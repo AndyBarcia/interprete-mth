@@ -6,20 +6,28 @@
 void yyerror(const char* s);
 %}
 
+%code requires {
+    #include "evaluar.h"
+}
+
 %union {
     int tipoOperador;
     int valorEntero;
     String error;
     String identificador;
+    ListaExpresiones listaValores;
+    Valor valor;
+    Expresion expresion;
+    Enunciado enunciado;
 }
 
 %token <valorEntero> ENTERO
 %token <identificador> IDENTIFICADOR
 %token <error> ERROR
 
-%token OPERADOR_BINARIO
-%token OPERADOR_UNARIO
-%token OPERADOR_ASIGNACION
+%token <tipoOperador> OPERADOR_BINARIO
+%token <tipoOperador> OPERADOR_UNARIO
+%token <tipoOperador> OPERADOR_ASIGNACION
 
 %token PARENTESIS_IZQ
 %token PARENTESIS_DER
@@ -28,7 +36,17 @@ void yyerror(const char* s);
 %token LLAVE_IZQ
 %token LLAVE_DER
 
+%token FLECHA
+%token SLASH_INVERTIDA
+
+%token SALTO_LINEA
+
 %token COMA
+
+%type <listaValores> argument_list
+%type <expresion> expresion
+%type <identificador> identificador
+%type <enunciado> statement
 
 %%
 
@@ -42,26 +60,40 @@ statement_list:
     ;
 
 argument_list:
-    expresion
-    | argument_list expresion
+    expresion {
+            $$ = crear_lista_expresiones();
+            push_lista_expresiones(&$$, $1);
+        }
+    | argument_list COMA expresion { push_lista_expresiones(&$$, $3); }
+    ;
+
+identifier_list:
+    IDENTIFICADOR
+    | identifier_list IDENTIFICADOR
+    ;
+
+function:
+    SLASH_INVERTIDA argument_list FLECHA CORCHETE_IZQ statement_list CORCHETE_DER {}
     ;
 
 expresion:
-    IDENTIFICADOR { printf("Identificador: %s\n", string_a_puntero(&$1)); }
-    | ENTERO { printf("Entero: %d\n", $1); }
-    | OPERADOR_UNARIO expresion
-    | expresion OPERADOR_BINARIO expresion
-    | IDENTIFICADOR PARENTESIS_IZQ argument_list PARENTESIS_DER { printf("%d", $3); }
-    | ERROR
-    ;
-
-asignacion:
-    IDENTIFICADOR OPERADOR_ASIGNACION expresion
+    IDENTIFICADOR { $$ = crear_exp_valor(crear_identificador($1)); }
+    | ENTERO { $$ = crear_exp_valor(crear_entero($1)); }
+    | OPERADOR_UNARIO expresion { $$ = crear_exp_op_unaria($1, $2); }
+    | expresion OPERADOR_BINARIO expresion { $$ = crear_exp_op_binaria($1, $2, $3); }
+    | IDENTIFICADOR PARENTESIS_IZQ argument_list PARENTESIS_DER { $$ = crear_exp_llamada($1, $3); }
+    | PARENTESIS_IZQ expresion PARENTESIS_DER { $$ = $2; }
+    | ERROR { $$ = crear_exp_valor(crear_error($1)); }
     ;
 
 statement:
-    expresion
-    | asignacion
+    expresion SALTO_LINEA {
+            $$ = crear_enunciado_exp($1);
+            imprimir_expresion($1);
+        }
+    | IDENTIFICADOR OPERADOR_ASIGNACION expresion {
+            $$ = crear_enunciado_asignacion($1, $3);
+        }
     ;
 
 %%

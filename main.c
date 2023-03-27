@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
     inicializar_analizador_lexico();
 
     printf("> ");
+    fflush(stdout);
+
     yyparse();
 
     borrar_analizador_lexico();

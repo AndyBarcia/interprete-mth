@@ -82,7 +82,7 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
         return ERROR;
     }
 
-[+\-*/,.;<>&|] {
+[+\-*/.;<>&|] {
         yylval.tipoOperador = yytext[0];
         return OPERADOR_BINARIO;
     }
@@ -123,6 +123,11 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 }   { return LLAVE_DER; }
 
 ,   { return COMA; }
+
+\n  { return SALTO_LINEA; }
+
+=>  { return FLECHA;}
+\\  { return SLASH_INVERTIDA; }
 
 \/\/[^\n]* { /* ignorar comentarios de una línea */ }
 
