@@ -121,15 +121,15 @@ expresion:
     | OPERADOR expresion {
             ListaExpresiones args = crear_lista_expresiones();
             push_lista_expresiones(&args, $2);
-            $$ = crear_exp_llamada($1, args);
+            $$ = crear_exp_llamada(crear_exp_identificador($1), args);
         }
     | expresion OPERADOR expresion {
             ListaExpresiones args = crear_lista_expresiones();
             push_lista_expresiones(&args, $1);
             push_lista_expresiones(&args, $3);
-            $$ = crear_exp_llamada($2, args);
+            $$ = crear_exp_llamada(crear_exp_identificador($2), args);
         }
-    | IDENTIFICADOR PARENTESIS_IZQ argument_list PARENTESIS_DER { $$ = crear_exp_llamada($1, $3); }
+    | expresion PARENTESIS_IZQ argument_list PARENTESIS_DER { $$ = crear_exp_llamada($1, $3); }
     | PARENTESIS_IZQ expresion PARENTESIS_DER { $$ = $2; }
     | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0); }
     | CONST nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1); }

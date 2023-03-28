@@ -109,7 +109,7 @@ void _imprimir_expresion(Expresion expresion) {
             printf("%s", string_a_puntero(&expresion.identificador));
             break;
         case EXP_OP_LLAMADA:
-            printf("%s", string_a_puntero(&expresion.llamadaFuncion.identificador_funcion));
+            _imprimir_expresion(*(Expresion*)expresion.llamadaFuncion.funcion);
             imprimir_lista_expresiones(expresion.llamadaFuncion.argumentos);
             break;
         case EXP_OP_ASIGNACION:
@@ -140,11 +140,14 @@ Expresion crear_exp_identificador(String identificador) {
     };
 }
 
-Expresion crear_exp_llamada(String identificador, ListaExpresiones argumentos)  {
+Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos)  {
+    Expresion* e = malloc(sizeof (Expresion));
+    *e = funcion;
+
     return (Expresion) {
             .tipo = EXP_OP_LLAMADA,
             .llamadaFuncion = (LlamadaFuncion) {
-                    .identificador_funcion = identificador,
+                    .funcion = (struct Expresion *) e,
                     .argumentos = argumentos
             },
             .es_sentencia = 0,

@@ -13,12 +13,13 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
             return v;
         }
         case EXP_OP_LLAMADA: {
-            Valor f = recuperar_valor_tabla(*tabla, exp.llamadaFuncion.identificador_funcion);
+            Valor f = evaluar_expresion(tabla, *(Expresion*)exp.llamadaFuncion.funcion);
+            if (f.tipoValor == TIPO_ERROR) return f;
             switch (f.tipoValor) {
                 case TIPO_ERROR:
                     return f;
                 case TIPO_INDEFINIDO:
-                    return crear_error("\"%s\" no es una función definida!", string_a_puntero(&exp.llamadaFuncion.identificador_funcion));
+                    return crear_error("Llamando una función no definida!");
                 case TIPO_FUNCION_NATIVA: {
                     FuncionNativa fn = f.funcion_nativa;
                     ListaValores args = evaluar_expresiones(tabla, exp.llamadaFuncion.argumentos);
@@ -53,7 +54,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     return v;
                 }
                 default:
-                    return crear_error("\"%s\" no es una función!", string_a_puntero(&exp.llamadaFuncion.identificador_funcion));
+                    return crear_error("Este valor no es una función!");
             }
         }
         case EXP_OP_ASIGNACION: {
