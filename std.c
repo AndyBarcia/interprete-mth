@@ -4,28 +4,29 @@
 void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     int a = 0;
     for (int i = 0; i < args.longitud; ++i) {
-        if (((Valor*)args.valores)[i].tipoValor != TIPO_ENTERO) {
+        if (((Valor *) args.valores)[i].tipoValor != TIPO_ENTERO) {
             *retorno = crear_error("No es de tipo entero.");
             return;
         }
-        a += ((Valor*)args.valores)[i].entero;
+        a += ((Valor *) args.valores)[i].entero;
     }
     *retorno = crear_entero(a);
 }
 
 void restar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud == 1) {
-        if (((Valor*)args.valores)[0].tipoValor != TIPO_ENTERO) {
+        if (((Valor *) args.valores)[0].tipoValor != TIPO_ENTERO) {
             *retorno = crear_error("No es de tipo entero.");
             return;
         }
-        *retorno = crear_entero(-((Valor*)args.valores)[0].entero);
+        *retorno = crear_entero(-((Valor *) args.valores)[0].entero);
     } else if (args.longitud == 2) {
-        if (((Valor*)args.valores)[0].tipoValor != TIPO_ENTERO || ((Valor*)args.valores)[1].tipoValor != TIPO_ENTERO) {
+        if (((Valor *) args.valores)[0].tipoValor != TIPO_ENTERO ||
+            ((Valor *) args.valores)[1].tipoValor != TIPO_ENTERO) {
             *retorno = crear_error("No es de tipo entero.");
             return;
         }
-        *retorno = crear_entero(((Valor*)args.valores)[0].entero - ((Valor*)args.valores)[1].entero);
+        *retorno = crear_entero(((Valor *) args.valores)[0].entero - ((Valor *) args.valores)[1].entero);
     } else {
         *retorno = crear_error("Se pasaron argumentos de más.");
     }
@@ -39,11 +40,11 @@ void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
 
     int a = 1;
     for (int i = 0; i < args.longitud; ++i) {
-        if (((Valor*)args.valores)[i].tipoValor != TIPO_ENTERO) {
+        if (((Valor *) args.valores)[i].tipoValor != TIPO_ENTERO) {
             *retorno = crear_error("No es de tipo entero.");
             return;
         }
-        a *= ((Valor*)args.valores)[i].entero;
+        a *= ((Valor *) args.valores)[i].entero;
     }
     *retorno = crear_entero(a);
 }
@@ -54,9 +55,9 @@ void igualdad(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
         return;
     }
 
-    Valor v = ((Valor*)args.valores)[0];
+    Valor v = ((Valor *) args.valores)[0];
     for (int i = 1; i < args.longitud; ++i) {
-        if (!comparar_valor(v, ((Valor*)args.valores)[i])) {
+        if (!comparar_valor(v, ((Valor *) args.valores)[i])) {
             *retorno = crear_bool(0);
             return;
         }
@@ -64,22 +65,111 @@ void igualdad(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     *retorno = crear_bool(1);
 }
 
+void print(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
+    for (int i = 0; i < args.longitud; ++i) {
+        imprimir_valor(((Valor *) args.valores)[i]);
+    }
+}
+
+void _imprimir_todo(EntradaTablaHash entrada) {
+    printf("\"%s\" := ", string_a_puntero(&entrada.clave));
+    imprimir_valor(entrada.valor);
+}
+
+void _imprimir_solo_usuario(EntradaTablaHash entrada);
+
+void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
+    if (args.longitud > 1) {
+        *retorno = crear_error("Demasiados argumentos.");
+        return;
+    }
+    if (args.longitud == 1) {
+        Valor arg = ((Valor *) args.valores)[0];
+        if (arg.tipoValor != TIPO_BOOL) {
+            *retorno = crear_error("Se esperaba un booleano.");
+            return;
+        }
+        if (arg.bool) {
+            for (int i = 0; i <= tabla->nivel; ++i)
+                iterar_tabla_hash(tabla->tablas[i], _imprimir_todo);
+            return;
+        }
+    }
+    for (int i = 0; i <= tabla->nivel; ++i) {
+        iterar_tabla_hash(tabla->tablas[i], _imprimir_solo_usuario);
+    }
+}
+
 typedef struct {
-    FuncionNativa funcion;
-    char* texto_ayuda;
-} TextoAyuda;
+    char *nombres[2];
+    Valor valor;
+    char *texto_ayuda;
+} ValorLibreriaEstandar;
 
-void ayuda(ListaValores args, Valor *retorno);
+void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno);
 
-TextoAyuda ayudas[] = {
-        { sumar, "Suma un conjunto de enteros." },
-        { restar, "Resta un número a otro, o convierte un número positivo a negativo." },
-        { multiplicar, "Multiplica un conjunto de enteros." },
-        { igualdad, "Comprueba si un conjunto de valores son iguales." },
-        { ayuda, "Imprime la documentación de una función de la librería estándar." }
+ValorLibreriaEstandar elementos[] = {
+        {
+                {"sumar",       "+"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = sumar},
+                "Suma un conjunto de enteros."
+        },
+        {
+                {"restar",      "-"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = restar},
+                "Resta un número a otro, o convierte un número positivo a negativo."
+        },
+        {
+                {"multiplicar", "*"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = multiplicar},
+                "Multiplica un conjunto de enteros."
+        },
+        {
+                {"igualdad",    "=="},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = igualdad},
+                "Comprueba si un conjunto de valores son iguales."
+        },
+        {
+                {"print",       "imprimir"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = print},
+                "Imprime un conjunto de valores."
+        },
+        {
+                {"print_ws",    "imprimir_ws"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = print_ws},
+                "Imprime todas las variables del conjunto de trabajo (workspace).\nSi recibe \"verdadero\" como primer "
+                "argumento, imprime todas las variables, incluidas las de la librería estándar."
+        },
+        {
+                {"help",        "ayuda"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = ayuda},
+                "Imprime la documentación de una función de la librería estándar."
+        },
+        {
+                {"verdadero",   "true"},
+                {TIPO_BOOL, .bool = 1},
+                "Booleano verdadero."
+        },
+        {
+                {"falso",       "false"},
+                {TIPO_BOOL, .bool = 0},
+                "Booleano falso."
+        }
 };
 
-void ayuda(ListaValores args, Valor *retorno) {
+void _imprimir_solo_usuario(EntradaTablaHash entrada) {
+    char *nombre = string_a_puntero(&entrada.clave);
+    for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
+        if (strcmp(nombre, elementos[i].nombres[0]) == 0)
+            return;
+        if (elementos[i].nombres[1] && strcmp(nombre, elementos[i].nombres[1]) == 0)
+            return;
+    }
+    printf("\"%s\" := ", string_a_puntero(&entrada.clave));
+    imprimir_valor(entrada.valor);
+}
+
+void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
         *retorno = crear_error("Sólo se acepta un argumento de entrada.");
         return;
@@ -88,36 +178,21 @@ void ayuda(ListaValores args, Valor *retorno) {
         printf("Imprime ayuda sobre la función que se pasa como argumento. Ejemplo: `ayuda(sumar)`.\n");
         return;
     }
-    Valor arg = ((Valor*)args.valores)[0];
-    if (arg.tipoValor != TIPO_FUNCION_NATIVA && arg.tipoValor != TIPO_FUNCION) {
-        *retorno = crear_error("No es una función.");
-        return;
-    }
-    if (arg.tipoValor != TIPO_FUNCION_NATIVA) {
-        *retorno = crear_error("No es una función de la librería estándar.");
-        return;
-    }
-    for (int i = 0; i < sizeof(ayudas)/sizeof(TextoAyuda); ++i) {
-        if (((Valor*)args.valores)[0].funcion_nativa == ayudas[i].funcion) {
-            printf("%s\n", ayudas[i].texto_ayuda);
+    Valor arg = ((Valor *) args.valores)[0];
+    for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
+        if (comparar_valor(arg, elementos[i].valor)) {
+            printf("%s\n", elementos[i].texto_ayuda);
             return;
         }
     }
-    printf("No hay ayuda para la función.ºn");
+    printf("No hay ayuda para este elemento.\n");
 }
 
 void inicializar_libreria_estandar(TablaSimbolos *t) {
-    asignar_valor_tabla(t, crear_string("sumar"), crear_funcion_nativa(sumar), 1);
-    asignar_valor_tabla(t, crear_string("+"), crear_funcion_nativa(sumar), 1);
-    asignar_valor_tabla(t, crear_string("restar"), crear_funcion_nativa(restar), 1);
-    asignar_valor_tabla(t, crear_string("-"), crear_funcion_nativa(restar), 1);
-    asignar_valor_tabla(t, crear_string("multiplicar"), crear_funcion_nativa(multiplicar), 1);
-    asignar_valor_tabla(t, crear_string("*"), crear_funcion_nativa(multiplicar), 1);
-    asignar_valor_tabla(t, crear_string("ayuda"), crear_funcion_nativa(ayuda), 1);
-    asignar_valor_tabla(t, crear_string("=="), crear_funcion_nativa(igualdad), 1);
-    asignar_valor_tabla(t, crear_string("eq"), crear_funcion_nativa(igualdad), 1);
-    asignar_valor_tabla(t, crear_string("print"), crear_funcion_nativa(print), 1);
-
-    asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1), 1);
-    asignar_valor_tabla(t, crear_string("falso"), crear_bool(0), 1);
+    for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
+        ValorLibreriaEstandar v = elementos[i];
+        asignar_valor_tabla(t, crear_string(v.nombres[0]), v.valor, 1);
+        if (v.nombres[1])
+            asignar_valor_tabla(t, crear_string(v.nombres[1]), v.valor, 1);
+    }
 }
