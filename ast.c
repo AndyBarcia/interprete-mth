@@ -127,14 +127,16 @@ void imprimir_expresion(Expresion expresion) {
 Expresion crear_exp_valor(Valor valor) {
     return (Expresion) {
         .tipo = EXP_VALOR,
-        .valor = valor
+        .valor = valor,
+        .es_sentencia = 0,
     };
 }
 
 Expresion crear_exp_identificador(String identificador) {
     return (Expresion) {
             .tipo = EXP_IDENTIFICADOR,
-            .identificador = identificador
+            .identificador = identificador,
+            .es_sentencia = 0,
     };
 }
 
@@ -144,7 +146,8 @@ Expresion crear_exp_llamada(String identificador, ListaExpresiones argumentos)  
             .llamadaFuncion = (LlamadaFuncion) {
                     .identificador_funcion = identificador,
                     .argumentos = argumentos
-            }
+            },
+            .es_sentencia = 0,
     };
 }
 
@@ -159,13 +162,15 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion, int in
                     .expresion = (struct Expresion*) e,
                     .inmutable = inmutable
             },
+            .es_sentencia = 0,
     };
 }
 
 Expresion crear_exp_bloque(ListaExpresiones expresiones) {
     return (Expresion) {
         .tipo = EXP_BLOQUE,
-        .bloque = expresiones
+        .bloque = expresiones,
+            .es_sentencia = 0,
     };
 }
 

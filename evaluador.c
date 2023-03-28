@@ -2,10 +2,16 @@
 
 Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
     switch (exp.tipo) {
-        case EXP_VALOR:
+        case EXP_VALOR: {
+            if (exp.es_sentencia) return crear_indefinido();
             return exp.valor;
-        case EXP_IDENTIFICADOR:
-            return recuperar_valor_tabla(*tabla, exp.identificador);
+        }
+        case EXP_IDENTIFICADOR: {
+            Valor v = recuperar_valor_tabla(*tabla, exp.identificador);
+            if (v.tipoValor == TIPO_ERROR) return v;
+            if (exp.es_sentencia) return crear_indefinido();
+            return v;
+        }
         case EXP_OP_LLAMADA: {
             Valor f = recuperar_valor_tabla(*tabla, exp.llamadaFuncion.identificador_funcion);
             switch (f.tipoValor) {
@@ -23,6 +29,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
 
                     Valor result = crear_indefinido();
                     fn(args, &result);
+                    if (exp.es_sentencia) return crear_indefinido();
                     return result;
                 }
                 case TIPO_FUNCION: {
@@ -41,6 +48,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                         asignar_valor_tabla(tabla, fn.argumentos.valores[i], ((Valor*)args.valores)[i], 0);
                     Valor v = evaluar_expresion(tabla, *(Expresion*)fn.cuerpo);
                     reducir_nivel_tabla_simbolos(tabla);
+
+                    if (exp.es_sentencia) return crear_indefinido();
                     return v;
                 }
                 default:
@@ -49,13 +58,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
         }
         case EXP_OP_ASIGNACION: {
             Valor v = evaluar_expresion(tabla, *(Expresion*)exp.asignacion.expresion);
-            if (v.tipoValor != TIPO_ERROR) {
-                if (asignar_valor_tabla(tabla, exp.asignacion.identificador, v, exp.asignacion.inmutable))
-                    return crear_indefinido();
-                else
-                    return crear_error("Intentando reasignar variable inmutable \"%s\"", string_a_puntero(&exp.asignacion.identificador));
-            } else {
+            if (v.tipoValor == TIPO_ERROR) return v;
+            if (asignar_valor_tabla(tabla, exp.asignacion.identificador, v, exp.asignacion.inmutable)) {
+                if (exp.es_sentencia) return crear_indefinido();
                 return v;
+            } else {
+                return crear_error("Intentando reasignar variable inmutable \"%s\"", string_a_puntero(&exp.asignacion.identificador));
             }
         }
         case EXP_BLOQUE: {
@@ -68,6 +76,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     return ultimo_valor;
             }
             reducir_nivel_tabla_simbolos(tabla);
+
+            if (exp.es_sentencia) return crear_indefinido();
             return ultimo_valor;
         }
         default:

@@ -74,8 +74,9 @@ extern int yydebug;
     LLAVE_DER = 269,               /* LLAVE_DER  */
     FLECHA = 270,                  /* FLECHA  */
     SLASH_INVERTIDA = 271,         /* SLASH_INVERTIDA  */
-    TERMINADOR_SENTENCIA = 272,    /* TERMINADOR_SENTENCIA  */
-    COMA = 273                     /* COMA  */
+    NUEVA_LINEA = 272,             /* NUEVA_LINEA  */
+    PUNTO_Y_COMA = 273,            /* PUNTO_Y_COMA  */
+    COMA = 274                     /* COMA  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -95,7 +96,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 99 "../analizador_sintactico.h"
+#line 100 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

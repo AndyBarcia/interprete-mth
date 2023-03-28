@@ -81,6 +81,7 @@ typedef struct {
 
 typedef struct {
     int tipo;
+    int es_sentencia;
     union {
         Valor valor;
         String identificador;

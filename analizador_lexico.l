@@ -144,7 +144,8 @@ const { return CONST; }
 
 ,   { return COMA; }
 
-\n|;  { return TERMINADOR_SENTENCIA; }
+\n  { return NUEVA_LINEA; }
+;  { return PUNTO_Y_COMA; }
 
 =>  { return FLECHA;}
 \\  { return SLASH_INVERTIDA; }

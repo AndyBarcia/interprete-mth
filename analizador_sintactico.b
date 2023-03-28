@@ -45,7 +45,8 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %token FLECHA
 %token SLASH_INVERTIDA
 
-%token TERMINADOR_SENTENCIA
+%token NUEVA_LINEA
+%token PUNTO_Y_COMA
 
 %token COMA
 
@@ -56,6 +57,7 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %type <listaIdentificadores> identifier_list
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
+%type <expresion> expresion_sentenciable
 
 %%
 
@@ -64,15 +66,15 @@ program:
     ;
 
 statement_list:
-    expresion TERMINADOR_SENTENCIA {
+    expresion_sentenciable NUEVA_LINEA {
             imprimir_valor(evaluar_expresion(&tablaSimbolos, $1));
             printf("> ");
         }
-    | statement_list expresion TERMINADOR_SENTENCIA {
+    | statement_list expresion_sentenciable NUEVA_LINEA {
             imprimir_valor(evaluar_expresion(&tablaSimbolos, $2));
             printf("> ");
         }
-    | error TERMINADOR_SENTENCIA {
+    | error NUEVA_LINEA {
             /* Saltarse la línea en caso de error */
             printf("> ");
         }
@@ -101,11 +103,11 @@ identifier_list:
     | identifier_list_many { $$ = $1; }
 
 expression_block:
-    expresion {
+    expresion_sentenciable {
             $$ = crear_lista_expresiones();
             push_lista_expresiones(&$$, $1);
         }
-    | expression_block TERMINADOR_SENTENCIA expresion { push_lista_expresiones(&$$, $3); }
+    | expression_block expresion_sentenciable { push_lista_expresiones(&$$, $2); }
     ;
 
 nombre_asignable:
@@ -135,6 +137,13 @@ expresion:
     | SLASH_INVERTIDA identifier_list FLECHA expresion { $$ = crear_exp_valor(crear_funcion($2, $4)); }
     | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1))); }
     ;
+
+expresion_sentenciable:
+    expresion { $$ = $1; }
+    | expresion PUNTO_Y_COMA {
+            $1.es_sentencia = 1;
+            $$ = $1;
+        }
 
 %%
 
