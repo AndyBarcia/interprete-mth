@@ -4,13 +4,15 @@
 #include "string.h"
 
 typedef int Entero;
+typedef int Bool;
 
 #define TIPO_INDEFINIDO 0
 #define TIPO_NULO 1
 #define TIPO_ERROR 2
 #define TIPO_ENTERO 3
-#define TIPO_FUNCION_NATIVA 4
-#define TIPO_FUNCION 5
+#define TIPO_BOOL 4
+#define TIPO_FUNCION_NATIVA 5
+#define TIPO_FUNCION 6
 
 typedef struct {
     int longitud;
@@ -43,6 +45,7 @@ typedef struct {
     int tipoValor;
     union {
         Entero entero;
+        Bool bool;
         FuncionNativa funcion_nativa;
         Funcion funcion;
         String error;
@@ -51,11 +54,13 @@ typedef struct {
 
 Valor crear_indefinido();
 Valor crear_nulo();
-Valor crear_entero(int entero);
+Valor crear_entero(Entero entero);
+Valor crear_bool(Bool bool);
 Valor crear_funcion_nativa(FuncionNativa funcion);
 
 Valor crear_error(const char *formato, ...);
 void imprimir_valor(Valor valor);
+int comparar_valor(Valor a, Valor b);
 
 typedef struct {
     String identificador;

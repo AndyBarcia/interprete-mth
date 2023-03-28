@@ -15,10 +15,17 @@ Valor crear_nulo() {
     };
 }
 
-Valor crear_entero(int entero) {
+Valor crear_entero(Entero entero) {
     return (Valor) {
         .tipoValor = TIPO_ENTERO,
         .entero = entero
+    };
+}
+
+Valor crear_bool(Bool bool) {
+    return (Valor) {
+            .tipoValor = TIPO_BOOL,
+            .entero = bool ? 1 : 0
     };
 }
 
@@ -71,12 +78,26 @@ void _imprimir_valor(Valor valor) {
         case TIPO_FUNCION_NATIVA: printf("[función nativa]"); break;
         case TIPO_FUNCION: printf("[función]"); break;
         case TIPO_ENTERO: printf("%d", valor.entero); break;
+        case TIPO_BOOL: printf("%s", valor.bool ? "Verdadero" : "Falso"); break;
     }
 }
 
 void imprimir_valor(Valor valor) {
     _imprimir_valor(valor);
     if (valor.tipoValor != TIPO_INDEFINIDO) printf("\n");
+}
+
+int comparar_valor(Valor a, Valor b) {
+    if (a.tipoValor != b.tipoValor) return 0;
+    switch (a.tipoValor) {
+        case TIPO_INDEFINIDO: return 0;
+        case TIPO_NULO: return 1;
+        case TIPO_ERROR: return 1;
+        case TIPO_FUNCION_NATIVA: return a.funcion_nativa == b.funcion_nativa;
+        case TIPO_FUNCION: return 0;
+        case TIPO_ENTERO: return a.entero == b.entero;
+        case TIPO_BOOL: return a.bool == b.bool;
+    }
 }
 
 void _imprimir_expresion(Expresion expresion) {
