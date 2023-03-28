@@ -54,5 +54,6 @@ void ayuda(ListaValores args, Valor *retorno) {
 
 void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("sumar"), crear_funcion_nativa(sumar));
+    asignar_valor_tabla(t, crear_string("+"), crear_funcion_nativa(sumar));
     asignar_valor_tabla(t, crear_string("ayuda"), crear_funcion_nativa(ayuda));
 }

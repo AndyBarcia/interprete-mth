@@ -87,15 +87,6 @@ void _imprimir_expresion(Expresion expresion) {
         case EXP_IDENTIFICADOR:
             printf("%s", string_a_puntero(&expresion.identificador));
             break;
-        case EXP_OP_UNARIA:
-            printf("(%c)", expresion.operacionUnaria.operador);
-            _imprimir_expresion(*(Expresion *) expresion.operacionUnaria.valor);
-            break;
-        case EXP_OP_BINARIA:
-            _imprimir_expresion(*(Expresion *) expresion.operacionBinaria.izq);
-            printf("(%c)", expresion.operacionBinaria.operador);
-            _imprimir_expresion(*(Expresion *) expresion.operacionBinaria.der);
-            break;
         case EXP_OP_LLAMADA:
             printf("%s", string_a_puntero(&expresion.llamadaFuncion.identificador_funcion));
             imprimir_lista_expresiones(expresion.llamadaFuncion.argumentos);
@@ -123,35 +114,6 @@ Expresion crear_exp_identificador(String identificador) {
     return (Expresion) {
             .tipo = EXP_IDENTIFICADOR,
             .identificador = identificador
-    };
-}
-
-Expresion crear_exp_op_unaria(int op, Expresion  exp) {
-    Expresion* e = malloc(sizeof (Expresion));
-    *e = exp;
-
-    return (Expresion) {
-            .tipo = EXP_OP_UNARIA,
-            .operacionUnaria = (OperacionUnaria) {
-                .operador = op,
-                .valor = (struct Expresion *) e
-            }
-    };
-}
-
-Expresion crear_exp_op_binaria(Expresion expA, int op, Expresion expB) {
-    Expresion* eA = malloc(sizeof (Expresion));
-    *eA = expA;
-    Expresion* eB = malloc(sizeof (Expresion));
-    *eB = expB;
-
-    return (Expresion) {
-            .tipo = EXP_OP_BINARIA,
-            .operacionBinaria = (OperacionBinaria) {
-                    .izq = (struct Expresion *) eA,
-                    .operador = op,
-                    .der = (struct Expresion *) eB
-            }
     };
 }
 

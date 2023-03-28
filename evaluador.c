@@ -6,31 +6,6 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
             return exp.valor;
         case EXP_IDENTIFICADOR:
             return recuperar_valor_tabla(*tabla, exp.identificador);
-        case EXP_OP_UNARIA: {
-            Valor v = evaluar_expresion(tabla, *(Expresion *) exp.operacionUnaria.valor);
-            if (v.tipoValor == TIPO_ERROR) return v;
-
-            switch (exp.operacionUnaria.operador) {
-                case '!':
-                    return crear_error("Operación no soportada!");
-                default:
-                    return crear_error("'%c' no es un operador unario!", exp.operacionUnaria.operador);
-            }
-        }
-        case EXP_OP_BINARIA: {
-            Valor izq = evaluar_expresion(tabla, *(Expresion *) exp.operacionBinaria.izq);
-            if (izq.tipoValor == TIPO_ERROR) return izq;
-            Valor der = evaluar_expresion(tabla, *(Expresion *) exp.operacionBinaria.der);
-            if (der.tipoValor == TIPO_ERROR) return der;
-
-            switch (exp.operacionBinaria.operador) {
-                case '+': {
-                    return crear_entero(izq.entero + der.entero);
-                }
-                default:
-                    return crear_error("'%c' no es un operador binario!", exp.operacionBinaria.operador);
-            }
-        }
         case EXP_OP_LLAMADA: {
             Valor f = recuperar_valor_tabla(*tabla, exp.llamadaFuncion.identificador_funcion);
             switch (f.tipoValor) {

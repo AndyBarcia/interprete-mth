@@ -30,7 +30,7 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %token <identificador> IDENTIFICADOR
 %token <error> ERROR
 
-%token <tipoOperador> OPERADOR
+%token <identificador> OPERADOR
 %token <tipoOperador> OPERADOR_ASIGNACION
 
 %token PARENTESIS_IZQ
@@ -107,12 +107,23 @@ expression_block:
 
 expresion:
     IDENTIFICADOR { $$ = crear_exp_identificador($1); }
+    | OPERADOR { $$ = crear_exp_identificador($1); }
     | ENTERO { $$ = crear_exp_valor(crear_entero($1)); }
-    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2); }
-    | expresion OPERADOR expresion { $$ = crear_exp_op_binaria($1, $2, $3); }
+    | OPERADOR expresion {
+            ListaExpresiones args = crear_lista_expresiones();
+            push_lista_expresiones(&args, $2);
+            $$ = crear_exp_llamada($1, args);
+        }
+    | expresion OPERADOR expresion {
+            ListaExpresiones args = crear_lista_expresiones();
+            push_lista_expresiones(&args, $1);
+            push_lista_expresiones(&args, $3);
+            $$ = crear_exp_llamada($2, args);
+        }
     | IDENTIFICADOR PARENTESIS_IZQ argument_list PARENTESIS_DER { $$ = crear_exp_llamada($1, $3); }
     | PARENTESIS_IZQ expresion PARENTESIS_DER { $$ = $2; }
     | IDENTIFICADOR OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3); }
+    | OPERADOR OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3); }
     | LLAVE_IZQ expression_block LLAVE_DER { $$ = crear_exp_bloque($2); }
     | SLASH_INVERTIDA identifier_list FLECHA expresion { $$ = crear_exp_valor(crear_funcion($2, $4)); }
     | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1))); }

@@ -100,23 +100,23 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
     }
 
 [+\-*/.<>&|] {
-        yylval.tipoOperador = yytext[0];
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 \=\=   {
-        yylval.tipoOperador = OP_COMPARACION_IGUAL;
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 >=  {
-        yylval.tipoOperador = OP_COMPARACION_MAYOR_IGUAL;
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 \<=  {
-        yylval.tipoOperador = OP_COMPARACION_MENOR_IGUAL;
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 !   {
-        yylval.tipoOperador = yytext[0];
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 = {

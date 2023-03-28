@@ -58,17 +58,6 @@ Valor crear_error(const char *formato, ...);
 void imprimir_valor(Valor valor);
 
 typedef struct {
-    int operador;
-    struct Expresion *valor;
-} OperacionUnaria;
-
-typedef struct {
-    int operador;
-    struct Expresion *izq;
-    struct Expresion *der;
-} OperacionBinaria;
-
-typedef struct {
     String identificador;
     struct Expresion *expresion;
 } Asignacion;
@@ -80,20 +69,15 @@ typedef struct {
 
 #define EXP_VALOR 0
 #define EXP_IDENTIFICADOR 1
-#define EXP_OP_UNARIA 2
-#define EXP_OP_BINARIA 3
-#define EXP_OP_LLAMADA 4
-#define EXP_OP_ASIGNACION 5
-#define EXP_BLOQUE 6
-#define EXP_DEF_FUNCION 7
+#define EXP_OP_LLAMADA 2
+#define EXP_OP_ASIGNACION 3
+#define EXP_BLOQUE 4
 
 typedef struct {
     int tipo;
     union {
         Valor valor;
         String identificador;
-        OperacionUnaria operacionUnaria;
-        OperacionBinaria  operacionBinaria;
         LlamadaFuncion llamadaFuncion;
         Asignacion asignacion;
         ListaExpresiones bloque;
@@ -106,8 +90,6 @@ void imprimir_expresion(Expresion expresion);
 
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_identificador(String identificador);
-Expresion crear_exp_op_unaria(int op, Expresion  exp);
-Expresion crear_exp_op_binaria(Expresion expA, int op, Expresion expB);
 Expresion crear_exp_llamada(String identificador, ListaExpresiones argumentos);
 Expresion crear_exp_asignacion(String identificador, Expresion expresion);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);

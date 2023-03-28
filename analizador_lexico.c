@@ -826,7 +826,7 @@ case 4:
 YY_RULE_SETUP
 #line 102 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval.tipoOperador = yytext[0];
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 	YY_BREAK
@@ -834,7 +834,7 @@ case 5:
 YY_RULE_SETUP
 #line 106 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval.tipoOperador = OP_COMPARACION_IGUAL;
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 	YY_BREAK
@@ -842,7 +842,7 @@ case 6:
 YY_RULE_SETUP
 #line 110 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval.tipoOperador = OP_COMPARACION_MAYOR_IGUAL;
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 	YY_BREAK
@@ -850,7 +850,7 @@ case 7:
 YY_RULE_SETUP
 #line 114 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval.tipoOperador = OP_COMPARACION_MENOR_IGUAL;
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 	YY_BREAK
@@ -858,7 +858,7 @@ case 8:
 YY_RULE_SETUP
 #line 118 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval.tipoOperador = yytext[0];
+        yylval.identificador = crear_string(yytext);
         return OPERADOR;
     }
 	YY_BREAK
