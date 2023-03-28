@@ -101,23 +101,23 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 
 [+\-*/.<>&|] {
         yylval.tipoOperador = yytext[0];
-        return OPERADOR_BINARIO;
+        return OPERADOR;
     }
 \=\=   {
         yylval.tipoOperador = OP_COMPARACION_IGUAL;
-        return OPERADOR_BINARIO;
+        return OPERADOR;
     }
 >=  {
         yylval.tipoOperador = OP_COMPARACION_MAYOR_IGUAL;
-        return OPERADOR_BINARIO;
+        return OPERADOR;
     }
 \<=  {
         yylval.tipoOperador = OP_COMPARACION_MENOR_IGUAL;
-        return OPERADOR_BINARIO;
+        return OPERADOR;
     }
 !   {
         yylval.tipoOperador = yytext[0];
-        return OPERADOR_UNARIO;
+        return OPERADOR;
     }
 = {
         yylval.tipoOperador = '=';

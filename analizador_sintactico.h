@@ -63,19 +63,18 @@ extern int yydebug;
     ENTERO = 258,                  /* ENTERO  */
     IDENTIFICADOR = 259,           /* IDENTIFICADOR  */
     ERROR = 260,                   /* ERROR  */
-    OPERADOR_BINARIO = 261,        /* OPERADOR_BINARIO  */
-    OPERADOR_UNARIO = 262,         /* OPERADOR_UNARIO  */
-    OPERADOR_ASIGNACION = 263,     /* OPERADOR_ASIGNACION  */
-    PARENTESIS_IZQ = 264,          /* PARENTESIS_IZQ  */
-    PARENTESIS_DER = 265,          /* PARENTESIS_DER  */
-    CORCHETE_IZQ = 266,            /* CORCHETE_IZQ  */
-    CORCHETE_DER = 267,            /* CORCHETE_DER  */
-    LLAVE_IZQ = 268,               /* LLAVE_IZQ  */
-    LLAVE_DER = 269,               /* LLAVE_DER  */
-    FLECHA = 270,                  /* FLECHA  */
-    SLASH_INVERTIDA = 271,         /* SLASH_INVERTIDA  */
-    TERMINADOR_SENTENCIA = 272,    /* TERMINADOR_SENTENCIA  */
-    COMA = 273                     /* COMA  */
+    OPERADOR = 261,                /* OPERADOR  */
+    OPERADOR_ASIGNACION = 262,     /* OPERADOR_ASIGNACION  */
+    PARENTESIS_IZQ = 263,          /* PARENTESIS_IZQ  */
+    PARENTESIS_DER = 264,          /* PARENTESIS_DER  */
+    CORCHETE_IZQ = 265,            /* CORCHETE_IZQ  */
+    CORCHETE_DER = 266,            /* CORCHETE_DER  */
+    LLAVE_IZQ = 267,               /* LLAVE_IZQ  */
+    LLAVE_DER = 268,               /* LLAVE_DER  */
+    FLECHA = 269,                  /* FLECHA  */
+    SLASH_INVERTIDA = 270,         /* SLASH_INVERTIDA  */
+    TERMINADOR_SENTENCIA = 271,    /* TERMINADOR_SENTENCIA  */
+    COMA = 272                     /* COMA  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -95,7 +94,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 99 "../analizador_sintactico.h"
+#line 98 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -1,6 +1,7 @@
 #include "ast.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 Valor crear_indefinido() {
     return (Valor) {
@@ -41,7 +42,21 @@ Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo) {
     };
 }
 
-Valor crear_error(String error) {
+Valor crear_error(const char *formato, ...) {
+    String error;
+    // Cosas mágicas para pasar un número variable de argumentos.
+    va_list args, args2;
+    va_start(args, formato);
+    va_copy(args2, args);
+    // Calcular la longitud total que tendrá el string final.
+    size_t longitud = vsnprintf(NULL, 0, formato, args);
+    error = crear_string_n(longitud);
+    // Escribir el resultado en el string creado.
+    char *str = string_a_puntero(&error);
+    vsnprintf(str, longitud + 1, formato, args2);
+    va_end(args);
+    va_end(args2);
+
     return (Valor) {
             .tipoValor = TIPO_ERROR,
             .error = error

@@ -12,9 +12,9 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
 
             switch (exp.operacionUnaria.operador) {
                 case '!':
-                    return crear_error(crear_string("Operación no soportada!"));
+                    return crear_error("Operación no soportada!");
                 default:
-                    return crear_error(crear_string("Operador no reconocido!"));
+                    return crear_error("'%c' no es un operador unario!", exp.operacionUnaria.operador);
             }
         }
         case EXP_OP_BINARIA: {
@@ -28,7 +28,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     return crear_entero(izq.entero + der.entero);
                 }
                 default:
-                    return crear_error(crear_string("Operador no reconocido!"));
+                    return crear_error("'%c' no es un operador binario!", exp.operacionBinaria.operador);
             }
         }
         case EXP_OP_LLAMADA: {
@@ -37,7 +37,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                 case TIPO_ERROR:
                     return f;
                 case TIPO_INDEFINIDO:
-                    return crear_error(crear_string("Función no definida!"));
+                    return crear_error("\"%s\" no es una función definida!", string_a_puntero(&exp.llamadaFuncion.identificador_funcion));
                 case TIPO_FUNCION_NATIVA: {
                     FuncionNativa fn = f.funcion_nativa;
                     ListaValores args = evaluar_expresiones(tabla, exp.llamadaFuncion.argumentos);
@@ -54,7 +54,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     Funcion fn = f.funcion;
                     ListaValores args = evaluar_expresiones(tabla, exp.llamadaFuncion.argumentos);
                     if (fn.argumentos.longitud != args.longitud)
-                        return crear_error(crear_string("Número incorrecto de argumentos."));
+                        return crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
                     for(int i = 0; i < args.longitud; ++i) {
                         if (((Valor*)args.valores)[i].tipoValor == TIPO_ERROR)
                             return ((Valor*)args.valores)[i];
@@ -69,7 +69,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     return v;
                 }
                 default:
-                    return crear_error(crear_string("No es una función!"));
+                    return crear_error("\"%s\" no es una función!", string_a_puntero(&exp.llamadaFuncion.identificador_funcion));
             }
         }
         case EXP_OP_ASIGNACION: {
@@ -91,7 +91,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
             return ultimo_valor;
         }
         default:
-            return crear_error(crear_string("What?"));
+            return crear_error("What?");
     }
 
 }

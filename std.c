@@ -5,7 +5,7 @@ void sumar(ListaValores args, Valor *retorno) {
     int a = 0;
     for (int i = 0; i < args.longitud; ++i) {
         if (((Valor*)args.valores)[i].tipoValor != TIPO_ENTERO) {
-            *retorno = crear_error(crear_string("No es de tipo entero."));
+            *retorno = crear_error("No es de tipo entero.");
             return;
         }
         a += ((Valor*)args.valores)[i].entero;
@@ -27,7 +27,7 @@ TextoAyuda ayudas[] = {
 
 void ayuda(ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_error(crear_string("Sólo se acepta un argumento de entrada."));
+        *retorno = crear_error("Sólo se acepta un argumento de entrada.");
         return;
     }
     if (args.longitud == 0) {
@@ -36,11 +36,11 @@ void ayuda(ListaValores args, Valor *retorno) {
     }
     Valor arg = ((Valor*)args.valores)[0];
     if (arg.tipoValor != TIPO_FUNCION_NATIVA && arg.tipoValor != TIPO_FUNCION) {
-        *retorno = crear_error(crear_string("No es una función."));
+        *retorno = crear_error("No es una función.");
         return;
     }
     if (arg.tipoValor != TIPO_FUNCION_NATIVA) {
-        *retorno = crear_error(crear_string("No es una función de la librería estándar."));
+        *retorno = crear_error("No es una función de la librería estándar.");
         return;
     }
     for (int i = 0; i < sizeof(ayudas)/sizeof(TextoAyuda); ++i) {

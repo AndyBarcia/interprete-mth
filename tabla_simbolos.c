@@ -42,7 +42,7 @@ Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
             continue;
         }
     }
-    return crear_error(crear_string("Variable no definida."));
+    return crear_error("\"%s\" es una variable definida.", string_a_puntero(&identificador));
 }
 
 Valor asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor) {

@@ -54,7 +54,7 @@ Valor crear_nulo();
 Valor crear_entero(int entero);
 Valor crear_funcion_nativa(FuncionNativa funcion);
 
-Valor crear_error(String error);
+Valor crear_error(const char *formato, ...);
 void imprimir_valor(Valor valor);
 
 typedef struct {
