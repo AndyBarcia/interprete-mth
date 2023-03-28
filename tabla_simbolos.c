@@ -35,7 +35,7 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
 
 Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
     Valor resultado;
-    for (int i = 0; i <= t.nivel; ++i) {
+    for (int i = t.nivel; i >= 0; --i) {
         if (buscar_hash(t.tablas[i], string_a_puntero(&identificador), &resultado)) {
             return resultado;
         } else {
