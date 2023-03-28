@@ -107,16 +107,16 @@ void ayuda(ListaValores args, Valor *retorno) {
 }
 
 void inicializar_libreria_estandar(TablaSimbolos *t) {
-    asignar_valor_tabla(t, crear_string("sumar"), crear_funcion_nativa(sumar));
-    asignar_valor_tabla(t, crear_string("+"), crear_funcion_nativa(sumar));
-    asignar_valor_tabla(t, crear_string("restar"), crear_funcion_nativa(restar));
-    asignar_valor_tabla(t, crear_string("-"), crear_funcion_nativa(restar));
-    asignar_valor_tabla(t, crear_string("multiplicar"), crear_funcion_nativa(multiplicar));
-    asignar_valor_tabla(t, crear_string("*"), crear_funcion_nativa(multiplicar));
-    asignar_valor_tabla(t, crear_string("ayuda"), crear_funcion_nativa(ayuda));
-    asignar_valor_tabla(t, crear_string("=="), crear_funcion_nativa(igualdad));
-    asignar_valor_tabla(t, crear_string("eq"), crear_funcion_nativa(igualdad));
+    asignar_valor_tabla(t, crear_string("sumar"), crear_funcion_nativa(sumar), 1);
+    asignar_valor_tabla(t, crear_string("+"), crear_funcion_nativa(sumar), 1);
+    asignar_valor_tabla(t, crear_string("restar"), crear_funcion_nativa(restar), 1);
+    asignar_valor_tabla(t, crear_string("-"), crear_funcion_nativa(restar), 1);
+    asignar_valor_tabla(t, crear_string("multiplicar"), crear_funcion_nativa(multiplicar), 1);
+    asignar_valor_tabla(t, crear_string("*"), crear_funcion_nativa(multiplicar), 1);
+    asignar_valor_tabla(t, crear_string("ayuda"), crear_funcion_nativa(ayuda), 1);
+    asignar_valor_tabla(t, crear_string("=="), crear_funcion_nativa(igualdad), 1);
+    asignar_valor_tabla(t, crear_string("eq"), crear_funcion_nativa(igualdad), 1);
 
-    asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1));
-    asignar_valor_tabla(t, crear_string("falso"), crear_bool(0));
+    asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1), 1);
+    asignar_valor_tabla(t, crear_string("falso"), crear_bool(0), 1);
 }

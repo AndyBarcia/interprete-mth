@@ -148,7 +148,7 @@ Expresion crear_exp_llamada(String identificador, ListaExpresiones argumentos)  
     };
 }
 
-Expresion crear_exp_asignacion(String identificador, Expresion expresion) {
+Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable) {
     Expresion* e = malloc(sizeof (Expresion));
     *e = expresion;
 
@@ -156,8 +156,9 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion) {
             .tipo = EXP_OP_ASIGNACION,
             .asignacion = (Asignacion) {
                     .identificador = identificador,
-                    .expresion = (struct Expresion*) e
-            }
+                    .expresion = (struct Expresion*) e,
+                    .inmutable = inmutable
+            },
     };
 }
 

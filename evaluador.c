@@ -38,7 +38,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     // Introducir los argumentos en la tabla de símbolos-
                     aumentar_nivel_tabla_simbolos(tabla);
                     for (int i = 0; i < args.longitud; ++i)
-                        asignar_valor_tabla(tabla, fn.argumentos.valores[i], ((Valor*)args.valores)[i]);
+                        asignar_valor_tabla(tabla, fn.argumentos.valores[i], ((Valor*)args.valores)[i], 0);
                     Valor v = evaluar_expresion(tabla, *(Expresion*)fn.cuerpo);
                     reducir_nivel_tabla_simbolos(tabla);
                     return v;
@@ -50,8 +50,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
         case EXP_OP_ASIGNACION: {
             Valor v = evaluar_expresion(tabla, *(Expresion*)exp.asignacion.expresion);
             if (v.tipoValor != TIPO_ERROR) {
-                asignar_valor_tabla(tabla, exp.asignacion.identificador, v);
-                return crear_indefinido();
+                if (asignar_valor_tabla(tabla, exp.asignacion.identificador, v, exp.asignacion.inmutable))
+                    return crear_indefinido();
+                else
+                    return crear_error("Intentando reasignar variable inmutable \"%s\"", string_a_puntero(&exp.asignacion.identificador));
             } else {
                 return v;
             }

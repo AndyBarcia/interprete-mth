@@ -67,7 +67,7 @@ unsigned int funcion_hash(char *cad) {
     return (unsigned int) hash;
 }
 
-int buscar_hash(TablaHash t, char *identificador, Valor *entrada_salida) {
+int buscar_hash(TablaHash t, char *identificador, EntradaTablaHash *entrada_salida) {
     unsigned int hash = funcion_hash(identificador);
     int posicion_ideal = hash & (t.capacidad - 1);
     EntradaTablaHash *entrada_actual = &t.buffer[posicion_ideal];
@@ -79,7 +79,7 @@ int buscar_hash(TablaHash t, char *identificador, Valor *entrada_salida) {
         if (distancia_entrada_actual == distancia) {
             if (entrada_actual->hash == hash && strcmp(string_a_puntero(&entrada_actual->clave), identificador) == 0) {
                 if (entrada_salida)
-                    *entrada_salida = entrada_actual->valor;
+                    *entrada_salida = *entrada_actual;
                 return 1;
             }
         } else if (distancia > distancia_entrada_actual) {
@@ -103,13 +103,14 @@ int es_miembro_hash(TablaHash t, char *clavebuscar) {
 
 void crecer_tabla_hash(TablaHash *t, int nueva_capacidad);
 
-void _insertar_hash_precalculado(TablaHash *t, String lexema, Valor valor, unsigned int hash) {
+void _insertar_hash_precalculado(TablaHash *t, String lexema, Valor valor, int inmutable, unsigned int hash) {
     int posicion_ideal = hash & (t->capacidad - 1);
     EntradaTablaHash *entrada_actual = &t->buffer[posicion_ideal];
 
     EntradaTablaHash entrada_a_insertar = {
             .valor = valor,
             .clave = lexema,
+            .inmutable = inmutable,
             .distancia_posicion_ideal = 0,
             .hash = hash
     };
@@ -165,7 +166,7 @@ void crecer_tabla_hash(TablaHash *t, int nueva_capacidad) {
             // Aprovechar que ya tenemos precalculados los
             // hashes de todas las entradas y no tenemos que
             // volver a calcularlos.
-            _insertar_hash_precalculado(&nueva_tabla, t->buffer[i].clave, t->buffer[i].valor, t->buffer[i].hash);
+            _insertar_hash_precalculado(&nueva_tabla, t->buffer[i].clave, t->buffer[i].valor, t->buffer[i].inmutable, t->buffer[i].hash);
         }
     }
     nueva_tabla.longitud = t->longitud;
@@ -175,7 +176,7 @@ void crecer_tabla_hash(TablaHash *t, int nueva_capacidad) {
     *t = nueva_tabla;
 }
 
-Valor insertar_hash(TablaHash *t, String identificador, Valor valor) {
+Valor insertar_hash(TablaHash *t, String identificador, Valor valor, int inmutable) {
     // Si el hashmap se va a llenar al 90%, aumentar su tamaño.
     // Esto  no debería de pasar de forma normal, porque ya se
     // incrementa el tamaño de la tabla si hay que buscar demasiados
@@ -186,7 +187,7 @@ Valor insertar_hash(TablaHash *t, String identificador, Valor valor) {
 
     // Calcular el hash del lexema e insertarlo en la tabla.
     unsigned int hash = funcion_hash(string_a_puntero(&identificador));
-    _insertar_hash_precalculado(t, identificador, valor, hash);
+    _insertar_hash_precalculado(t, identificador, valor, inmutable, hash);
     return valor;
 }
 

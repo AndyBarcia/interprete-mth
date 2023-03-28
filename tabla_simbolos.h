@@ -29,7 +29,7 @@ void borrar_tabla_simbolos(TablaSimbolos *t);
 
 Valor recuperar_valor_tabla(TablaSimbolos t, String identificador);
 
-Valor asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor);
+int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int inmutable);
 
 /**
  * Imprime los símbolos de la tabla de símbolos

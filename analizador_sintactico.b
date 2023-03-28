@@ -33,6 +33,8 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %token <identificador> OPERADOR
 %token <tipoOperador> OPERADOR_ASIGNACION
 
+%token CONST
+
 %token PARENTESIS_IZQ
 %token PARENTESIS_DER
 %token CORCHETE_IZQ
@@ -47,6 +49,7 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 
 %token COMA
 
+%type <identificador> nombre_asignable
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
 %type <listaExpresiones> expression_block
@@ -105,9 +108,13 @@ expression_block:
     | expression_block TERMINADOR_SENTENCIA expresion { push_lista_expresiones(&$$, $3); }
     ;
 
+nombre_asignable:
+    IDENTIFICADOR { $$ = $1; }
+    | OPERADOR { $$ = $1; }
+    ;
+
 expresion:
-    IDENTIFICADOR { $$ = crear_exp_identificador($1); }
-    | OPERADOR { $$ = crear_exp_identificador($1); }
+    nombre_asignable { $$ = crear_exp_identificador($1); }
     | ENTERO { $$ = crear_exp_valor(crear_entero($1)); }
     | OPERADOR expresion {
             ListaExpresiones args = crear_lista_expresiones();
@@ -122,8 +129,8 @@ expresion:
         }
     | IDENTIFICADOR PARENTESIS_IZQ argument_list PARENTESIS_DER { $$ = crear_exp_llamada($1, $3); }
     | PARENTESIS_IZQ expresion PARENTESIS_DER { $$ = $2; }
-    | IDENTIFICADOR OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3); }
-    | OPERADOR OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3); }
+    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0); }
+    | CONST nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1); }
     | LLAVE_IZQ expression_block LLAVE_DER { $$ = crear_exp_bloque($2); }
     | SLASH_INVERTIDA identifier_list FLECHA expresion { $$ = crear_exp_valor(crear_funcion($2, $4)); }
     | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1))); }

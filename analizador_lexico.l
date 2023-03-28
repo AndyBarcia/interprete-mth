@@ -85,6 +85,9 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 %x comentario_anidado
 %x comentario_bloque
 %%
+
+const { return CONST; }
+
 {ALFA_US}{ALFANUM_US}* {
          yylval.identificador = crear_string(yytext);
          return IDENTIFICADOR;

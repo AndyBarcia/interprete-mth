@@ -65,6 +65,7 @@ int comparar_valor(Valor a, Valor b);
 typedef struct {
     String identificador;
     struct Expresion *expresion;
+    int inmutable;
 } Asignacion;
 
 typedef struct {
@@ -96,7 +97,7 @@ void imprimir_expresion(Expresion expresion);
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_identificador(String identificador);
 Expresion crear_exp_llamada(String identificador, ListaExpresiones argumentos);
-Expresion crear_exp_asignacion(String identificador, Expresion expresion);
+Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
 
 ListaExpresiones crear_lista_expresiones();

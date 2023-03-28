@@ -34,10 +34,10 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
 }
 
 Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
-    Valor resultado;
+    EntradaTablaHash resultado;
     for (int i = t.nivel; i >= 0; --i) {
         if (buscar_hash(t.tablas[i], string_a_puntero(&identificador), &resultado)) {
-            return resultado;
+            return resultado.valor;
         } else {
             continue;
         }
@@ -45,9 +45,16 @@ Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
     return crear_error("\"%s\" es una variable definida.", string_a_puntero(&identificador));
 }
 
-Valor asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor) {
-    insertar_hash(&t->tablas[t->nivel], identificador, valor);
-    return valor;
+int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int inmutable) {
+    // Buscar sólo en el último nivel si esta variable ya estaba definida como inmutable.
+    EntradaTablaHash entrada;
+    if (buscar_hash(t->tablas[t->nivel], string_a_puntero(&identificador), &entrada) && entrada.inmutable) {
+        // Se estaba intentando reasignar una variable inmutable
+        return 0;
+    }
+
+    insertar_hash(&t->tablas[t->nivel], identificador, valor, inmutable);
+    return 1;
 }
 
 void imprimir(EntradaTablaHash entrada) {

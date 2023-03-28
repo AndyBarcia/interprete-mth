@@ -8,6 +8,7 @@
 #include <string.h>
 
 typedef struct {
+    int inmutable;
     Valor valor;
     String clave;
     int distancia_posicion_ideal;
@@ -60,7 +61,7 @@ int es_miembro_hash(TablaHash t, char *clavebuscar);
  *        No se modificará si no se encontró la clave.
  * @return si la búsqueda tuvo éxito
  */
-int buscar_hash(TablaHash t, char *identificador, Valor *entrada);
+int buscar_hash(TablaHash t, char *identificador, EntradaTablaHash *entrada);
 
 /**
  * Inserta un elemento en una tabla hash al principio de la lista.
@@ -71,7 +72,7 @@ int buscar_hash(TablaHash t, char *identificador, Valor *entrada);
  * @param ComponenteLexico el componente léxico a insertar.
  * @return el elemento que se ha insertado.
  */
-Valor insertar_hash(TablaHash *t, String identificador, Valor valor);
+Valor insertar_hash(TablaHash *t, String identificador, Valor valor, int inmutable);
 
 /**
  * Borra un elemento en una tabla hash
