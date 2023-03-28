@@ -1,7 +1,7 @@
 #include "std.h"
 #include "ast.h"
 
-void sumar(ListaValores args, Valor *retorno) {
+void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     int a = 0;
     for (int i = 0; i < args.longitud; ++i) {
         if (((Valor*)args.valores)[i].tipoValor != TIPO_ENTERO) {
@@ -13,7 +13,7 @@ void sumar(ListaValores args, Valor *retorno) {
     *retorno = crear_entero(a);
 }
 
-void restar(ListaValores args, Valor *retorno) {
+void restar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud == 1) {
         if (((Valor*)args.valores)[0].tipoValor != TIPO_ENTERO) {
             *retorno = crear_error("No es de tipo entero.");
@@ -31,7 +31,7 @@ void restar(ListaValores args, Valor *retorno) {
     }
 }
 
-void multiplicar(ListaValores args, Valor *retorno) {
+void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud < 2) {
         *retorno = crear_error("Faltan argumentos.");
         return;
@@ -48,7 +48,7 @@ void multiplicar(ListaValores args, Valor *retorno) {
     *retorno = crear_entero(a);
 }
 
-void igualdad(ListaValores args, Valor *retorno) {
+void igualdad(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud < 2) {
         *retorno = crear_error("Faltan argumentos.");
         return;
@@ -116,6 +116,7 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("ayuda"), crear_funcion_nativa(ayuda), 1);
     asignar_valor_tabla(t, crear_string("=="), crear_funcion_nativa(igualdad), 1);
     asignar_valor_tabla(t, crear_string("eq"), crear_funcion_nativa(igualdad), 1);
+    asignar_valor_tabla(t, crear_string("print"), crear_funcion_nativa(print), 1);
 
     asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1), 1);
     asignar_valor_tabla(t, crear_string("falso"), crear_bool(0), 1);

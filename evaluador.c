@@ -28,7 +28,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     }
 
                     Valor result = crear_indefinido();
-                    fn(args, &result);
+                    fn(tabla, args, &result);
                     if (exp.es_sentencia) return crear_indefinido();
                     return result;
                 }
