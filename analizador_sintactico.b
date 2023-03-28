@@ -26,27 +26,27 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
     Expresion expresion;
 }
 
-%token <valorEntero> ENTERO
-%token <identificador> IDENTIFICADOR
+%token <valorEntero> ENTERO "número entero"
+%token <identificador> IDENTIFICADOR "identificador"
 %token <error> ERROR
 
-%token <identificador> OPERADOR
-%token <tipoOperador> OPERADOR_ASIGNACION
+%token <identificador> OPERADOR "operador"
+%token <tipoOperador> OPERADOR_ASIGNACION "operador"
 
-%token CONST
+%token CONST "const"
 
-%token PARENTESIS_IZQ
-%token PARENTESIS_DER
-%token CORCHETE_IZQ
-%token CORCHETE_DER
-%token LLAVE_IZQ
-%token LLAVE_DER
+%token PARENTESIS_IZQ "("
+%token PARENTESIS_DER ")"
+%token CORCHETE_IZQ "["
+%token CORCHETE_DER "]"
+%token LLAVE_IZQ "{"
+%token LLAVE_DER "}"
 
-%token FLECHA
-%token SLASH_INVERTIDA
+%token FLECHA "=>"
+%token SLASH_INVERTIDA "\\"
 
-%token NUEVA_LINEA
-%token PUNTO_Y_COMA
+%token NUEVA_LINEA "salto de línea"
+%token PUNTO_Y_COMA "punto y coma"
 
 %token COMA
 

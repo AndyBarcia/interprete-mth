@@ -60,22 +60,22 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    ENTERO = 258,                  /* ENTERO  */
-    IDENTIFICADOR = 259,           /* IDENTIFICADOR  */
+    ENTERO = 258,                  /* "número entero"  */
+    IDENTIFICADOR = 259,           /* "identificador"  */
     ERROR = 260,                   /* ERROR  */
-    OPERADOR = 261,                /* OPERADOR  */
+    OPERADOR = 261,                /* "operador"  */
     OPERADOR_ASIGNACION = 262,     /* OPERADOR_ASIGNACION  */
-    CONST = 263,                   /* CONST  */
-    PARENTESIS_IZQ = 264,          /* PARENTESIS_IZQ  */
-    PARENTESIS_DER = 265,          /* PARENTESIS_DER  */
-    CORCHETE_IZQ = 266,            /* CORCHETE_IZQ  */
-    CORCHETE_DER = 267,            /* CORCHETE_DER  */
-    LLAVE_IZQ = 268,               /* LLAVE_IZQ  */
-    LLAVE_DER = 269,               /* LLAVE_DER  */
-    FLECHA = 270,                  /* FLECHA  */
-    SLASH_INVERTIDA = 271,         /* SLASH_INVERTIDA  */
-    NUEVA_LINEA = 272,             /* NUEVA_LINEA  */
-    PUNTO_Y_COMA = 273,            /* PUNTO_Y_COMA  */
+    CONST = 263,                   /* "const"  */
+    PARENTESIS_IZQ = 264,          /* "("  */
+    PARENTESIS_DER = 265,          /* ")"  */
+    CORCHETE_IZQ = 266,            /* "["  */
+    CORCHETE_DER = 267,            /* "]"  */
+    LLAVE_IZQ = 268,               /* "{"  */
+    LLAVE_DER = 269,               /* "}"  */
+    FLECHA = 270,                  /* "=>"  */
+    SLASH_INVERTIDA = 271,         /* "\\"  */
+    NUEVA_LINEA = 272,             /* "salto de línea"  */
+    PUNTO_Y_COMA = 273,            /* "punto y coma"  */
     COMA = 274                     /* COMA  */
   };
   typedef enum yytokentype yytoken_kind_t;
