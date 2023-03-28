@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include "definiciones.h"
+#include <stdarg.h>
 #include "string.h"
 #include "analizador_lexico.h"
 #include "analizador_sintactico.h"
@@ -13,7 +13,6 @@
 #define OP_COMPARACION_MENOR_IGUAL 132
 
 TablaSimbolos tablaSimbolos;
-ComponenteLexico componente_lexico;
 
 void inicializar_analizador_lexico() {
     tablaSimbolos = crear_tabla_simbolos();
@@ -25,6 +24,24 @@ void borrar_analizador_lexico() {
     borrar_tabla_simbolos(&tablaSimbolos);
     fclose(yyin);
     yylex_destroy();
+}
+
+String crear_error_lexico(const char *formato, ...) {
+    String error;
+    // Cosas mágicas para pasar un número variable de argumentos.
+    va_list args, args2;
+    va_start(args, formato);
+    va_copy(args2, args);
+    // Calcular la longitud total que tendrá el string final.
+    size_t longitud = vsnprintf(NULL, 0, formato, args);
+    error = crear_string_n(longitud);
+    // Escribir el resultado en el string creado.
+    char *str = string_a_puntero(&error);
+    vsnprintf(str, longitud + 1, formato, args2);
+    va_end(args);
+    va_end(args2);
+
+    return error;
 }
 
 int nivel_comentario_anidado = 0;
@@ -82,7 +99,7 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
         return ERROR;
     }
 
-[+\-*/.;<>&|] {
+[+\-*/.<>&|] {
         yylval.tipoOperador = yytext[0];
         return OPERADOR_BINARIO;
     }
@@ -119,12 +136,12 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 \)   { return PARENTESIS_DER; }
 \[   { return CORCHETE_IZQ; }
 \]   { return CORCHETE_DER; }
-{   { return LLAVE_IZQ; }
-}   { return LLAVE_DER; }
+\{   { return LLAVE_IZQ; }
+\}   { return LLAVE_DER; }
 
 ,   { return COMA; }
 
-\n  { return SALTO_LINEA; }
+\n|;  { return TERMINADOR_SENTENCIA; }
 
 =>  { return FLECHA;}
 \\  { return SLASH_INVERTIDA; }

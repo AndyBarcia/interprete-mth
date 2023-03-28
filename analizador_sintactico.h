@@ -45,9 +45,9 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 9 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 14 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
-    #include "evaluar.h"
+    #include "ast.h"
 
 #line 53 "../analizador_sintactico.h"
 
@@ -74,7 +74,7 @@ extern int yydebug;
     LLAVE_DER = 269,               /* LLAVE_DER  */
     FLECHA = 270,                  /* FLECHA  */
     SLASH_INVERTIDA = 271,         /* SLASH_INVERTIDA  */
-    SALTO_LINEA = 272,             /* SALTO_LINEA  */
+    TERMINADOR_SENTENCIA = 272,    /* TERMINADOR_SENTENCIA  */
     COMA = 273                     /* COMA  */
   };
   typedef enum yytokentype yytoken_kind_t;
@@ -84,16 +84,16 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 13 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 18 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int tipoOperador;
     int valorEntero;
     String error;
     String identificador;
-    ListaExpresiones listaValores;
+    ListaExpresiones listaExpresiones;
+    ListaIdentificadores listaIdentificadores;
     Valor valor;
     Expresion expresion;
-    Enunciado enunciado;
 
 #line 99 "../analizador_sintactico.h"
 
@@ -107,7 +107,7 @@ typedef union YYSTYPE YYSTYPE;
 extern YYSTYPE yylval;
 
 
-int yyparse (void);
+int yyparse (TablaSimbolos tablaSimbolos);
 
 
 #endif /* !YY_YY_ANALIZADOR_SINTACTICO_H_INCLUDED  */

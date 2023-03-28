@@ -1,14 +1,14 @@
 #ifndef LEXER_TABLA_HASH_H
 #define LEXER_TABLA_HASH_H
 
-#include "definiciones.h"
+#include "ast.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 typedef struct {
-    TipoLexema tipo;
+    Valor valor;
     String clave;
     int distancia_posicion_ideal;
     unsigned int hash;
@@ -55,37 +55,23 @@ int es_miembro_hash(TablaHash t, char *clavebuscar);
 /**
  * Buscar una clave en la tabla hash
  * @param t es la tabla hash en la que buscamos la clave
- * @param lexema: es la clave que buscamos
+ * @param identificador: es la clave que buscamos
  * @param entrada aquí se pondrá la entrada encontrada.
  *        No se modificará si no se encontró la clave.
  * @return si la búsqueda tuvo éxito
  */
-int buscar_hash(TablaHash t, char *lexema, ComponenteLexico *entrada);
+int buscar_hash(TablaHash t, char *identificador, Valor *entrada);
 
 /**
  * Inserta un elemento en una tabla hash al principio de la lista.
  * Si ya había un lexema en la tabla hash con esa misma clave, se
  * libera la memoria del string que ya estaba en la tabla hash, y
  * se sustituye por el componente léxico que se pasó como argumento.
- * @param t la tabla hash
+ * @param identificador la tabla hash
  * @param ComponenteLexico el componente léxico a insertar.
  * @return el elemento que se ha insertado.
  */
-ComponenteLexico insertar_hash(TablaHash *t, ComponenteLexico lexema);
-
-/**
- * Trata de insertar un elemento en la tabla hash si este no está
- * presente, o devuelve el elemento que ya estaba en la tabla sin
- * modificar la tabla.
- * @param t la tabal hash.
- * @param lexema el componente léxico a insertar.
- * @param resultado donde se guardará el componente léxico que
- *        ya se encontraba en la tabla. No se modificará si no
- *        estaba en la tabla.
- * @return 1 si ya estaba el elemento en la tabla, o 0 en caso
- *        contrario.
- */
-int buscar_o_insertar_hash(TablaHash *t, ComponenteLexico lexema, ComponenteLexico *resultado);
+Valor insertar_hash(TablaHash *t, String identificador, Valor valor);
 
 /**
  * Borra un elemento en una tabla hash

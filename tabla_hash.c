@@ -33,7 +33,7 @@ TablaHash crear_tabla_hash(int capacidad) {
 
     for (int i = 0; i < capacidad_real; i++) {
         t.buffer[i] = (EntradaTablaHash) {
-                .tipo = 0,
+                .valor = crear_nulo(),
                 .clave = crear_string_vacio(),
                 .distancia_posicion_ideal = -1
         };
@@ -67,8 +67,8 @@ unsigned int funcion_hash(char *cad) {
     return (unsigned int) hash;
 }
 
-int buscar_hash(TablaHash t, char *lexema, ComponenteLexico *entrada_salida) {
-    unsigned int hash = funcion_hash(lexema);
+int buscar_hash(TablaHash t, char *identificador, Valor *entrada_salida) {
+    unsigned int hash = funcion_hash(identificador);
     int posicion_ideal = hash & (t.capacidad - 1);
     EntradaTablaHash *entrada_actual = &t.buffer[posicion_ideal];
 
@@ -77,13 +77,9 @@ int buscar_hash(TablaHash t, char *lexema, ComponenteLexico *entrada_salida) {
         // Si este slot está a la misma distancia de su posición ideal que
         // nosotros, y tiene el mismo hash, seguramente es la entrada que buscamos.
         if (distancia_entrada_actual == distancia) {
-            if (entrada_actual->hash == hash && strcmp(string_a_puntero(&entrada_actual->clave), lexema) == 0) {
-                if (entrada_salida) {
-                    *entrada_salida = (ComponenteLexico) {
-                            .tipo = entrada_actual->tipo,
-                            .lexema = entrada_actual->clave
-                    };
-                }
+            if (entrada_actual->hash == hash && strcmp(string_a_puntero(&entrada_actual->clave), identificador) == 0) {
+                if (entrada_salida)
+                    *entrada_salida = entrada_actual->valor;
                 return 1;
             }
         } else if (distancia > distancia_entrada_actual) {
@@ -107,13 +103,13 @@ int es_miembro_hash(TablaHash t, char *clavebuscar) {
 
 void crecer_tabla_hash(TablaHash *t, int nueva_capacidad);
 
-void _insertar_hash_precalculado(TablaHash *t, ComponenteLexico lexema, unsigned int hash) {
+void _insertar_hash_precalculado(TablaHash *t, String lexema, Valor valor, unsigned int hash) {
     int posicion_ideal = hash & (t->capacidad - 1);
     EntradaTablaHash *entrada_actual = &t->buffer[posicion_ideal];
 
     EntradaTablaHash entrada_a_insertar = {
-            .tipo = lexema.tipo,
-            .clave = lexema.lexema,
+            .valor = valor,
+            .clave = lexema,
             .distancia_posicion_ideal = 0,
             .hash = hash
     };
@@ -169,10 +165,7 @@ void crecer_tabla_hash(TablaHash *t, int nueva_capacidad) {
             // Aprovechar que ya tenemos precalculados los
             // hashes de todas las entradas y no tenemos que
             // volver a calcularlos.
-            _insertar_hash_precalculado(&nueva_tabla, (ComponenteLexico) {
-                    .tipo = t->buffer[i].tipo,
-                    .lexema = t->buffer[i].clave
-            }, t->buffer[i].hash);
+            _insertar_hash_precalculado(&nueva_tabla, t->buffer[i].clave, t->buffer[i].valor, t->buffer[i].hash);
         }
     }
     nueva_tabla.longitud = t->longitud;
@@ -182,7 +175,7 @@ void crecer_tabla_hash(TablaHash *t, int nueva_capacidad) {
     *t = nueva_tabla;
 }
 
-ComponenteLexico insertar_hash(TablaHash *t, ComponenteLexico lexema) {
+Valor insertar_hash(TablaHash *t, String identificador, Valor valor) {
     // Si el hashmap se va a llenar al 90%, aumentar su tamaño.
     // Esto  no debería de pasar de forma normal, porque ya se
     // incrementa el tamaño de la tabla si hay que buscar demasiados
@@ -192,64 +185,9 @@ ComponenteLexico insertar_hash(TablaHash *t, ComponenteLexico lexema) {
     }
 
     // Calcular el hash del lexema e insertarlo en la tabla.
-    unsigned int hash = funcion_hash(string_a_puntero(&lexema.lexema));
-    _insertar_hash_precalculado(t, lexema, hash);
-    return lexema;
-}
-
-int buscar_o_insertar_hash(TablaHash *t, ComponenteLexico lexema, ComponenteLexico *resultado) {
-    unsigned int hash = funcion_hash(string_a_puntero(&lexema.lexema));
-    int posicion_ideal = hash & (t->capacidad - 1);
-    EntradaTablaHash *entrada_actual = &t->buffer[posicion_ideal];
-
-    EntradaTablaHash entrada_a_insertar = {
-            .tipo = lexema.tipo,
-            .clave = lexema.lexema,
-            .distancia_posicion_ideal = 0,
-            .hash = hash
-    };
-
-    while (1) {
-        int distancia_entrada_actual = entrada_actual->distancia_posicion_ideal;
-        if (entrada_a_insertar.distancia_posicion_ideal == distancia_entrada_actual) {
-            // Este slot podría tener la misma clave que nosotros, pues está a la misma distancia
-            // de la posición ideal y tiene el mismo hash. Comparar las claves para asegurarnos.
-            if (entrada_a_insertar.hash == entrada_actual->hash &&
-                strcmp(string_a_puntero(&entrada_actual->clave), string_a_puntero(&entrada_a_insertar.clave)) == 0) {
-                // Este hueco tenía el elemento que estamos insertando. Devolverlo.
-                *resultado = (ComponenteLexico) {
-                        .tipo = entrada_actual->tipo,
-                        .lexema = entrada_actual->clave
-                };
-                return 1;
-            }
-        } else if (entrada_a_insertar.distancia_posicion_ideal > distancia_entrada_actual) {
-            // Este slot o podría ser un hueco vacío, o una entrada que está a una menor
-            // distancia de su posición ideal que nosotros. Comprobarlo.
-            if (distancia_entrada_actual == -1) {
-                *entrada_actual = entrada_a_insertar;
-                ++t->longitud;
-                return 0;
-            } else {
-                // Si no, encontramos una entrada que estaba más cerca
-                // de su posición ideal que nosotros. Intercambiarla.
-                EntradaTablaHash antiguo = *entrada_actual;
-                *entrada_actual = entrada_a_insertar;
-                entrada_a_insertar = antiguo;
-            }
-        }
-        ++entrada_a_insertar.distancia_posicion_ideal;
-        ++entrada_actual;
-
-        // Si hemos superado el límite de búsqueda de un hueco, hacer crecer la tabla.
-        if (entrada_a_insertar.distancia_posicion_ideal > t->limite_busqueda) {
-            crecer_tabla_hash(t, t->capacidad * 2);
-            // Resetear los datos de la entrada que estamos insertando
-            entrada_a_insertar.distancia_posicion_ideal = 0;
-            posicion_ideal = entrada_a_insertar.hash & (t->capacidad - 1);
-            entrada_actual = &t->buffer[posicion_ideal];
-        }
-    }
+    unsigned int hash = funcion_hash(string_a_puntero(&identificador));
+    _insertar_hash_precalculado(t, identificador, valor, hash);
+    return valor;
 }
 
 /* Funcion que elimina un elemento de la tabla */

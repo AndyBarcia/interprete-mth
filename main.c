@@ -4,6 +4,7 @@
 #include "analizador_sintactico.h"
 #include "tabla_hash.h"
 #include "string.h"
+#include "std.h"
 
 int main(int argc, char *argv[]) {
 
@@ -25,10 +26,13 @@ int main(int argc, char *argv[]) {
     establecer_fichero_entrada(entrada);
     inicializar_analizador_lexico();
 
+    TablaSimbolos tablaSimbolos = crear_tabla_simbolos();
+    inicializar_libreria_estandar(&tablaSimbolos);
+
     printf("> ");
     fflush(stdout);
 
-    yyparse();
+    yyparse(tablaSimbolos);
 
     borrar_analizador_lexico();
     borrar_buffer_strings();

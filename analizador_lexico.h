@@ -1,7 +1,6 @@
 #ifndef LEXER_ANALIZADOR_LEXICO_H
 #define LEXER_ANALIZADOR_LEXICO_H
 
-#include "definiciones.h"
 #include "tabla_simbolos.h"
 
 void establecer_fichero_entrada(FILE *fichero);

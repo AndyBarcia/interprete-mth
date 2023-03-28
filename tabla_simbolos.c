@@ -1,54 +1,62 @@
 #include "tabla_simbolos.h"
 
-#include "definiciones.h"
 #include "analizador_sintactico.h"
 #include "string.h"
 
-typedef struct {
-    char *palabra;
-    TipoLexema tipo;
-} PalabraClave;
-
-PalabraClave palabras_clave[] = {
-};
-
 TablaSimbolos crear_tabla_simbolos() {
     TablaSimbolos t;
-    t.tablaHash = crear_tabla_hash(sizeof(palabras_clave) / sizeof(PalabraClave));
-    for (int i = 0; i < sizeof(palabras_clave) / sizeof(PalabraClave); ++i) {
-        insertar_hash(&t.tablaHash, (ComponenteLexico) {
-                .tipo = palabras_clave[i].tipo,
-                .lexema = crear_string(palabras_clave[i].palabra)
-        });
-    }
+    t.capacidad = 1;
+    t.nivel = 0;
+    t.tablas = malloc(t.capacidad*sizeof(TablaHash));
+
+    t.tablas[0] = crear_tabla_hash(16);
     return t;
 }
 
-void borrar_tabla_simbolos(TablaSimbolos *t) {
-    borrar_tabla_hash(&t->tablaHash);
+void aumentar_nivel_tabla_simbolos(TablaSimbolos *t) {
+    ++t->nivel;
+    if (t->nivel >= t->capacidad) {
+        t->capacidad *= 2;
+        t->tablas = realloc(t->tablas, t->capacidad*sizeof(TablaHash));
+    }
+    t->tablas[t->nivel] = crear_tabla_hash(2);
 }
 
-ComponenteLexico buscar_o_insertar_simbolo(TablaSimbolos *t, String simbolo) {
-    ComponenteLexico entrada = (ComponenteLexico) {
-            .tipo = IDENTIFICADOR,
-            .lexema = simbolo
-    };
-    ComponenteLexico salida;
-    if (buscar_o_insertar_hash(&t->tablaHash, entrada, &salida)) {
-        // El elemento ya estaba en la tabla, devolver lo que estaba ahí
-        // y liberar la memoria del símbolo, que no se utilizará.
-        borrar_string(&simbolo);
-        return salida;
-    } else {
-        // Insertamos el elemento.
-        return entrada;
-    };
+void reducir_nivel_tabla_simbolos(TablaSimbolos *t) {
+    borrar_tabla_hash(&t->tablas[t->nivel]);
+    t->nivel--;
+}
+
+void borrar_tabla_simbolos(TablaSimbolos *t) {
+    for (int i = 0; i <= t->nivel; ++i) {
+        borrar_tabla_hash(&t->tablas[i]);
+    }
+}
+
+Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
+    Valor resultado;
+    for (int i = 0; i <= t.nivel; ++i) {
+        if (buscar_hash(t.tablas[i], string_a_puntero(&identificador), &resultado)) {
+            return resultado;
+        } else {
+            continue;
+        }
+    }
+    return crear_error(crear_string("Variable no definida."));
+}
+
+Valor asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor) {
+    insertar_hash(&t->tablas[t->nivel], identificador, valor);
+    return valor;
 }
 
 void imprimir(EntradaTablaHash entrada) {
-    printf("<%s: %d>\n", string_a_puntero(&entrada.clave), entrada.tipo);
+    printf("%s:= ", string_a_puntero(&entrada.clave));
+    imprimir_valor(entrada.valor);
 }
 
 void imprimir_simbolos(TablaSimbolos t) {
-    iterar_tabla_hash(t.tablaHash, imprimir);
+    for (int i = 0; i <= t.nivel; ++i) {
+        iterar_tabla_hash(t.tablas[i], imprimir);
+    }
 }

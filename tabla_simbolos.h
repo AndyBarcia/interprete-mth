@@ -1,11 +1,14 @@
 #ifndef LEXER_TABLA_SIMBOLOS_H
 #define LEXER_TABLA_SIMBOLOS_H
 
-#include "definiciones.h"
 #include "tabla_hash.h"
+#include "ast.h"
 
 typedef struct {
-    TablaHash tablaHash;
+    // Array de tablas; una por cada nivel
+    TablaHash* tablas;
+    int capacidad;
+    int nivel;
 } TablaSimbolos;
 
 /**
@@ -14,26 +17,19 @@ typedef struct {
  */
 TablaSimbolos crear_tabla_simbolos();
 
+void aumentar_nivel_tabla_simbolos(TablaSimbolos *t);
+
+void reducir_nivel_tabla_simbolos(TablaSimbolos *t);
+
 /**
  * Borra la memoria de la tabla de símbolos.
  * @param t tabla de símbolos a eliminar.
  */
 void borrar_tabla_simbolos(TablaSimbolos *t);
 
-/**
- * Busca el tipo de componente léxico correspondiente a un símbolo
- * (ya sea una palabra clave o un identificador), o inserta el
- * símbolo en la tabla de símbolos si es la primera vez que se ve.
- *
- * El símbolo se asume que es una cadena reservada con malloc, y
- * que se liberará en el caso de que ya estuviese insertada en la
- * tabla de símbolos.
- *
- * @tparam t la tabla de símbolos
- * @param simbolo la cadena que se buscará
- * @return devuelve el símbolo insertado en la tabla de símbolos.
- */
-ComponenteLexico buscar_o_insertar_simbolo(TablaSimbolos *t, String simbolo);
+Valor recuperar_valor_tabla(TablaSimbolos t, String identificador);
+
+Valor asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor);
 
 /**
  * Imprime los símbolos de la tabla de símbolos
