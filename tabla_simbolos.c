@@ -42,7 +42,7 @@ Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
             continue;
         }
     }
-    return crear_error("\"%s\" es una variable definida.", string_a_puntero(&identificador));
+    return crear_error("\"%s\" es una variable no definida.", string_a_puntero(&identificador));
 }
 
 int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int inmutable) {
