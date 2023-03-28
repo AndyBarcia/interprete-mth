@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 14 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 13 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     #include "ast.h"
 
@@ -64,7 +64,7 @@ extern int yydebug;
     IDENTIFICADOR = 259,           /* "identificador"  */
     ERROR = 260,                   /* ERROR  */
     OPERADOR = 261,                /* "operador"  */
-    OPERADOR_ASIGNACION = 262,     /* OPERADOR_ASIGNACION  */
+    OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
     CONST = 263,                   /* "const"  */
     PARENTESIS_IZQ = 264,          /* "("  */
     PARENTESIS_DER = 265,          /* ")"  */
@@ -85,7 +85,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 18 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 17 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int tipoOperador;
     int valorEntero;

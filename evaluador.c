@@ -67,6 +67,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                 return crear_error("Intentando reasignar variable inmutable \"%s\"", string_a_puntero(&exp.asignacion.identificador));
             }
         }
+        case EXP_OP_DEF_FUNCION: {
+            Expresion cuerpo = * (Expresion*) exp.defFuncion.cuerpo;
+            // TODO: calcular variables capturadas
+            return crear_funcion(exp.defFuncion.argumentos, cuerpo);
+        }
         case EXP_BLOQUE: {
             aumentar_nivel_tabla_simbolos(tabla);
             ListaExpresiones lista = exp.bloque;

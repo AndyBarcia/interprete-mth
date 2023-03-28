@@ -44,7 +44,7 @@ Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo) {
         .tipoValor = TIPO_FUNCION,
         .funcion = (Funcion) {
             .argumentos = argumentos,
-            .cuerpo = e
+            .cuerpo = (struct Expresion*) e
         }
     };
 }
@@ -100,6 +100,17 @@ int comparar_valor(Valor a, Valor b) {
     }
 }
 
+void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores) {
+    for (int i = 0; i < listaIdentificadores.longitud; ++i) {
+        printf("%s, ", string_a_puntero(&listaIdentificadores.valores[i]));
+    }
+}
+
+void imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores) {
+    _imprimir_lista_identificadores(listaIdentificadores);
+    printf("\n");
+}
+
 void _imprimir_expresion(Expresion expresion) {
     switch (expresion.tipo) {
         case EXP_VALOR:
@@ -115,6 +126,12 @@ void _imprimir_expresion(Expresion expresion) {
         case EXP_OP_ASIGNACION:
             printf("%s = ", string_a_puntero(&expresion.asignacion.identificador));
             imprimir_expresion(*(Expresion*)expresion.asignacion.expresion);
+            break;
+        case EXP_OP_DEF_FUNCION:
+            printf("\\");
+            _imprimir_lista_identificadores(expresion.defFuncion.argumentos);
+            printf(" => ");
+            _imprimir_expresion(* (Expresion*) expresion.defFuncion.cuerpo);
             break;
     }
 }
@@ -164,6 +181,20 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion, int in
                     .identificador = identificador,
                     .expresion = (struct Expresion*) e,
                     .inmutable = inmutable
+            },
+            .es_sentencia = 0,
+    };
+}
+
+Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo) {
+    Expresion* e = malloc(sizeof (Expresion));
+    *e = cuerpo;
+
+    return (Expresion) {
+            .tipo = EXP_OP_DEF_FUNCION,
+            .defFuncion = (DefinicionFuncion) {
+                    .argumentos = argumentos,
+                    .cuerpo = (struct Expresion*) e
             },
             .es_sentencia = 0,
     };
@@ -222,3 +253,4 @@ void push_lista_identificadores(ListaIdentificadores *lista, String identificado
     }
     ((String *) lista->valores)[lista->longitud++] = identificador;
 }
+

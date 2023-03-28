@@ -8,7 +8,6 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %}
 
 %parse-param {TablaSimbolos tablaSimbolos}
-%error-verbose
 %define parse.error verbose
 
 %code requires {
@@ -31,7 +30,7 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %token <error> ERROR
 
 %token <identificador> OPERADOR "operador"
-%token <tipoOperador> OPERADOR_ASIGNACION "operador"
+%token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
 
 %token CONST "const"
 
@@ -134,7 +133,7 @@ expresion:
     | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0); }
     | CONST nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1); }
     | LLAVE_IZQ expression_block LLAVE_DER { $$ = crear_exp_bloque($2); }
-    | SLASH_INVERTIDA identifier_list FLECHA expresion { $$ = crear_exp_valor(crear_funcion($2, $4)); }
+    | SLASH_INVERTIDA identifier_list FLECHA expresion { $$ = crear_exp_def_funcion($2, $4); }
     | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1))); }
     ;
 

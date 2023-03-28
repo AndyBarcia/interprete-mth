@@ -38,6 +38,7 @@ typedef struct {
 
 typedef struct {
     ListaIdentificadores argumentos;
+    //TablaHash variables_capturadas;
     struct Expresion *cuerpo;
 } Funcion;
 
@@ -63,21 +64,27 @@ void imprimir_valor(Valor valor);
 int comparar_valor(Valor a, Valor b);
 
 typedef struct {
+    struct Expresion *funcion;
+    ListaExpresiones argumentos;
+} LlamadaFuncion;
+
+typedef struct {
     String identificador;
     struct Expresion *expresion;
     int inmutable;
 } Asignacion;
 
 typedef struct {
-    struct Expresion *funcion;
-    ListaExpresiones argumentos;
-} LlamadaFuncion;
+    ListaIdentificadores argumentos;
+    struct Expresion *cuerpo;
+} DefinicionFuncion;
 
 #define EXP_VALOR 0
 #define EXP_IDENTIFICADOR 1
 #define EXP_OP_LLAMADA 2
 #define EXP_OP_ASIGNACION 3
-#define EXP_BLOQUE 4
+#define EXP_OP_DEF_FUNCION 4
+#define EXP_BLOQUE 5
 
 typedef struct {
     int tipo;
@@ -87,22 +94,25 @@ typedef struct {
         String identificador;
         LlamadaFuncion llamadaFuncion;
         Asignacion asignacion;
+        DefinicionFuncion defFuncion;
         ListaExpresiones bloque;
     };
 } Expresion;
 
 Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 
-void imprimir_expresion(Expresion expresion);
-
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_identificador(String identificador);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos);
 Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable);
+Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
 
 ListaExpresiones crear_lista_expresiones();
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
+
+void imprimir_expresion(Expresion expresion);
 void imprimir_lista_expresiones(ListaExpresiones listaValores);
+void imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
 
 #endif //PRACTICA3_AST_H
