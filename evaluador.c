@@ -60,8 +60,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
             aumentar_nivel_tabla_simbolos(tabla);
             ListaExpresiones lista = exp.bloque;
             Valor ultimo_valor = crear_indefinido();
-            for (int i = 0; i < lista.longitud; ++i)
+            for (int i = 0; i < lista.longitud; ++i) {
                 ultimo_valor = evaluar_expresion(tabla, ((Expresion*) lista.valores)[i]);
+                if (ultimo_valor.tipoValor == TIPO_ERROR)
+                    return ultimo_valor;
+            }
             reducir_nivel_tabla_simbolos(tabla);
             return ultimo_valor;
         }
