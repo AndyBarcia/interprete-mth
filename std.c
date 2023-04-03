@@ -1,5 +1,6 @@
 #include "std.h"
 #include "ast.h"
+#include "evaluador.h"
 
 void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud == 0) return;
@@ -123,6 +124,38 @@ void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     }
 }
 
+void eval(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
+    if (args.longitud > 1) {
+        *retorno = crear_error("Demasiados argumentos.");
+        return;
+    } else if (args.longitud == 0) {
+        *retorno = crear_error("Se esperaba un string a evaluar.");
+        return;
+    }
+    Valor arg = ((Valor *) args.valores)[0];
+    if (arg.tipoValor != TIPO_STRING) {
+        *retorno = crear_error("Se esperaba un string a evaluar.");
+        return;
+    }
+    *retorno = evaluar_str(tabla, string_a_puntero(&arg.string));
+}
+
+void import(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
+    if (args.longitud > 1) {
+        *retorno = crear_error("Demasiados argumentos.");
+        return;
+    } else if (args.longitud == 0) {
+        *retorno = crear_error("Se esperaba una dirección de un archivo.");
+        return;
+    }
+    Valor arg = ((Valor *) args.valores)[0];
+    if (arg.tipoValor != TIPO_STRING) {
+        *retorno = crear_error("Se esperaba una dirección de un archivo.");
+        return;
+    }
+    *retorno = evaluar_archivo(tabla, string_a_puntero(&arg.string));
+}
+
 typedef struct {
     char *nombres[2];
     Valor valor;
@@ -162,6 +195,17 @@ ValorLibreriaEstandar elementos[] = {
                 {TIPO_FUNCION_NATIVA, .funcion_nativa = print_ws},
                 "Imprime todas las variables del conjunto de trabajo (workspace).\nSi recibe \"verdadero\" como primer "
                 "argumento, imprime todas las variables, incluidas las de la librería estándar."
+        },
+        {
+                {"eval",    NULL},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = eval},
+                "Evalúa el string que se le pasa como argumento, como si fuera parte del código fuente.\n\nNótese que "
+                "esto significa que evaluar strings como \"x=5\" crearán nuevas variables."
+        },
+        {
+                {"importar",    "import"},
+                {TIPO_FUNCION_NATIVA, .funcion_nativa = import},
+                "Ejecuta el archivo que se pasa como argumento, como si fuera parte del código fuente."
         },
         {
                 {"help",        "ayuda"},
