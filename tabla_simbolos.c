@@ -57,6 +57,18 @@ int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int
     return 1;
 }
 
+int asignar_valores_tabla(TablaSimbolos *t, TablaHash otro) {
+    int capacidad_real = otro.capacidad + otro.limite_busqueda;
+    for (int i = 0; i < capacidad_real; ++i) {
+        if (otro.buffer[i].distancia_posicion_ideal != -1) {
+            EntradaTablaHash entrada = otro.buffer[i];
+            if (!asignar_valor_tabla(t, entrada.clave, entrada.valor, entrada.inmutable))
+                return 0;
+        }
+    }
+    return 1;
+}
+
 void imprimir(EntradaTablaHash entrada) {
     printf("%s:= ", string_a_puntero(&entrada.clave));
     imprimir_valor(entrada.valor);

@@ -39,7 +39,7 @@ typedef struct {
 
 typedef struct {
     ListaIdentificadores argumentos;
-    //TablaHash variables_capturadas;
+    struct TablaHash *variables_capturadas;
     struct Expresion *cuerpo;
 } Funcion;
 
@@ -82,6 +82,8 @@ typedef struct {
     struct Expresion *cuerpo;
 } DefinicionFuncion;
 
+ListaIdentificadores variables_capturadas(DefinicionFuncion funcion);
+
 #define EXP_VALOR 0
 #define EXP_IDENTIFICADOR 1
 #define EXP_OP_LLAMADA 2
@@ -102,7 +104,7 @@ typedef struct {
     };
 } Expresion;
 
-Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
+Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo, struct TablaHash *capturadas);
 
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_identificador(String identificador);
@@ -112,8 +114,6 @@ Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b);
 Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
-
-int es_expresion_error(Expresion *expresion);
 
 ListaExpresiones crear_lista_expresiones();
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);

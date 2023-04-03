@@ -87,15 +87,18 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
                     ListaValores args = evaluar_expresiones(tabla, exp.llamadaFuncion.argumentos);
                     if (fn.argumentos.longitud != args.longitud)
                         return crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
-                    for(int i = 0; i < args.longitud; ++i) {
-                        if (((Valor*)args.valores)[i].tipoValor == TIPO_ERROR)
-                            return ((Valor*)args.valores)[i];
-                    }
 
-                    // Introducir los argumentos en la tabla de símbolos-
+                    // Introducir los argumentos en la tabla de símbolos.
                     aumentar_nivel_tabla_simbolos(tabla);
-                    for (int i = 0; i < args.longitud; ++i)
-                        asignar_valor_tabla(tabla, fn.argumentos.valores[i], ((Valor*)args.valores)[i], 0);
+                    for (int i = 0; i < args.longitud; ++i) {
+                        Valor arg = ((Valor*)args.valores)[i];
+                        if (arg.tipoValor == TIPO_ERROR)
+                            return arg;
+                        asignar_valor_tabla(tabla, fn.argumentos.valores[i], arg, 0);
+                    }
+                    // Introducir las variables capturadas por la función
+                    asignar_valores_tabla(tabla, *(TablaHash*) fn.variables_capturadas);
+
                     Valor v = evaluar_expresion(tabla, *(Expresion*)fn.cuerpo);
                     reducir_nivel_tabla_simbolos(tabla);
 
@@ -118,8 +121,18 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
         }
         case EXP_OP_DEF_FUNCION: {
             Expresion cuerpo = * (Expresion*) exp.defFuncion.cuerpo;
-            // TODO: calcular variables capturadas
-            return crear_funcion(exp.defFuncion.argumentos, cuerpo);
+            ListaIdentificadores ids = variables_capturadas(exp.defFuncion);
+
+            TablaHash  *capturadas = malloc(sizeof(TablaHash));
+            *capturadas = crear_tabla_hash(ids.longitud);
+
+            for(int i = 0; i < ids.longitud; ++i) {
+                Valor v = recuperar_valor_tabla(*tabla, ids.valores[i]);
+                if (v.tipoValor == TIPO_ERROR) return v;
+                insertar_hash(capturadas, ids.valores[i], v, 1);
+            }
+
+            return crear_funcion(exp.defFuncion.argumentos, cuerpo, (struct TablaHash*) capturadas);
         }
         case EXP_BLOQUE: {
             aumentar_nivel_tabla_simbolos(tabla);

@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "tabla_simbolos.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -28,7 +29,7 @@ Valor crear_funcion_nativa(FuncionNativa funcion) {
     return (Valor) { TIPO_FUNCION_NATIVA, .funcion_nativa = funcion };
 }
 
-Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo) {
+Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo, struct TablaHash *capturadas) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = cuerpo;
 
@@ -36,7 +37,8 @@ Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo) {
             .tipoValor = TIPO_FUNCION,
             .funcion = (Funcion) {
                     .argumentos = argumentos,
-                    .cuerpo = (struct Expresion *) e
+                    .cuerpo = (struct Expresion *) e,
+                    .variables_capturadas = capturadas
             }
     };
 }
@@ -175,6 +177,41 @@ void imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
     printf("\n");
 }
 
+void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentificadores *lista) {
+    switch (expresion.tipo) {
+        case EXP_VALOR: break;
+        case EXP_IDENTIFICADOR:
+            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.identificador)))
+                push_lista_identificadores(lista, expresion.identificador);
+            break;
+        case EXP_OP_LLAMADA:
+            _variables_capturadas(*(Expresion *) expresion.llamadaFuncion.funcion, locales, lista);
+            for (int i = 0; i < expresion.llamadaFuncion.argumentos.longitud; ++i)
+                _variables_capturadas(((Expresion *) expresion.llamadaFuncion.argumentos.valores)[i], locales, lista);
+            break;
+        case EXP_OP_ASIGNACION:
+            insertar_hash(locales, expresion.asignacion.identificador, crear_indefinido(), 0);
+            _variables_capturadas(*(Expresion*)expresion.asignacion.expresion, locales, lista);
+            break;
+        case EXP_OP_DEF_FUNCION:
+            for (int i = 0; i < expresion.defFuncion.argumentos.longitud; ++i)
+                insertar_hash(locales, expresion.defFuncion.argumentos.valores[i], crear_indefinido(), 0);
+            _variables_capturadas(*(Expresion*)expresion.defFuncion.cuerpo, locales, lista);
+            break;
+    }
+}
+
+ListaIdentificadores variables_capturadas(DefinicionFuncion funcion) {
+    ListaIdentificadores capturadas = crear_lista_identificadores();
+    TablaHash locales = crear_tabla_hash(funcion.argumentos.longitud);
+    for (int i = 0; i < funcion.argumentos.longitud; ++i)
+        insertar_hash(&locales, funcion.argumentos.valores[i], crear_indefinido(), 0);
+
+    Expresion cuerpo = * (Expresion*) funcion.cuerpo;
+    _variables_capturadas(cuerpo, &locales, &capturadas);
+    return capturadas;
+}
+
 Expresion crear_exp_valor(Valor valor) {
     return (Expresion) {
             .tipo = EXP_VALOR,
@@ -253,10 +290,6 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones) {
             .bloque = expresiones,
             .es_sentencia = 0,
     };
-}
-
-int es_expresion_error(Expresion *expresion) {
-    return expresion->tipo == EXP_VALOR && expresion->valor.tipoValor == TIPO_ERROR;
 }
 
 ListaExpresiones crear_lista_expresiones() {
