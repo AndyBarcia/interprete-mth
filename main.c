@@ -5,8 +5,10 @@
 #include "tabla_hash.h"
 #include "string.h"
 #include "std.h"
+#include "evaluador.h"
 
 int main(int argc, char *argv[]) {
+
 
     FILE* entrada;
     if (argc <= 1) {
@@ -23,18 +25,46 @@ int main(int argc, char *argv[]) {
     }
 
     crear_buffer_strings();
-    establecer_fichero_entrada(entrada);
-    inicializar_analizador_lexico();
+    Lexer lexer = crear_analizador_lexico(entrada);
 
-    TablaSimbolos tablaSimbolos = crear_tabla_simbolos();
-    inicializar_libreria_estandar(&tablaSimbolos);
+    TablaSimbolos simbolos = crear_tabla_simbolos();
+    inicializar_libreria_estandar(&simbolos);
 
-    printf("> ");
-    fflush(stdout);
+    if (entrada == stdin) printf("> ");
 
-    yyparse(tablaSimbolos);
+    int status;
+    yypstate *ps = yypstate_new();
+    do {
+        YYSTYPE yylval_param;
+        int c = siguiente_componente_lexico(lexer, &yylval_param);
 
-    borrar_analizador_lexico();
+        Expresion exp;
+        exp.tipo = -1;
+        status = yypush_parse(ps, c, &yylval_param, &exp);
+
+        if (exp.tipo != -1) {
+            Valor v = evaluar_expresion(&simbolos, exp);
+            if (v.tipoValor == TIPO_ERROR || entrada == stdin) imprimir_valor(v);
+            if (entrada == stdin) printf("> ");
+        }
+    } while (status == YYPUSH_MORE);
+    yypstate_delete (ps);
+
+    printf("Terminado!!!!!\n");
+
+    borrar_analizador_lexico(lexer);
     borrar_buffer_strings();
+
+    /*
+yyscan_t scanner;
+YY_BUFFER_STATE buf;
+yylex_init( &scanner );
+yytext[yyleng-1] = ’ ’;
+buf = yy_scan_string( yytext + 5, scanner );
+yylex( scanner );
+yy_delete_buffer(buf,scanner);
+yylex_destroy( scanner );
+     */
+
     return 0;
 }

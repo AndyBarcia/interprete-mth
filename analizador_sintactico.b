@@ -3,12 +3,15 @@
 #include "string.h"
 #include "evaluador.h"
 
-void yyerror(TablaSimbolos tablaSimbolos, const char* s);
+void yyerror(Expresion *exp, const char* s);
 
 %}
 
-%parse-param {TablaSimbolos tablaSimbolos}
+%parse-param {Expresion *exp}
+
 %define parse.error verbose
+%define api.pure full
+%define api.push-pull push
 
 %code requires {
     #include "ast.h"
@@ -76,24 +79,12 @@ program:
     ;
 
 statement_list:
-    expresion NUEVA_LINEA {
-            imprimir_valor(evaluar_expresion(&tablaSimbolos, $1));
-            //imprimir_expresion($1);
-            printf("> ");
-         }
-    | statement_list expresion NUEVA_LINEA {
-            imprimir_valor(evaluar_expresion(&tablaSimbolos, $2));
-            //imprimir_expresion($2);
-            printf("> ");
-         }
-    | statement_list expresion PUNTO_Y_COMA {
-            evaluar_expresion(&tablaSimbolos, $2);
-            //imprimir_expresion($2);
-         }
-    | error NUEVA_LINEA {
-            /* Saltarse la línea en caso de error */
-            printf("> ");
-        }
+    %empty {  }
+    | expresion { *exp = $1; }
+    | error { }
+    | "\n" statement_list { }
+    | statement_list "\n" expresion { *exp = $3; }
+    | statement_list "\n" error { }
     ;
 
 argument_list_many:
@@ -151,8 +142,8 @@ expresion:
 
 %%
 
-void yyerror(TablaSimbolos tablaSimbolos, const char* s) {
-    printf("Error: %s\n", s);
+void yyerror(Expresion *exp, const char* s) {
+    *exp = crear_exp_valor(crear_error("%s", s));
 }
 
 int yywrap() {

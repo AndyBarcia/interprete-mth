@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 13 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 16 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     #include "ast.h"
 
@@ -87,7 +87,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 17 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 20 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int tipoOperador;
     int valorEntero;
@@ -107,10 +107,21 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 
-extern YYSTYPE yylval;
 
 
-int yyparse (TablaSimbolos tablaSimbolos);
+#ifndef YYPUSH_MORE_DEFINED
+# define YYPUSH_MORE_DEFINED
+enum { YYPUSH_MORE = 4 };
+#endif
+
+typedef struct yypstate yypstate;
+
+
+int yypush_parse (yypstate *ps,
+                  int pushed_char, YYSTYPE const *pushed_val, Expresion *exp);
+
+yypstate *yypstate_new (void);
+void yypstate_delete (yypstate *ps);
 
 
 #endif /* !YY_YY_ANALIZADOR_SINTACTICO_H_INCLUDED  */

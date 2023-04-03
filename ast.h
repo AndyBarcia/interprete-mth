@@ -110,6 +110,8 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion, int in
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
 
+int es_expresion_error(Expresion *expresion);
+
 ListaExpresiones crear_lista_expresiones();
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
 

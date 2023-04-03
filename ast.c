@@ -237,6 +237,10 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones) {
     };
 }
 
+int es_expresion_error(Expresion *expresion) {
+    return expresion->tipo == EXP_VALOR && expresion->valor.tipoValor == TIPO_ERROR;
+}
+
 ListaExpresiones crear_lista_expresiones() {
     return (ListaExpresiones) {
         .longitud = 0,

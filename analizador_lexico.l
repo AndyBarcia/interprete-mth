@@ -12,20 +12,6 @@
 #define OP_COMPARACION_MAYOR_IGUAL 131
 #define OP_COMPARACION_MENOR_IGUAL 132
 
-TablaSimbolos tablaSimbolos;
-
-void inicializar_analizador_lexico() {
-    tablaSimbolos = crear_tabla_simbolos();
-}
-
-int yylex_destroy (void);
-
-void borrar_analizador_lexico() {
-    borrar_tabla_simbolos(&tablaSimbolos);
-    fclose(yyin);
-    yylex_destroy();
-}
-
 String crear_error_lexico(const char *formato, ...) {
     String error;
     // Cosas mágicas para pasar un número variable de argumentos.
@@ -84,62 +70,63 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 
 %x comentario_anidado
 %x comentario_bloque
+%option reentrant bison-bridge
 %%
 
 const { return CONST; }
 
 {ALFA_US}{ALFANUM_US}* {
-         yylval.identificador = crear_string(yytext);
+         yylval->identificador = crear_string(yytext);
          return IDENTIFICADOR;
      }
 
 {INICIO_ENTERO}{CUERPO_ENTERO} {
-        yylval.valorEntero = atoi(yytext);
+        yylval->valorEntero = atoi(yytext);
         return ENTERO;
     }
 {INICIO_ENTERO}{CUERPO_ENTERO_MALFORMADO} {
-        yylval.error = crear_error_lexico("Número \"%s\" malformado.", yytext);
+        yylval->error = crear_error_lexico("Número \"%s\" malformado.", yytext);
         return ERROR;
     }
 
 [\-/.<>&|] {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return OPERADOR;
     }
 \+  {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return SUMA;
     }
 \*  {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return MULT;
     }
 \=\=   {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return OPERADOR;
     }
 >=  {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return OPERADOR;
     }
 \<=  {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return OPERADOR;
     }
 !   {
-        yylval.identificador = crear_string(yytext);
+        yylval->identificador = crear_string(yytext);
         return OPERADOR;
     }
 = {
-        yylval.tipoOperador = '=';
+        yylval->tipoOperador = '=';
         return OPERADOR_ASIGNACION;
     }
 \+= {
-        yylval.tipoOperador = OP_SUMAR;
+        yylval->tipoOperador = OP_SUMAR;
         return OPERADOR_ASIGNACION;
     }
 -= {
-        yylval.tipoOperador = OP_RESTAR;
+        yylval->tipoOperador = OP_RESTAR;
         return OPERADOR_ASIGNACION;
     }
 
@@ -166,7 +153,7 @@ const { return CONST; }
 .|\n { /* ignorar comentarios multilinea */ }
 <<EOF>> {
         BEGIN(INITIAL);
-        yylval.error = crear_error_lexico("Comentario de bloque no terminado.");
+        yylval->error = crear_error_lexico("Comentario de bloque no terminado.");
         return ERROR;
     }
 }
@@ -184,19 +171,35 @@ const { return CONST; }
 .|\n { /* ignorar comentarios anidados */ }
 <<EOF>> {
         BEGIN(INITIAL);
-        yylval.error = crear_error_lexico("Comentario anidado no terminado.");
+        yylval->error = crear_error_lexico("Comentario anidado no terminado.");
         return ERROR;
     }
 }
 
 {ESPACIO_EN_BLANCO} { /* ignorar espacios */ }
 
+<<EOF>> { return YYEOF; }
+
 .   {
-        yylval.error = crear_error_lexico("Caracter no reconocido.");
+        yylval->error = crear_error_lexico("Caracter no reconocido.");
         return ERROR;
     }
 %%
 
-void establecer_fichero_entrada(FILE *archivo) {
-    yyin = archivo;
+Lexer crear_analizador_lexico(FILE *fichero) {
+    Lexer lexer;
+    yylex_init(&lexer);
+    yyset_in(fichero, lexer);
+
+    return lexer;
+}
+
+void borrar_analizador_lexico(Lexer lexer) {
+    FILE *fichero = yyget_in(lexer);
+    yylex_destroy(lexer);
+    fclose(fichero);
+}
+
+int siguiente_componente_lexico(Lexer lexer, YYSTYPE *yylval_param) {
+    return yylex(yylval_param, lexer);
 }
