@@ -4,9 +4,18 @@
 #include "tabla_simbolos.h"
 #include "analizador_sintactico.h"
 
-typedef void* Lexer;
+typedef struct {
+    // El escáner de bison
+    void* scanner;
+    // Buffer que se utiliza si
+    // estamos procesando un char*
+    // en vez de un archivo.
+    void* str_buffer;
+} Lexer;
 
-Lexer crear_analizador_lexico(FILE *fichero);
+Lexer crear_lexer_fichero(FILE *fichero);
+
+Lexer crear_lexer_str(char *str);
 
 void borrar_analizador_lexico(Lexer lexer);
 

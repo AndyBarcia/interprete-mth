@@ -2275,20 +2275,34 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 #line 187 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
-Lexer crear_analizador_lexico(FILE *fichero) {
+Lexer crear_lexer_fichero(FILE *fichero) {
     Lexer lexer;
-    yylex_init(&lexer);
-    yyset_in(fichero, lexer);
+    lexer.str_buffer = NULL;
+
+    yylex_init(&lexer.scanner);
+    yyset_in(fichero, lexer.scanner);
 
     return lexer;
 }
 
+Lexer crear_lexer_str(char *str) {
+     Lexer lexer;
+     yylex_init(&lexer.scanner);
+
+     lexer.str_buffer = yy_scan_string(str, lexer.scanner);
+
+     return lexer;
+}
+
 void borrar_analizador_lexico(Lexer lexer) {
-    FILE *fichero = yyget_in(lexer);
-    yylex_destroy(lexer);
-    fclose(fichero);
+    if (lexer.str_buffer) {
+        yy_delete_buffer(lexer.str_buffer, lexer.scanner);
+    } else {
+        fclose(yyget_in(lexer.scanner));
+    }
+    yylex_destroy(lexer.scanner);
 }
 
 int siguiente_componente_lexico(Lexer lexer, YYSTYPE *yylval_param) {
-    return yylex(yylval_param, lexer);
+    return yylex(yylval_param, lexer.scanner);
 }

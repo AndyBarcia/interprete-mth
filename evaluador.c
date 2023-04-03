@@ -1,4 +1,52 @@
 #include "evaluador.h"
+#include "analizador_sintactico.h"
+#include "analizador_lexico.h"
+
+Valor _evaluar_con_lexer(TablaSimbolos *tabla, Lexer lexer, int interactivo) {
+    if (interactivo) printf("> ");
+
+    Valor ultimo_valor;
+    int status;
+    yypstate *ps = yypstate_new();
+    do {
+        YYSTYPE yylval_param;
+        int c = siguiente_componente_lexico(lexer, &yylval_param);
+
+        Expresion exp;
+        exp.tipo = -1;
+        status = yypush_parse(ps, c, &yylval_param, &exp);
+
+        if (exp.tipo != -1) {
+            ultimo_valor= evaluar_expresion(tabla, exp);
+            if (ultimo_valor.tipoValor == TIPO_ERROR || interactivo) imprimir_valor(ultimo_valor);
+            if (interactivo) printf("> ");
+        }
+    } while (status == YYPUSH_MORE);
+    yypstate_delete (ps);
+    borrar_analizador_lexico(lexer);
+
+    return ultimo_valor;
+}
+
+void evaluar_fichero(TablaSimbolos *tabla, FILE *entrada) {
+    Lexer lexer = crear_lexer_fichero(entrada);
+    _evaluar_con_lexer(tabla, lexer, entrada == stdin);
+}
+
+Valor evaluar_archivo(TablaSimbolos *tabla, char* archivo) {
+    FILE* entrada;
+    if ((entrada = fopen(archivo, "r")) == NULL) {
+        return crear_error("No se pudo abrir el archivo \"%s\".", archivo);
+    }
+    Lexer lexer = crear_lexer_fichero(entrada);
+    _evaluar_con_lexer(tabla, lexer, 0);
+    return crear_indefinido();
+}
+
+Valor evaluar_str(TablaSimbolos *tabla, char* str) {
+    Lexer lexer = crear_lexer_str(str);
+    return _evaluar_con_lexer(tabla, lexer, 0);
+}
 
 Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
     switch (exp.tipo) {
