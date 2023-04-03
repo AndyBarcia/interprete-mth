@@ -11,8 +11,9 @@ typedef int Bool;
 #define TIPO_ERROR 2
 #define TIPO_ENTERO 3
 #define TIPO_BOOL 4
-#define TIPO_FUNCION_NATIVA 5
-#define TIPO_FUNCION 6
+#define TIPO_STRING 5
+#define TIPO_FUNCION_NATIVA 6
+#define TIPO_FUNCION 7
 
 typedef struct {
     int longitud;
@@ -49,6 +50,7 @@ typedef struct {
         Bool bool;
         FuncionNativa funcion_nativa;
         Funcion funcion;
+        String string;
         String error;
     };
 } Valor;
@@ -57,6 +59,7 @@ Valor crear_indefinido();
 Valor crear_nulo();
 Valor crear_entero(Entero entero);
 Valor crear_bool(Bool bool);
+Valor crear_valor_string(String string);
 Valor crear_funcion_nativa(FuncionNativa funcion);
 
 Valor crear_error(const char *formato, ...);

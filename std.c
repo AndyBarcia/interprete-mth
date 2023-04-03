@@ -2,15 +2,38 @@
 #include "ast.h"
 
 void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    int a = 0;
-    for (int i = 0; i < args.longitud; ++i) {
-        if (((Valor *) args.valores)[i].tipoValor != TIPO_ENTERO) {
-            *retorno = crear_error("No es de tipo entero.");
+    if (args.longitud == 0) return;
+
+    Valor result = ((Valor*) args.valores)[0];
+    for (int i = 1; i < args.longitud; ++i) {
+        Valor v = ((Valor *) args.valores)[i];
+        if (result.tipoValor == v.tipoValor) {
+            switch (result.tipoValor) {
+                case TIPO_ENTERO:
+                    result.entero += v.entero;
+                    break;
+                case TIPO_STRING: {
+                    String a = result.string;
+                    String b = v.string;
+
+                    result.string = crear_string(string_a_puntero(&a));
+                    extender_string(&result.string, string_a_puntero(&b));
+                    borrar_string(&a);
+                    borrar_string(&b);
+                    break;
+                }
+                default:
+                    *retorno = crear_error("No se pueden sumar valores de este tipo.");
+                    return;
+            }
+            if (result.tipoValor == TIPO_ENTERO)
+                result.entero += v.entero;
+        } else {
+            *retorno = crear_error("Sumando valores de tipos distintos.");
             return;
         }
-        a += ((Valor *) args.valores)[i].entero;
     }
-    *retorno = crear_entero(a);
+    *retorno = result;
 }
 
 void restar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {

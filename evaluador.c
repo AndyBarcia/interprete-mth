@@ -40,6 +40,7 @@ Valor evaluar_archivo(TablaSimbolos *tabla, char* archivo) {
     }
     Lexer lexer = crear_lexer_fichero(entrada);
     _evaluar_con_lexer(tabla, lexer, 0);
+    fclose(entrada);
     return crear_indefinido();
 }
 

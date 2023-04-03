@@ -62,23 +62,24 @@ extern int yydebug;
     YYUNDEF = 257,                 /* "invalid token"  */
     ENTERO = 258,                  /* "número entero"  */
     IDENTIFICADOR = 259,           /* "identificador"  */
-    ERROR = 260,                   /* ERROR  */
-    OPERADOR_ASIGNACION = 261,     /* "operador de asignación"  */
-    CONST = 262,                   /* "const"  */
-    PARENTESIS_IZQ = 263,          /* "("  */
-    PARENTESIS_DER = 264,          /* ")"  */
-    CORCHETE_IZQ = 265,            /* "["  */
-    CORCHETE_DER = 266,            /* "]"  */
-    LLAVE_IZQ = 267,               /* "{"  */
-    LLAVE_DER = 268,               /* "}"  */
-    FLECHA = 269,                  /* "=>"  */
-    SLASH_INVERTIDA = 270,         /* "\\"  */
-    NUEVA_LINEA = 271,             /* "\n"  */
-    PUNTO_Y_COMA = 272,            /* ";"  */
-    COMA = 273,                    /* ","  */
-    OPERADOR = 274,                /* "operador"  */
-    SUMA = 275,                    /* "+"  */
-    MULT = 276                     /* "*"  */
+    STRING = 260,                  /* "string"  */
+    ERROR = 261,                   /* ERROR  */
+    OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
+    CONST = 263,                   /* "const"  */
+    PARENTESIS_IZQ = 264,          /* "("  */
+    PARENTESIS_DER = 265,          /* ")"  */
+    CORCHETE_IZQ = 266,            /* "["  */
+    CORCHETE_DER = 267,            /* "]"  */
+    LLAVE_IZQ = 268,               /* "{"  */
+    LLAVE_DER = 269,               /* "}"  */
+    FLECHA = 270,                  /* "=>"  */
+    SLASH_INVERTIDA = 271,         /* "\\"  */
+    NUEVA_LINEA = 272,             /* "\n"  */
+    PUNTO_Y_COMA = 273,            /* ";"  */
+    COMA = 274,                    /* ","  */
+    OPERADOR = 275,                /* "operador"  */
+    SUMA = 276,                    /* "+"  */
+    MULT = 277                     /* "*"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -93,12 +94,13 @@ union YYSTYPE
     int valorEntero;
     String error;
     String identificador;
+    String string;
     ListaExpresiones listaExpresiones;
     ListaIdentificadores listaIdentificadores;
     Valor valor;
     Expresion expresion;
 
-#line 102 "../analizador_sintactico.h"
+#line 104 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

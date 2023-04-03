@@ -89,6 +89,17 @@ const { return CONST; }
         return ERROR;
     }
 
+{STRING} {
+        yytext[yyleng-1] = '\0';
+        // TODO: escapar caracteres
+        yylval->string = crear_string(yytext+1);
+        return STRING;
+    }
+{STRING_MALFORMADO} {
+        yylval->error = crear_error_lexico("String sin comillas de cierre.");
+        return ERROR;
+    }
+
 [\-/.<>&|] {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
@@ -208,9 +219,6 @@ Lexer crear_lexer_str(char *str) {
 void borrar_analizador_lexico(Lexer lexer) {
     if (lexer.str_buffer) {
         yy_delete_buffer(lexer.str_buffer, lexer.scanner);
-    } else {
-        FILE *fichero = yyget_in(lexer.scanner);
-        fclose(fichero);
     }
     yylex_destroy(lexer.scanner);
 }

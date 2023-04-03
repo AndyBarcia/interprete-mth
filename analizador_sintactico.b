@@ -22,6 +22,7 @@ void yyerror(Expresion *exp, const char* s);
     int valorEntero;
     String error;
     String identificador;
+    String string;
     ListaExpresiones listaExpresiones;
     ListaIdentificadores listaIdentificadores;
     Valor valor;
@@ -30,6 +31,7 @@ void yyerror(Expresion *exp, const char* s);
 
 %token <valorEntero> ENTERO "número entero"
 %token <identificador> IDENTIFICADOR "identificador"
+%token <string> STRING "string"
 %token <error> ERROR
 
 %token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
@@ -127,6 +129,7 @@ nombre_asignable: IDENTIFICADOR | OPERADOR ;
 expresion:
     nombre_asignable { $$ = crear_exp_identificador($1); }
     | ENTERO { $$ = crear_exp_valor(crear_entero($1)); }
+    | STRING { $$ = crear_exp_valor(crear_valor_string($1)); }
     | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2); }
     | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3); }
     | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3); }

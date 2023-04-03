@@ -31,5 +31,8 @@ int main(int argc, char *argv[]) {
 
     borrar_buffer_strings();
 
+    if (entrada != stdin)
+        fclose(entrada);
+
     return 0;
 }
