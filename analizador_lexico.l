@@ -102,9 +102,17 @@ const { return CONST; }
         return ERROR;
     }
 
-[+\-*/.<>&|] {
+[\-/.<>&|] {
         yylval.identificador = crear_string(yytext);
         return OPERADOR;
+    }
+\+  {
+        yylval.identificador = crear_string(yytext);
+        return SUMA;
+    }
+\*  {
+        yylval.identificador = crear_string(yytext);
+        return MULT;
     }
 \=\=   {
         yylval.identificador = crear_string(yytext);

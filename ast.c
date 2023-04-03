@@ -111,6 +111,8 @@ void imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores) {
     printf("\n");
 }
 
+void _imprimir_lista_expresiones(ListaExpresiones listaValores);
+
 void _imprimir_expresion(Expresion expresion) {
     switch (expresion.tipo) {
         case EXP_VALOR:
@@ -121,11 +123,11 @@ void _imprimir_expresion(Expresion expresion) {
             break;
         case EXP_OP_LLAMADA:
             _imprimir_expresion(*(Expresion*)expresion.llamadaFuncion.funcion);
-            imprimir_lista_expresiones(expresion.llamadaFuncion.argumentos);
+            _imprimir_lista_expresiones(expresion.llamadaFuncion.argumentos);
             break;
         case EXP_OP_ASIGNACION:
             printf("%s = ", string_a_puntero(&expresion.asignacion.identificador));
-            imprimir_expresion(*(Expresion*)expresion.asignacion.expresion);
+            _imprimir_expresion(*(Expresion*)expresion.asignacion.expresion);
             break;
         case EXP_OP_DEF_FUNCION:
             printf("\\");
@@ -138,6 +140,20 @@ void _imprimir_expresion(Expresion expresion) {
 
 void imprimir_expresion(Expresion expresion) {
     _imprimir_expresion(expresion);
+    printf("\n");
+}
+
+void _imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
+    printf("[");
+    for (int i = 0; i < listaExpresiones.longitud; ++i) {
+        _imprimir_expresion(((Expresion*) listaExpresiones.valores)[i]);
+        printf(", ");
+    }
+    printf("]");
+}
+
+void imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
+    _imprimir_lista_expresiones(listaExpresiones);
     printf("\n");
 }
 
@@ -169,6 +185,19 @@ Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos)  {
             },
             .es_sentencia = 0,
     };
+}
+
+Expresion crear_exp_op_unaria(String operador, Expresion x) {
+    ListaExpresiones args = crear_lista_expresiones();
+    push_lista_expresiones(&args, x);
+    return crear_exp_llamada(crear_exp_identificador(operador), args);
+}
+
+Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b) {
+    ListaExpresiones args = crear_lista_expresiones();
+    push_lista_expresiones(&args, a);
+    push_lista_expresiones(&args, b);
+    return crear_exp_llamada(crear_exp_identificador(operador), args);
 }
 
 Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable) {
@@ -204,7 +233,7 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones) {
     return (Expresion) {
         .tipo = EXP_BLOQUE,
         .bloque = expresiones,
-            .es_sentencia = 0,
+        .es_sentencia = 0,
     };
 }
 
@@ -222,20 +251,6 @@ void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion) {
         ++lista->capacidad;
     }
     ((Expresion*) lista->valores)[lista->longitud++] = expresion;
-}
-
-void _imprimir_lista_expresiones(ListaExpresiones listaValores) {
-    printf("[");
-    for (int i = 0; i < listaValores.longitud; ++i) {
-        _imprimir_expresion(((Expresion*) listaValores.valores)[i]);
-        printf(", ");
-    }
-    printf("]");
-}
-
-void imprimir_lista_expresiones(ListaExpresiones listaValores) {
-    _imprimir_lista_expresiones(listaValores);
-    printf("\n");
 }
 
 ListaIdentificadores crear_lista_identificadores() {

@@ -104,6 +104,8 @@ Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_identificador(String identificador);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos);
+Expresion crear_exp_op_unaria(String operador, Expresion x);
+Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b);
 Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
@@ -112,7 +114,7 @@ ListaExpresiones crear_lista_expresiones();
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
 
 void imprimir_expresion(Expresion expresion);
-void imprimir_lista_expresiones(ListaExpresiones listaValores);
+void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
 void imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
 
 #endif //PRACTICA3_AST_H

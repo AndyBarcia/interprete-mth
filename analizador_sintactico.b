@@ -29,7 +29,6 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %token <identificador> IDENTIFICADOR "identificador"
 %token <error> ERROR
 
-%token <identificador> OPERADOR "operador"
 %token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
 
 %token CONST "const"
@@ -44,19 +43,31 @@ void yyerror(TablaSimbolos tablaSimbolos, const char* s);
 %token FLECHA "=>"
 %token SLASH_INVERTIDA "\\"
 
-%token NUEVA_LINEA "salto de línea"
-%token PUNTO_Y_COMA "punto y coma"
+%token NUEVA_LINEA "\n"
+%token PUNTO_Y_COMA ";"
 
-%token COMA
+%token COMA ","
 
 %type <identificador> nombre_asignable
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
 %type <listaExpresiones> expression_block
+%type <listaExpresiones> expression_block_inner
 %type <listaIdentificadores> identifier_list
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
-%type <expresion> expresion_sentenciable
+
+%token <identificador> OPERADOR "operador"
+%token <identificador> SUMA "+"
+%token <identificador> MULT "*"
+
+%precedence CONST
+%precedence OPERADOR_ASIGNACION
+%precedence "=>"
+%left OPERADOR
+%left "+"
+%left "*"
+%precedence "("
 
 %%
 
@@ -65,14 +76,20 @@ program:
     ;
 
 statement_list:
-    expresion_sentenciable NUEVA_LINEA {
+    expresion NUEVA_LINEA {
             imprimir_valor(evaluar_expresion(&tablaSimbolos, $1));
+            //imprimir_expresion($1);
             printf("> ");
-        }
-    | statement_list expresion_sentenciable NUEVA_LINEA {
+         }
+    | statement_list expresion NUEVA_LINEA {
             imprimir_valor(evaluar_expresion(&tablaSimbolos, $2));
+            //imprimir_expresion($2);
             printf("> ");
-        }
+         }
+    | statement_list expresion PUNTO_Y_COMA {
+            evaluar_expresion(&tablaSimbolos, $2);
+            //imprimir_expresion($2);
+         }
     | error NUEVA_LINEA {
             /* Saltarse la línea en caso de error */
             printf("> ");
@@ -87,8 +104,8 @@ argument_list_many:
     | argument_list_many COMA expresion { push_lista_expresiones(&$$, $3); }
     ;
 argument_list:
-    %empty { $$ = crear_lista_expresiones(); }
-    | argument_list_many { $$ = $1; }
+      argument_list_many
+    | %empty { $$ = crear_lista_expresiones(); }
 
 identifier_list_many:
     IDENTIFICADOR {
@@ -98,51 +115,39 @@ identifier_list_many:
     | identifier_list_many COMA IDENTIFICADOR { push_lista_identificadores(&$$, $3); }
     ;
 identifier_list:
-    %empty { $$ = crear_lista_identificadores(); }
-    | identifier_list_many { $$ = $1; }
+      identifier_list_many
+    | %empty { $$ = crear_lista_identificadores(); }
+
+sentence_terminator:
+      sentence_terminator ";"
+    | sentence_terminator "\n"
+    | ";" | "\n"
+    ;
+
+nuevas_lineas: %empty | nuevas_lineas "\n"
 
 expression_block:
-    expresion_sentenciable {
-            $$ = crear_lista_expresiones();
-            push_lista_expresiones(&$$, $1);
-        }
-    | expression_block expresion_sentenciable { push_lista_expresiones(&$$, $2); }
+     nuevas_lineas { $$ = crear_lista_expresiones(); }
+    | expression_block expresion nuevas_lineas { push_lista_expresiones(&$$, $2); }
     ;
 
-nombre_asignable:
-    IDENTIFICADOR { $$ = $1; }
-    | OPERADOR { $$ = $1; }
-    ;
+nombre_asignable: IDENTIFICADOR | OPERADOR ;
 
 expresion:
     nombre_asignable { $$ = crear_exp_identificador($1); }
     | ENTERO { $$ = crear_exp_valor(crear_entero($1)); }
-    | OPERADOR expresion {
-            ListaExpresiones args = crear_lista_expresiones();
-            push_lista_expresiones(&args, $2);
-            $$ = crear_exp_llamada(crear_exp_identificador($1), args);
-        }
-    | expresion OPERADOR expresion {
-            ListaExpresiones args = crear_lista_expresiones();
-            push_lista_expresiones(&args, $1);
-            push_lista_expresiones(&args, $3);
-            $$ = crear_exp_llamada(crear_exp_identificador($2), args);
-        }
-    | expresion PARENTESIS_IZQ argument_list PARENTESIS_DER { $$ = crear_exp_llamada($1, $3); }
-    | PARENTESIS_IZQ expresion PARENTESIS_DER { $$ = $2; }
+    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2); }
+    | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3); }
+    | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3); }
+    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3); }
+    | "(" expresion ")" { $$ = $2; }
     | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0); }
-    | CONST nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1); }
-    | LLAVE_IZQ expression_block LLAVE_DER { $$ = crear_exp_bloque($2); }
-    | SLASH_INVERTIDA identifier_list FLECHA expresion { $$ = crear_exp_def_funcion($2, $4); }
+    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1); }
+    | "{" expression_block "}" { $$ = crear_exp_bloque($2); }
+    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4); }
+    | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1))); }
     ;
-
-expresion_sentenciable:
-    expresion { $$ = $1; }
-    | expresion PUNTO_Y_COMA {
-            $1.es_sentencia = 1;
-            $$ = $1;
-        }
 
 %%
 
