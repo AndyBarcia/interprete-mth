@@ -70,12 +70,12 @@ typedef enum {
 } TipoExpresion;
 
 /// Una expresión de un determinado tipo.
-/// Se hae distinción entre si una expresión
-/// es una sentencia o no (Ej, `5` vs `5;`).
-/// Una sentencia produce como valor siempre
-/// "indefinido".
 typedef struct {
+    /// El tipo de la expresión.
     TipoExpresion tipo;
+    /// Si es una sentencia o no (Ej, `5` vs `5;`).
+    /// Una sentencia produce como valor siempre
+    /// "indefinido".
     int es_sentencia;
     union {
         Valor valor;

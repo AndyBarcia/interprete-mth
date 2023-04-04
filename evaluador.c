@@ -13,11 +13,12 @@ Valor _evaluar_con_lexer(TablaSimbolos *tabla, Lexer lexer, int interactivo) {
     int status;
     yypstate *ps = yypstate_new();
     do {
-        YYSTYPE yylval_param;
-        int c = siguiente_componente_lexico(lexer, &yylval_param);
+        ComponenteLexico token;
+        Localizacion loc;
+        int c = siguiente_componente_lexico(lexer, &token, &loc);
 
         Expresion exp = crear_exp_nula();
-        status = yypush_parse(ps, c, &yylval_param, &exp);
+        status = yypush_parse(ps, c, &token, &loc, &exp);
 
         if (exp.tipo != EXP_NULA) {
             borrar_valor(&ultimo_valor);

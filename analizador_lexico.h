@@ -4,6 +4,9 @@
 #include "tabla_simbolos.h"
 #include "analizador_sintactico.h"
 
+typedef YYSTYPE ComponenteLexico;
+typedef YYLTYPE Localizacion;
+
 /// Un determinado analizador léxico que es
 /// abstracto respecto al origen del código
 /// fuente; ya sea un fichero, stdin, o una
@@ -45,6 +48,6 @@ void borrar_analizador_lexico(Lexer lexer);
  * @param yylval_param variable en la que se guardará el token
  * @return tipo de token devuelto.
  */
-int siguiente_componente_lexico(Lexer lexer, YYSTYPE *yylval_param);
+int siguiente_componente_lexico(Lexer lexer, ComponenteLexico *yylval_param, Localizacion *loc);
 
 #endif //LEXER_ANALIZADOR_LEXICO_H

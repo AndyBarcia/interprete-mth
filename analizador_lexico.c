@@ -26,6 +26,18 @@
 #define yyset_lval yyset_lval
 #endif
 
+#ifdef yyget_lloc
+#define yyget_lloc_ALREADY_DEFINED
+#else
+#define yyget_lloc yyget_lloc
+#endif
+
+#ifdef yyset_lloc
+#define yyset_lloc_ALREADY_DEFINED
+#else
+#define yyset_lloc yyset_lloc
+#endif
+
 /* First, we deal with  platform-specific or compiler-specific issues. */
 
 /* begin standard C headers. */
@@ -502,9 +514,9 @@ String crear_error_lexico(const char *formato, ...) {
 }
 
 int nivel_comentario_anidado = 0;
-#line 506 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 518 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
-#line 508 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 520 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 #define INITIAL 0
 #define comentario_anidado 1
@@ -556,6 +568,8 @@ struct yyguts_t
 
     YYSTYPE * yylval_r;
 
+    YYLTYPE * yylloc_r;
+
     }; /* end struct yyguts_t */
 
 static int yy_init_globals ( yyscan_t yyscanner );
@@ -563,6 +577,8 @@ static int yy_init_globals ( yyscan_t yyscanner );
     /* This must go here because YYSTYPE and YYLTYPE are included
      * from bison output in section 1.*/
     #    define yylval yyg->yylval_r
+    
+    #    define yylloc yyg->yylloc_r
     
 int yylex_init (yyscan_t* scanner);
 
@@ -605,6 +621,10 @@ YYSTYPE * yyget_lval ( yyscan_t yyscanner );
 
 void yyset_lval ( YYSTYPE * yylval_param , yyscan_t yyscanner );
 
+       YYLTYPE *yyget_lloc ( yyscan_t yyscanner );
+    
+        void yyset_lloc ( YYLTYPE * yylloc_param , yyscan_t yyscanner );
+    
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
  */
@@ -721,10 +741,10 @@ static int input ( yyscan_t yyscanner );
 #define YY_DECL_IS_OURS 1
 
 extern int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner);
+               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner);
 
 #define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner)
+               (YYSTYPE * yylval_param, YYLTYPE * yylloc_param , yyscan_t yyscanner)
 #endif /* !YY_DECL */
 
 /* Code executed at the beginning of each rule, after yytext and yyleng
@@ -752,6 +772,8 @@ YY_DECL
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
     yylval = yylval_param;
+
+    yylloc = yylloc_param;
 
 	if ( !yyg->yy_init )
 		{
@@ -783,7 +805,7 @@ YY_DECL
 #line 74 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
-#line 787 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 809 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1114,7 +1136,7 @@ YY_RULE_SETUP
 #line 198 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 ECHO;
 	YY_BREAK
-#line 1118 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 1140 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2112,6 +2134,18 @@ void yyset_lval (YYSTYPE *  yylval_param , yyscan_t yyscanner)
     yylval = yylval_param;
 }
 
+YYLTYPE *yyget_lloc  (yyscan_t yyscanner)
+{
+    struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+    return yylloc;
+}
+    
+void yyset_lloc (YYLTYPE *  yylloc_param , yyscan_t yyscanner)
+{
+    struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+    yylloc = yylloc_param;
+}
+    
 /* User-visible API */
 
 /* yylex_init is special because it creates the scanner itself, so it is
@@ -2322,6 +2356,6 @@ void borrar_analizador_lexico(Lexer lexer) {
     yylex_destroy(lexer.scanner);
 }
 
-int siguiente_componente_lexico(Lexer lexer, YYSTYPE *yylval_param) {
-    return yylex(yylval_param, lexer.scanner);
+int siguiente_componente_lexico(Lexer lexer, ComponenteLexico *token, Localizacion *loc) {
+    return yylex(token, loc, lexer.scanner);
 }

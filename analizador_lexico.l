@@ -70,7 +70,7 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 
 %x comentario_anidado
 %x comentario_bloque
-%option reentrant bison-bridge
+%option reentrant bison-bridge bison-locations
 %%
 
 const { return CONST; }
@@ -223,6 +223,6 @@ void borrar_analizador_lexico(Lexer lexer) {
     yylex_destroy(lexer.scanner);
 }
 
-int siguiente_componente_lexico(Lexer lexer, YYSTYPE *yylval_param) {
-    return yylex(yylval_param, lexer.scanner);
+int siguiente_componente_lexico(Lexer lexer, ComponenteLexico *token, Localizacion *loc) {
+    return yylex(token, loc, lexer.scanner);
 }

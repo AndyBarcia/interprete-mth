@@ -1,7 +1,8 @@
 #ifndef LEXER_TABLA_HASH_H
 #define LEXER_TABLA_HASH_H
 
-#include "ast.h"
+#include "string.h"
+#include "valor.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 16 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 18 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     #include "ast.h"
 
@@ -88,7 +88,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 20 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 22 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int tipoOperador;
     int valorEntero;
@@ -108,6 +108,20 @@ typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_DECLARED 1
 #endif
 
+/* Location type.  */
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
+
 
 
 
@@ -120,7 +134,7 @@ typedef struct yypstate yypstate;
 
 
 int yypush_parse (yypstate *ps,
-                  int pushed_char, YYSTYPE const *pushed_val, Expresion *exp);
+                  int pushed_char, YYSTYPE const *pushed_val, YYLTYPE *pushed_loc, Expresion *exp);
 
 yypstate *yypstate_new (void);
 void yypstate_delete (yypstate *ps);

@@ -3,7 +3,7 @@
 #include "string.h"
 #include "evaluador.h"
 
-void yyerror(Expresion *exp, const char* s);
+void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 
 %}
 
@@ -12,6 +12,8 @@ void yyerror(Expresion *exp, const char* s);
 %define parse.error verbose
 %define api.pure full
 %define api.push-pull push
+
+%locations
 
 %code requires {
     #include "ast.h"
@@ -148,7 +150,7 @@ expresion:
 
 %%
 
-void yyerror(Expresion *exp, const char* s) {
+void yyerror(Localizacion *loc, Expresion *exp, const char* s) {
     *exp = crear_exp_valor(crear_error("%s", s));
 }
 
