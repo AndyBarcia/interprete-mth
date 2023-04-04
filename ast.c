@@ -225,6 +225,7 @@ void imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
 void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentificadores *lista) {
     switch (expresion.tipo) {
         case EXP_VALOR:
+        case EXP_NULA:
             break;
         case EXP_IDENTIFICADOR:
             if (!es_miembro_hash(*locales, string_a_puntero(&expresion.identificador)))
@@ -243,6 +244,12 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
             for (int i = 0; i < expresion.defFuncion.argumentos.longitud; ++i)
                 insertar_hash(locales, expresion.defFuncion.argumentos.valores[i], crear_indefinido(), 0);
             _variables_capturadas(*(Expresion *) expresion.defFuncion.cuerpo, locales, lista);
+            break;
+        case EXP_BLOQUE:
+            for (int i = 0; i < expresion.bloque.longitud; ++i) {
+                Expresion subexpresion = ((Expresion *) expresion.bloque.valores)[i];
+                _variables_capturadas(subexpresion, locales, lista);
+            }
             break;
     }
 }
