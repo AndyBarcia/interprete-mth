@@ -123,7 +123,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion exp) {
             Expresion cuerpo = * (Expresion*) exp.defFuncion.cuerpo;
             ListaIdentificadores ids = variables_capturadas(exp.defFuncion);
 
-            TablaHash  *capturadas = malloc(sizeof(TablaHash));
+            TablaHash *capturadas = malloc(sizeof(TablaHash));
             *capturadas = crear_tabla_hash(ids.longitud);
 
             for(int i = 0; i < ids.longitud; ++i) {

@@ -19,7 +19,7 @@ TablaHash crear_tabla_hash(int capacidad) {
 
     // Establecer el límite de búsqueda lineal como log2(capacidad).
     int x = t.capacidad;
-    int limite = 0;
+    int limite = 1;
     while (x >>= 1) ++limite;
     t.limite_busqueda = limite;
 
