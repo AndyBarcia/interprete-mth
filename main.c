@@ -7,7 +7,6 @@
 
 int main(int argc, char *argv[]) {
 
-
     FILE* entrada;
     if (argc <= 1) {
         entrada = stdin;

@@ -2,6 +2,10 @@
 #include "analizador_sintactico.h"
 #include "analizador_lexico.h"
 
+// Función interna que evalúa los componentes léxicos generados por un lexer
+// dado, ya sea un lexer que proviene de un archivo, entrada estándar, o un str.
+// Si "interactivo" es verdadero, se imprime por consola los valores de cada
+// expresión y los "> " típicos de las terminales.
 Valor _evaluar_con_lexer(TablaSimbolos *tabla, Lexer lexer, int interactivo) {
     if (interactivo) printf("> ");
 
@@ -49,13 +53,24 @@ Valor evaluar_str(TablaSimbolos *tabla, char* str) {
     return _evaluar_con_lexer(tabla, lexer, 0);
 }
 
+// Evalúa el valor de la expresión, liberando toda la memoria asociada
+// a la expresión antes de terminar.
 Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
+    // Hay que tener en cuenta que sólo hay que devolver un valor
+    // si la expresión no es una sentencia. Si no, se tiene que
+    // devolver "indefinido".
+    // Si en algún momento nos encontramos con un valor de tipo
+    // "error", hay que abortar y devolver ese valor, aunque la
+    // expresión sea una sentencia.
     switch (exp->tipo) {
         case EXP_VALOR: {
-            if (exp->es_sentencia) return crear_indefinido();
+            // La expresión es un valor; devolverlo si no es una sentencia.
+            if (exp->es_sentencia && exp->valor.tipoValor != TIPO_ERROR)
+                return crear_indefinido();
             return exp->valor;
         }
         case EXP_IDENTIFICADOR: {
+            // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
             Valor v = recuperar_valor_tabla(*tabla, exp->identificador);
             if (v.tipoValor == TIPO_ERROR) return v;
             borrar_string(&exp->identificador);
@@ -64,17 +79,15 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             return v;
         }
         case EXP_OP_LLAMADA: {
+            // Si es una llamada, evaluar la expresión que queremos llamar como función,
+            // y comprobar que efectivamente es una función, y distinguir entre si es
+            // una función nativa o si es una función definida por el usuario.
             Valor f = evaluar_expresion(tabla, (Expresion*)exp->llamadaFuncion.funcion);
             free(exp->llamadaFuncion.funcion);
-            if (f.tipoValor == TIPO_ERROR) {
-                borrar_lista_expresiones(&exp->llamadaFuncion.argumentos);
-                return f;
-            }
             switch (f.tipoValor) {
                 case TIPO_ERROR:
+                    borrar_lista_expresiones(&exp->llamadaFuncion.argumentos);
                     return f;
-                case TIPO_INDEFINIDO:
-                    return crear_error("Llamando una función no definida!");
                 case TIPO_FUNCION_NATIVA: {
                     FuncionNativa fn = f.funcion_nativa;
                     ListaValores args = evaluar_expresiones(tabla, &exp->llamadaFuncion.argumentos);
@@ -176,7 +189,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             }
 
             borrar_lista_identificadores(&ids);
-            return crear_funcion(exp->defFuncion.argumentos, cuerpo, (struct TablaHash*) capturadas);
+            return crear_funcion(exp->defFuncion.argumentos, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas);
         }
         case EXP_BLOQUE: {
             aumentar_nivel_tabla_simbolos(tabla);

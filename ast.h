@@ -2,106 +2,80 @@
 #define PRACTICA3_AST_H
 
 #include "string.h"
+#include "valor.h"
 
-typedef int Entero;
-typedef int Bool;
-
-#define TIPO_INDEFINIDO 0
-#define TIPO_NULO 1
-#define TIPO_ERROR 2
-#define TIPO_ENTERO 3
-#define TIPO_BOOL 4
-#define TIPO_STRING 5
-#define TIPO_FUNCION_NATIVA 6
-#define TIPO_FUNCION 7
-
-typedef struct {
-    int longitud;
-    struct Valor* valores;
-} ListaValores;
-
-typedef void (*FuncionNativa)();
-
-typedef struct {
-    int longitud;
-    int capacidad;
-    String* valores;
-} ListaIdentificadores;
-
-ListaIdentificadores crear_lista_identificadores();
-void push_lista_identificadores(ListaIdentificadores *lista, String identificador);
-ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista);
-void borrar_lista_identificadores(ListaIdentificadores *lista);
-
+/// Una lista de expresiones, ya sea en un
+/// bloque de expresiones o los argumentos
+/// de una llamada a una función.
 typedef struct {
     int capacidad;
     int longitud;
     struct Expresion* valores;
 } ListaExpresiones;
 
-typedef struct {
-    ListaIdentificadores argumentos;
-    struct TablaHash *variables_capturadas;
-    struct Expresion *cuerpo;
-} Funcion;
-
-typedef struct {
-    int tipoValor;
-    int *referencias;
-    union {
-        Entero entero;
-        Bool bool;
-        FuncionNativa funcion_nativa;
-        Funcion funcion;
-        String string;
-        String error;
-    };
-} Valor;
-
-Valor crear_indefinido();
-Valor crear_nulo();
-Valor crear_entero(Entero entero);
-Valor crear_bool(Bool bool);
-Valor crear_valor_string(String string);
-Valor crear_funcion_nativa(FuncionNativa funcion);
-
-Valor clonar_valor(Valor v);
-
-void borrar_valor(Valor *valor);
-void borrar_lista_valores(ListaValores *lista);
-
-Valor crear_error(const char *formato, ...);
-void imprimir_valor(Valor valor);
-int comparar_valor(Valor a, Valor b);
-
+/// Llamada a una expresión como si fuese
+/// una función, utilizando uns determinados
+/// argumentos.
 typedef struct {
     struct Expresion *funcion;
     ListaExpresiones argumentos;
 } LlamadaFuncion;
 
+/// Asignación del valor de una expresión
+/// a un identificador.
+/// Si la asignación es inmutable, ya no
+/// se puede volver a modificar.
 typedef struct {
     String identificador;
     struct Expresion *expresion;
     int inmutable;
 } Asignacion;
 
+/// La definición de una función creada por
+/// el usuario.
 typedef struct {
     ListaIdentificadores argumentos;
     struct Expresion *cuerpo;
 } DefinicionFuncion;
 
-ListaIdentificadores variables_capturadas(DefinicionFuncion funcion);
+/// El tipo de una expresión.
+typedef enum {
+    /// Una expresión desconocida.
+    /// Sólo se utiliza internamente en el código.
+    EXP_NULA,
+    /// Una expresión que es un simple valor.
+    /// Ejemplo: `5`
+    EXP_VALOR,
+    /// Una expresión que es un simple identificador.
+    /// Ejemplo: `x`
+    EXP_IDENTIFICADOR,
+    /// Una expresión que es una llamada a una función
+    /// con ciertos argumentos.
+    /// Ejemplo: `f(5)`, `(\x=>x+1)(2)`
+    EXP_OP_LLAMADA,
+    /// Una expresión que es una asignación de un valor
+    /// a un identificador.
+    /// Ejemplo: `x = 5`, `const pi = 3.14`
+    /// Nótese que una asignación produce como valor el
+    /// valor asignado (a no ser que sea una sentencia).
+    /// Es decir, `a=b=c=0` es una expresión válida que
+    /// establece a,b, y c a 0.
+    EXP_OP_ASIGNACION,
+    /// Una definición de una función creada por el usuario.
+    /// Ejemplo: `\x,y => x+y`
+    EXP_OP_DEF_FUNCION,
+    /// Una lista de expresiones dentro de un bloque.
+    /// Ejemplo: `{ x=5; print(x); }`
+    EXP_BLOQUE,
+} TipoExpresion;
 
-#define EXP_NULA (-1)
-#define EXP_VALOR 0
-#define EXP_IDENTIFICADOR 1
-#define EXP_OP_LLAMADA 2
-#define EXP_OP_ASIGNACION 3
-#define EXP_OP_DEF_FUNCION 4
-#define EXP_BLOQUE 5
-
+/// Una expresión de un determinado tipo.
+/// Se hae distinción entre si una expresión
+/// es una sentencia o no (Ej, `5` vs `5;`).
+/// Una sentencia produce como valor siempre
+/// "indefinido".
 typedef struct {
-    int tipo;
+    TipoExpresion tipo;
     int es_sentencia;
     union {
         Valor valor;
@@ -113,7 +87,9 @@ typedef struct {
     };
 } Expresion;
 
-Valor crear_funcion(ListaIdentificadores argumentos, Expresion *cuerpo, struct TablaHash *capturadas);
+/*
+ * Funciones ayuda de creación de expresiones.
+ */
 
 Expresion crear_exp_nula();
 Expresion crear_exp_valor(Valor valor);
@@ -125,16 +101,45 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion, int in
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
 
+/// Crea un clon profundo de una expresión.
 Expresion clonar_expresion(Expresion exp);
+/// Libera la memoria de una expresión, ignorando su valor.
 void borrar_expresion(Expresion *exp);
+
+/*
+ * Funciones ayuda de creación de expresiones
+ */
 
 ListaExpresiones crear_lista_expresiones();
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
 ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista);
 void borrar_lista_expresiones(ListaExpresiones *lista);
 
+/*
+ * Funciones ayuda de impresión
+ */
+
 void imprimir_expresion(Expresion expresion);
 void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
-void imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
+
+/*
+ * Funciones adicionales
+ */
+
+/**
+ * Funciones que calcula la lista de identificadores que una determinada
+ * definición de función ha capturado del exterior. Estos se determinan
+ * como aquellos identificadores que no son ni argumentos de la función
+ * ni variables locales. Por ejemplo,
+ *
+ *      const five = 5
+ *      \x => x+five
+ *
+ *  Devolvería ["five"] como lista de variables capturadas.
+ *
+ * @param funcion función a la que se le calcularán las variables capturadas.
+ * @return lista de variables capturadas.
+ */
+ListaIdentificadores variables_capturadas(DefinicionFuncion funcion);
 
 #endif //PRACTICA3_AST_H
