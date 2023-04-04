@@ -138,6 +138,10 @@ String crear_string_n(unsigned long n) {
     }
 }
 
+String clonar_string(String string) {
+    return crear_string(string_a_puntero(&string));
+}
+
 void borrar_string(String *string) {
     if (string->puntero) {
         // Comprobar si el string que estamos borrando es la última en el buffer.

@@ -31,13 +31,14 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
     for (int i = 0; i <= t->nivel; ++i) {
         borrar_tabla_hash(&t->tablas[i]);
     }
+    free(t->tablas);
 }
 
 Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
     EntradaTablaHash resultado;
     for (int i = t.nivel; i >= 0; --i) {
         if (buscar_hash(t.tablas[i], string_a_puntero(&identificador), &resultado)) {
-            return resultado.valor;
+            return clonar_valor(resultado.valor);
         } else {
             continue;
         }
@@ -50,6 +51,8 @@ int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int
     EntradaTablaHash entrada;
     if (buscar_hash(t->tablas[t->nivel], string_a_puntero(&identificador), &entrada) && entrada.inmutable) {
         // Se estaba intentando reasignar una variable inmutable
+        borrar_string(&identificador);
+        borrar_valor(&valor);
         return 0;
     }
 
@@ -57,12 +60,14 @@ int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int
     return 1;
 }
 
-int asignar_valores_tabla(TablaSimbolos *t, TablaHash otro) {
+int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {
     int capacidad_real = otro.capacidad + otro.limite_busqueda;
     for (int i = 0; i < capacidad_real; ++i) {
         if (otro.buffer[i].distancia_posicion_ideal != -1) {
             EntradaTablaHash entrada = otro.buffer[i];
-            if (!asignar_valor_tabla(t, entrada.clave, entrada.valor, entrada.inmutable))
+            String clave = clonar_string(entrada.clave);
+            Valor v = clonar_valor(entrada.valor);
+            if (!asignar_valor_tabla(t, clave, v, entrada.inmutable))
                 return 0;
         }
     }

@@ -30,6 +30,8 @@ typedef struct {
 
 ListaIdentificadores crear_lista_identificadores();
 void push_lista_identificadores(ListaIdentificadores *lista, String identificador);
+ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista);
+void borrar_lista_identificadores(ListaIdentificadores *lista);
 
 typedef struct {
     int capacidad;
@@ -45,6 +47,7 @@ typedef struct {
 
 typedef struct {
     int tipoValor;
+    int *referencias;
     union {
         Entero entero;
         Bool bool;
@@ -61,6 +64,11 @@ Valor crear_entero(Entero entero);
 Valor crear_bool(Bool bool);
 Valor crear_valor_string(String string);
 Valor crear_funcion_nativa(FuncionNativa funcion);
+
+Valor clonar_valor(Valor v);
+
+void borrar_valor(Valor *valor);
+void borrar_lista_valores(ListaValores *lista);
 
 Valor crear_error(const char *formato, ...);
 void imprimir_valor(Valor valor);
@@ -84,6 +92,7 @@ typedef struct {
 
 ListaIdentificadores variables_capturadas(DefinicionFuncion funcion);
 
+#define EXP_NULA (-1)
 #define EXP_VALOR 0
 #define EXP_IDENTIFICADOR 1
 #define EXP_OP_LLAMADA 2
@@ -104,8 +113,9 @@ typedef struct {
     };
 } Expresion;
 
-Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo, struct TablaHash *capturadas);
+Valor crear_funcion(ListaIdentificadores argumentos, Expresion *cuerpo, struct TablaHash *capturadas);
 
+Expresion crear_exp_nula();
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_identificador(String identificador);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos);
@@ -115,8 +125,13 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion, int in
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
 Expresion crear_exp_bloque(ListaExpresiones expresiones);
 
+Expresion clonar_expresion(Expresion exp);
+void borrar_expresion(Expresion *exp);
+
 ListaExpresiones crear_lista_expresiones();
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
+ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista);
+void borrar_lista_expresiones(ListaExpresiones *lista);
 
 void imprimir_expresion(Expresion expresion);
 void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);

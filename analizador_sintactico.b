@@ -57,7 +57,6 @@ void yyerror(Expresion *exp, const char* s);
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
 %type <listaExpresiones> expression_block
-%type <listaExpresiones> expression_block_inner
 %type <listaIdentificadores> identifier_list
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
@@ -73,6 +72,16 @@ void yyerror(Expresion *exp, const char* s);
 %left "+"
 %left "*"
 %precedence "("
+
+%destructor { borrar_string(&$$); } IDENTIFICADOR
+%destructor { borrar_string(&$$); } STRING
+%destructor { borrar_string(&$$); } nombre_asignable
+%destructor { borrar_lista_expresiones(&$$); } argument_list
+%destructor { borrar_lista_expresiones(&$$); } argument_list_many
+%destructor { borrar_lista_expresiones(&$$); } expression_block
+%destructor { borrar_lista_identificadores(&$$); } identifier_list
+%destructor { borrar_lista_identificadores(&$$); } identifier_list_many
+%destructor { borrar_expresion(&$$); } expresion
 
 %%
 
@@ -94,7 +103,7 @@ argument_list_many:
             $$ = crear_lista_expresiones();
             push_lista_expresiones(&$$, $1);
         }
-    | argument_list_many COMA expresion { push_lista_expresiones(&$$, $3); }
+    | argument_list_many COMA expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
     ;
 argument_list:
       argument_list_many
@@ -105,23 +114,17 @@ identifier_list_many:
             $$ = crear_lista_identificadores();
             push_lista_identificadores(&$$, $1);
         }
-    | identifier_list_many COMA IDENTIFICADOR { push_lista_identificadores(&$$, $3); }
+    | identifier_list_many COMA IDENTIFICADOR { push_lista_identificadores(&$1, $3); $$ = $1; }
     ;
 identifier_list:
       identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
 
-sentence_terminator:
-      sentence_terminator ";"
-    | sentence_terminator "\n"
-    | ";" | "\n"
-    ;
-
 nuevas_lineas: %empty | nuevas_lineas "\n"
 
 expression_block:
      nuevas_lineas { $$ = crear_lista_expresiones(); }
-    | expression_block expresion nuevas_lineas { push_lista_expresiones(&$$, $2); }
+    | expression_block expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
 
 nombre_asignable: IDENTIFICADOR | OPERADOR ;

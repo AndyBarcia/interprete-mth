@@ -27,8 +27,10 @@ int main(int argc, char *argv[]) {
     TablaSimbolos simbolos = crear_tabla_simbolos();
     inicializar_libreria_estandar(&simbolos);
 
-    evaluar_fichero(&simbolos, entrada);
+    Valor x = evaluar_fichero(&simbolos, entrada);
+    borrar_valor(&x);
 
+    borrar_tabla_simbolos(&simbolos);
     borrar_buffer_strings();
 
     if (entrada != stdin)

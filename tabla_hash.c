@@ -47,6 +47,7 @@ void borrar_tabla_hash(TablaHash *t) {
     for (int i = 0; i < capacidad_real; i++) {
         if (t->buffer[i].distancia_posicion_ideal != -1) {
             borrar_string(&t->buffer[i].clave);
+            borrar_valor(&t->buffer[i].valor);
         }
     }
     free(t->buffer);

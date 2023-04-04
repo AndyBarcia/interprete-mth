@@ -31,7 +31,7 @@ Valor recuperar_valor_tabla(TablaSimbolos t, String identificador);
 
 int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int inmutable);
 
-int asignar_valores_tabla(TablaSimbolos *t, TablaHash otro);
+int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro);
 
 /**
  * Imprime los símbolos de la tabla de símbolos

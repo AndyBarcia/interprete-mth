@@ -74,6 +74,8 @@ void extender_string(String *string, char *str);
  */
 void extender_string_n(String *string, char *str, unsigned long n);
 
+String clonar_string(String string);
+
 /**
  * Libera los contenidos del string.
  * Si no se utiliza memoria dinámica, no se hace nada

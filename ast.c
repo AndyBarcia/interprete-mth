@@ -6,41 +6,86 @@
 #include <string.h>
 
 Valor crear_indefinido() {
-    return (Valor) { TIPO_INDEFINIDO };
+    return (Valor) {TIPO_INDEFINIDO, NULL};
 }
 
 Valor crear_nulo() {
-    return (Valor) { TIPO_NULO };
+    return (Valor) {TIPO_NULO, NULL};
 }
 
 Valor crear_entero(Entero entero) {
-    return (Valor) { TIPO_ENTERO, .entero = entero };
+    return (Valor) {TIPO_ENTERO, NULL, .entero = entero};
 }
 
 Valor crear_bool(Bool bool) {
-    return (Valor) {TIPO_BOOL, .entero = bool ? 1 : 0};
+    return (Valor) {TIPO_BOOL, NULL, .entero = bool ? 1 : 0};
 }
 
 Valor crear_valor_string(String string) {
-    return (Valor) {TIPO_STRING, .string = string};
+    int *referencias = malloc(sizeof(int));
+    *referencias = 1;
+    return (Valor) {TIPO_STRING, referencias, .string = string};
 }
 
 Valor crear_funcion_nativa(FuncionNativa funcion) {
-    return (Valor) { TIPO_FUNCION_NATIVA, .funcion_nativa = funcion };
+    return (Valor) {TIPO_FUNCION_NATIVA, NULL, .funcion_nativa = funcion};
 }
 
-Valor crear_funcion(ListaIdentificadores argumentos, Expresion cuerpo, struct TablaHash *capturadas) {
-    Expresion *e = malloc(sizeof(Expresion));
-    *e = cuerpo;
+Valor crear_funcion(ListaIdentificadores argumentos, Expresion *cuerpo, struct TablaHash *capturadas) {
+    int *referencias = malloc(sizeof(int));
+    *referencias = 1;
 
     return (Valor) {
             .tipoValor = TIPO_FUNCION,
+            .referencias = referencias,
             .funcion = (Funcion) {
                     .argumentos = argumentos,
-                    .cuerpo = (struct Expresion *) e,
+                    .cuerpo = (struct Expresion *) cuerpo,
                     .variables_capturadas = capturadas
             }
     };
+}
+
+Valor clonar_valor(Valor v) {
+    Valor copia = v;
+    // Al clonar aumentar el número de referencias si es un
+    // valor dinámico (string, error, función, etc).
+    if (copia.referencias)
+        *copia.referencias += 1;
+    return copia;
+}
+
+void borrar_valor(Valor *valor) {
+    // Si es un valor dinámico (string, error, función, etc),
+    // reducir el número de referencias dinámicas; y si estas
+    // legan a 0, liberar la memoria.
+    if (valor->referencias) {
+        *valor->referencias -= 1;
+        if (*valor->referencias <= 0) {
+            switch (valor->tipoValor) {
+                case TIPO_ERROR:
+                    borrar_string(&valor->error); break;
+                case TIPO_STRING:
+                    borrar_string(&valor->string); break;
+                case TIPO_FUNCION:
+                    borrar_lista_identificadores(&valor->funcion.argumentos);
+                    borrar_expresion((Expresion*) valor->funcion.cuerpo);
+                    free(valor->funcion.cuerpo);
+                    borrar_tabla_hash((TablaHash*) valor->funcion.variables_capturadas);
+                    free(valor->funcion.variables_capturadas);
+                    break;
+            }
+            free(valor->referencias);
+            valor->referencias = NULL;
+        }
+    }
+    valor->tipoValor = TIPO_INDEFINIDO;
+}
+
+void borrar_lista_valores(ListaValores *lista) {
+    for (int i = 0; i < lista->longitud; ++i)
+        borrar_valor(&((Valor*)lista->valores)[i]);
+    free(lista->valores);
 }
 
 Valor crear_error(const char *formato, ...) {
@@ -179,7 +224,8 @@ void imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
 
 void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentificadores *lista) {
     switch (expresion.tipo) {
-        case EXP_VALOR: break;
+        case EXP_VALOR:
+            break;
         case EXP_IDENTIFICADOR:
             if (!es_miembro_hash(*locales, string_a_puntero(&expresion.identificador)))
                 push_lista_identificadores(lista, expresion.identificador);
@@ -191,12 +237,12 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
             break;
         case EXP_OP_ASIGNACION:
             insertar_hash(locales, expresion.asignacion.identificador, crear_indefinido(), 0);
-            _variables_capturadas(*(Expresion*)expresion.asignacion.expresion, locales, lista);
+            _variables_capturadas(*(Expresion *) expresion.asignacion.expresion, locales, lista);
             break;
         case EXP_OP_DEF_FUNCION:
             for (int i = 0; i < expresion.defFuncion.argumentos.longitud; ++i)
                 insertar_hash(locales, expresion.defFuncion.argumentos.valores[i], crear_indefinido(), 0);
-            _variables_capturadas(*(Expresion*)expresion.defFuncion.cuerpo, locales, lista);
+            _variables_capturadas(*(Expresion *) expresion.defFuncion.cuerpo, locales, lista);
             break;
     }
 }
@@ -207,25 +253,22 @@ ListaIdentificadores variables_capturadas(DefinicionFuncion funcion) {
     for (int i = 0; i < funcion.argumentos.longitud; ++i)
         insertar_hash(&locales, funcion.argumentos.valores[i], crear_indefinido(), 0);
 
-    Expresion cuerpo = * (Expresion*) funcion.cuerpo;
+    Expresion cuerpo = *(Expresion *) funcion.cuerpo;
     _variables_capturadas(cuerpo, &locales, &capturadas);
+    borrar_tabla_hash(&locales);
     return capturadas;
 }
 
+Expresion crear_exp_nula() {
+    return (Expresion) {EXP_NULA};
+}
+
 Expresion crear_exp_valor(Valor valor) {
-    return (Expresion) {
-            .tipo = EXP_VALOR,
-            .valor = valor,
-            .es_sentencia = 0,
-    };
+    return (Expresion) {EXP_VALOR, .valor = valor, .es_sentencia = 0};
 }
 
 Expresion crear_exp_identificador(String identificador) {
-    return (Expresion) {
-            .tipo = EXP_IDENTIFICADOR,
-            .identificador = identificador,
-            .es_sentencia = 0,
-    };
+    return (Expresion) {EXP_IDENTIFICADOR, .identificador = identificador, .es_sentencia = 0};
 }
 
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos) {
@@ -292,6 +335,67 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones) {
     };
 }
 
+Expresion clonar_expresion(Expresion exp) {
+    Expresion e = exp;
+    switch (e.tipo) {
+        case EXP_NULA: break;
+        case EXP_VALOR:
+            e.valor = clonar_valor(exp.valor);
+            break;
+        case EXP_IDENTIFICADOR:
+            e.identificador = clonar_string(exp.identificador);
+            break;
+        case EXP_OP_LLAMADA:
+            e.llamadaFuncion.funcion = malloc(sizeof(Expresion));
+            *(Expresion*)e.llamadaFuncion.funcion = clonar_expresion(*(Expresion*)exp.llamadaFuncion.funcion);
+            e.llamadaFuncion.argumentos = clonar_lista_expresiones(exp.llamadaFuncion.argumentos);
+            break;
+        case EXP_OP_ASIGNACION:
+            e.asignacion.identificador = clonar_string(exp.asignacion.identificador);
+            *(Expresion*)e.asignacion.expresion = clonar_expresion(*(Expresion*)exp.asignacion.expresion);
+            break;
+        case EXP_OP_DEF_FUNCION:
+            e.defFuncion.argumentos = clonar_lista_identificadores(exp.defFuncion.argumentos);
+            *(Expresion*)e.defFuncion.cuerpo = clonar_expresion(*(Expresion*)exp.defFuncion.cuerpo);
+            break;
+        case EXP_BLOQUE:
+            e.bloque = clonar_lista_expresiones(exp.bloque);
+            break;
+    }
+    return e;
+}
+
+void borrar_expresion(Expresion *exp) {
+    switch (exp->tipo) {
+        case EXP_NULA: break;
+        case EXP_VALOR:
+            borrar_valor(&exp->valor);
+            break;
+        case EXP_IDENTIFICADOR:
+            borrar_string(&exp->identificador);
+            break;
+        case EXP_OP_LLAMADA:
+            borrar_expresion((Expresion*) exp->llamadaFuncion.funcion);
+            free(exp->llamadaFuncion.funcion);
+            borrar_lista_expresiones(&exp->llamadaFuncion.argumentos);
+            break;
+        case EXP_OP_ASIGNACION:
+            borrar_expresion((Expresion*) exp->asignacion.expresion);
+            free(exp->asignacion.expresion);
+            borrar_string(&exp->asignacion.identificador);
+            break;
+        case EXP_OP_DEF_FUNCION:
+            borrar_expresion((Expresion*) exp->defFuncion.cuerpo);
+            free(exp->defFuncion.cuerpo);
+            borrar_lista_identificadores(&exp->defFuncion.argumentos);
+            break;
+        case EXP_BLOQUE:
+            borrar_lista_expresiones(&exp->bloque);
+            break;
+    }
+    exp->tipo = EXP_NULA;
+}
+
 ListaExpresiones crear_lista_expresiones() {
     return (ListaExpresiones) {
             .longitud = 0,
@@ -306,6 +410,33 @@ void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion) {
         ++lista->capacidad;
     }
     ((Expresion *) lista->valores)[lista->longitud++] = expresion;
+}
+
+ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista) {
+    ListaExpresiones result = {
+            .capacidad = lista.longitud,
+            .longitud = lista.longitud,
+            .valores = malloc(sizeof(Expresion)*lista.longitud)
+    };
+    for (int i = 0; i < lista.longitud; ++i)
+        ((Expresion*)result.valores)[i] = clonar_expresion(((Expresion*)lista.valores)[i]);
+    return result;
+}
+
+void borrar_lista_expresiones(ListaExpresiones *lista) {
+    for (int i = 0; i < lista->longitud; ++i)
+        borrar_expresion(&((Expresion*) lista->valores)[i]);
+    free(lista->valores);
+    lista->capacidad = 0;
+    lista->longitud = 0;
+}
+
+void borrar_lista_identificadores(ListaIdentificadores *lista) {
+    for (int i = 0; i < lista->longitud; ++i)
+        borrar_string(&lista->valores[i]);
+    free(lista->valores);
+    lista->capacidad = 0;
+    lista->longitud = 0;
 }
 
 ListaIdentificadores crear_lista_identificadores() {
@@ -324,3 +455,13 @@ void push_lista_identificadores(ListaIdentificadores *lista, String identificado
     ((String *) lista->valores)[lista->longitud++] = identificador;
 }
 
+ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista) {
+    ListaIdentificadores copia = (ListaIdentificadores) {
+        .longitud = lista.longitud,
+        .capacidad = lista.longitud,
+        .valores = malloc(sizeof(String)*lista.longitud)
+    };
+    for (int i = 0; i < lista.longitud; ++i)
+        copia.valores[i] = clonar_string(lista.valores[i]);
+    return copia;
+}
