@@ -27,8 +27,6 @@ void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
                     *retorno = crear_error("No se pueden sumar valores de este tipo.");
                     return;
             }
-            if (result.tipoValor == TIPO_ENTERO)
-                result.entero += v.entero;
         } else {
             *retorno = crear_error("Sumando valores de tipos distintos.");
             return;
