@@ -164,7 +164,8 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
             .tipo = EXP_OP_DEF_FUNCION,
             .defFuncion = (DefinicionFuncion) {
                     .argumentos = argumentos,
-                    .cuerpo = (struct Expresion *) e
+                    .cuerpo = (struct Expresion *) e,
+                    .loc = loc
             },
             .es_sentencia = 0,
     };

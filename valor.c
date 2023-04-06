@@ -192,7 +192,7 @@ ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista) {
     ListaIdentificadores copia = (ListaIdentificadores) {
             .longitud = lista.longitud,
             .capacidad = lista.longitud,
-            .valores = malloc(sizeof(String) * lista.longitud)
+            .valores = malloc(sizeof(Identificador) * lista.longitud)
     };
     for (int i = 0; i < lista.longitud; ++i) {
         copia.valores[i].nombre = clonar_string(lista.valores[i].nombre);
