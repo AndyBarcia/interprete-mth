@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 25 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 19 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     #include "ast.h"
 
@@ -88,7 +88,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 29 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 23 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int tipoOperador;
     int valorEntero;
@@ -109,18 +109,7 @@ typedef union YYSTYPE YYSTYPE;
 #endif
 
 /* Location type.  */
-#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
-typedef struct YYLTYPE YYLTYPE;
-struct YYLTYPE
-{
-  int first_line;
-  int first_column;
-  int last_line;
-  int last_column;
-};
-# define YYLTYPE_IS_DECLARED 1
-# define YYLTYPE_IS_TRIVIAL 1
-#endif
+typedef Localizacion YYLTYPE;
 
 
 

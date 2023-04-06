@@ -34,7 +34,7 @@ void imprimir_error(Error error, char* nombre, char* linea, Localizacion *loc) {
 
         for (int i = 0; i < loc->first_column-1; ++i)
             printf(" ");
-        int width = (loc->last_column - loc->first_column)+1;
+        int width = (loc->last_column - loc->first_column);
         for (int i = 0; i < width; ++i)
             printf("^");
         printf("\n");

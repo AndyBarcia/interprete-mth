@@ -8,7 +8,7 @@
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
                        yylloc->first_column = yylloc->last_column; \
-                       yylloc->last_column += yyleng - 1;
+                       yylloc->last_column += yyleng;
 
 #define OP_SUMAR 128
 #define OP_RESTAR 129
@@ -274,5 +274,5 @@ char* obtener_nombre_fichero(Lexer lexer) {
 }
 
 int siguiente_componente_lexico(Lexer lexer, void* token, Localizacion *loc) {
-    return yylex((YYSTYPE*) token, (YYLTYPE*) loc, lexer.scanner);
+    return yylex((YYSTYPE*) token, loc, lexer.scanner);
 }
