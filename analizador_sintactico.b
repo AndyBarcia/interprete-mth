@@ -94,13 +94,12 @@ program:
     statement_list
     ;
 
+nuevas_lineas: %empty | nuevas_lineas "\n"
+
 statement_list:
-    %empty {  }
-    | expresion { *exp = $1; }
-    | error { }
-    | "\n" statement_list { }
-    | statement_list "\n" expresion { *exp = $3; }
-    | statement_list "\n" error { }
+    | nuevas_lineas
+    | statement_list expresion nuevas_lineas { *exp = $2; }
+    | statement_list error expresion
     ;
 
 argument_list_many:
@@ -108,7 +107,7 @@ argument_list_many:
             $$ = crear_lista_expresiones();
             push_lista_expresiones(&$$, $1);
         }
-    | argument_list_many COMA expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
+    | argument_list_many "," expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
     ;
 argument_list:
       argument_list_many
@@ -127,8 +126,6 @@ identifier_list_many:
 identifier_list:
       identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
-
-nuevas_lineas: %empty | nuevas_lineas "\n"
 
 expression_block:
      nuevas_lineas { $$ = crear_lista_expresiones(); }
