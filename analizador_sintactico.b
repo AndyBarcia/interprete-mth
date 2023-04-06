@@ -39,6 +39,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
 
 %token CONST "const"
+%token EXPORT "export"
 %token IMPORT "import"
 %token FOREIGN "foreign"
 
@@ -159,11 +160,15 @@ expresion:
     | "(" expresion ")" { $$ = $2; }
     | nombre_asignable OPERADOR_ASIGNACION expresion {
             Identificador id = crear_identificador($1, @1);
-            $$ = crear_exp_asignacion(id, $3, 0, @$);
+            $$ = crear_exp_asignacion(id, $3, ASIGNACION_NORMAL, @$);
          }
     | "const" nombre_asignable OPERADOR_ASIGNACION expresion {
             Identificador id = crear_identificador($2, @2);
-            $$ = crear_exp_asignacion(id, $4, 1, @$);
+            $$ = crear_exp_asignacion(id, $4, ASIGNACION_INMUTABLE, @$);
+         }
+    | "export" nombre_asignable OPERADOR_ASIGNACION expresion {
+            Identificador id = crear_identificador($2, @2);
+            $$ = crear_exp_asignacion(id, $4, ASIGNACION_EXPORT, @$);
          }
     | "{" expression_block "}" { $$ = crear_exp_bloque($2, @$); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, @$); }

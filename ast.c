@@ -140,7 +140,7 @@ Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b,
     return crear_exp_llamada(crear_exp_identificador(operador), args, loc);
 }
 
-Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, int inmutable, Localizacion loc) {
+Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = expresion;
 
@@ -149,7 +149,7 @@ Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion,
             .asignacion = (Asignacion) {
                     .identificador = identificador,
                     .expresion = (struct Expresion *) e,
-                    .inmutable = inmutable,
+                    .tipo = asignacion,
                     .loc = loc,
             },
             .es_sentencia = 0,

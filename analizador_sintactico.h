@@ -66,22 +66,23 @@ extern int yydebug;
     ERROR = 261,                   /* ERROR  */
     OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
     CONST = 263,                   /* "const"  */
-    IMPORT = 264,                  /* "import"  */
-    FOREIGN = 265,                 /* "foreign"  */
-    PARENTESIS_IZQ = 266,          /* "("  */
-    PARENTESIS_DER = 267,          /* ")"  */
-    CORCHETE_IZQ = 268,            /* "["  */
-    CORCHETE_DER = 269,            /* "]"  */
-    LLAVE_IZQ = 270,               /* "{"  */
-    LLAVE_DER = 271,               /* "}"  */
-    FLECHA = 272,                  /* "=>"  */
-    SLASH_INVERTIDA = 273,         /* "\\"  */
-    NUEVA_LINEA = 274,             /* "\n"  */
-    PUNTO_Y_COMA = 275,            /* ";"  */
-    COMA = 276,                    /* ","  */
-    OPERADOR = 277,                /* "operador"  */
-    SUMA = 278,                    /* "+"  */
-    MULT = 279                     /* "*"  */
+    EXPORT = 264,                  /* "export"  */
+    IMPORT = 265,                  /* "import"  */
+    FOREIGN = 266,                 /* "foreign"  */
+    PARENTESIS_IZQ = 267,          /* "("  */
+    PARENTESIS_DER = 268,          /* ")"  */
+    CORCHETE_IZQ = 269,            /* "["  */
+    CORCHETE_DER = 270,            /* "]"  */
+    LLAVE_IZQ = 271,               /* "{"  */
+    LLAVE_DER = 272,               /* "}"  */
+    FLECHA = 273,                  /* "=>"  */
+    SLASH_INVERTIDA = 274,         /* "\\"  */
+    NUEVA_LINEA = 275,             /* "\n"  */
+    PUNTO_Y_COMA = 276,            /* ";"  */
+    COMA = 277,                    /* ","  */
+    OPERADOR = 278,                /* "operador"  */
+    SUMA = 279,                    /* "+"  */
+    MULT = 280                     /* "*"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -102,7 +103,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 106 "../analizador_sintactico.h"
+#line 107 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -240,10 +240,10 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
     for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
         ValorLibreriaEstandar v = elementos[i];
         Identificador id = (Identificador) { .nombre = crear_string(v.nombres[0]) };
-        asignar_valor_tabla(t, id, v.valor, 1);
+        asignar_valor_tabla(t, id, v.valor, ASIGNACION_INMUTABLE);
         if (v.nombres[1]) {
             Identificador id_alternativo = (Identificador) { .nombre = crear_string(v.nombres[1]) };
-            asignar_valor_tabla(t, id_alternativo, v.valor, 1);
+            asignar_valor_tabla(t, id_alternativo, v.valor, ASIGNACION_INMUTABLE);
         }
     }
 }

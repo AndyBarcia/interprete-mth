@@ -4,6 +4,7 @@
 #include "string.h"
 #include "valor.h"
 #include "analizador_lexico.h"
+#include "tabla_simbolos.h"
 
 /// Una lista de expresiones, ya sea en un
 /// bloque de expresiones o los argumentos
@@ -26,12 +27,19 @@ typedef struct {
 
 /// Asignación del valor de una expresión
 /// a un identificador.
-/// Si la asignación es inmutable, ya no
-/// se puede volver a modificar.
 typedef struct {
+    /// El nombre al que se va a asignar
+    /// el valor de la expresión.
     Identificador identificador;
+    /// La expresión a evaluar.
     struct Expresion *expresion;
-    int inmutable;
+    /// Si la asignación es normal, o
+    /// si es de tipo inmutable o export.
+    /// Ejemplo: `const x = 5`
+    /// Ejemplo: `export pi = 3.14`
+    TipoAsignacion tipo;
+    /// La localización de la expresión
+    /// en el código fuente.
     Localizacion loc;
 } Asignacion;
 
@@ -115,7 +123,7 @@ Expresion crear_exp_identificador(Identificador identificador);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc);
 Expresion crear_exp_op_unaria(Identificador operador, Expresion x, Localizacion loc);
 Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b, Localizacion loc);
-Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, int inmutable, Localizacion loc);
+Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion loc);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
 Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc);

@@ -61,6 +61,7 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 %%
 
 const { return CONST; }
+export { return EXPORT; }
 import { return IMPORT; }
 foreign { return FOREIGN; }
 

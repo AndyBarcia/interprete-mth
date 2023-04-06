@@ -119,7 +119,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                             free(args.valores);
                             return arg;
                         }
-                        asignar_valor_tabla(tabla, clonar_identificador(fn.argumentos.valores[i]), arg, 0);
+                        asignar_valor_tabla(tabla, clonar_identificador(fn.argumentos.valores[i]), arg, ASIGNACION_NORMAL);
                     }
                     // Introducir las variables capturadas por la función
                     asignar_clones_valores_tabla(tabla, *(TablaHash *) fn.variables_capturadas);
@@ -146,7 +146,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 borrar_string(&exp->asignacion.identificador.nombre);
                 return v;
             }
-            if (asignar_valor_tabla(tabla, exp->asignacion.identificador, clonar_valor(v), exp->asignacion.inmutable)) {
+            if (asignar_valor_tabla(tabla, exp->asignacion.identificador, clonar_valor(v), exp->asignacion.tipo)) {
                 if (exp->es_sentencia) return crear_indefinido();
                 return v;
             } else {
@@ -200,7 +200,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             return ultimo_valor;
         }
         case EXP_IMPORT: {
-            //aumentar_nivel_tabla_simbolos(tabla);
+            aumentar_nivel_tabla_simbolos(tabla);
 
             if (exp->importe.foraneo) {
                 // TODO: importar funciones de C de un archivo ".so"
@@ -226,7 +226,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 }
             }
 
-            //reducir_nivel_tabla_simbolos(tabla);
+            reducir_nivel_tabla_simbolos(tabla);
             borrar_string(&exp->importe.archivo);
             return crear_indefinido();
         }

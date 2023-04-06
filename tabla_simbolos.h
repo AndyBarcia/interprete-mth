@@ -10,6 +10,16 @@ typedef struct {
     int nivel;
 } TablaSimbolos;
 
+typedef enum {
+    /// Una variable normal que puede cambiarse después.
+    ASIGNACION_NORMAL,
+    /// Una constante que no puede cambiarse.
+    ASIGNACION_INMUTABLE,
+    /// Una variable que se recibió por un import.
+    /// También implica inmutabilidad.
+    ASIGNACION_EXPORT
+} TipoAsignacion;
+
 /**
  * Crea una nueva tabla de símbolos con las palabras claves insertadas.
  * @return nueva tabla de símbolos.
@@ -28,7 +38,7 @@ void borrar_tabla_simbolos(TablaSimbolos *t);
 
 Valor recuperar_valor_tabla(TablaSimbolos t, Identificador identificador);
 
-int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor valor, int inmutable);
+int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor valor, TipoAsignacion tipo);
 
 int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro);
 
