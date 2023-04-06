@@ -72,21 +72,7 @@ Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, s
     };
 }
 
-Valor crear_error(Localizacion *loc,const char *formato, ...) {
-    String mensaje;
-    // Cosas mágicas para pasar un número variable de argumentos.
-    va_list args, args2;
-    va_start(args, formato);
-    va_copy(args2, args);
-    // Calcular la longitud total que tendrá el string final.
-    size_t longitud = vsnprintf(NULL, 0, formato, args);
-    mensaje = crear_string_n(longitud);
-    // Escribir el resultado en el string creado.
-    char *str = string_a_puntero(&mensaje);
-    vsnprintf(str, longitud + 1, formato, args2);
-    va_end(args);
-    va_end(args2);
-
+Valor crear_valor_error(Error error, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
         *loc_copy = *loc;
@@ -96,7 +82,7 @@ Valor crear_error(Localizacion *loc,const char *formato, ...) {
     return (Valor) {
             .tipoValor = TIPO_ERROR,
             .loc = loc,
-            .error = mensaje
+            .error = error
     };
 }
 
@@ -120,7 +106,7 @@ void borrar_valor(Valor *valor) {
                 free(valor->loc);
             switch (valor->tipoValor) {
                 case TIPO_ERROR:
-                    borrar_string(&valor->error);
+                    borrar_error(&valor->error);
                     break;
                 case TIPO_STRING:
                     borrar_string(&valor->string);
@@ -241,16 +227,7 @@ void _imprimir_valor(Valor valor) {
             printf("null");
             break;
         case TIPO_ERROR:
-            if (valor.loc) {
-                printf("%d:%d-%d:%d: ",
-                       valor.loc->first_line,
-                       valor.loc->first_column,
-                       valor.loc->last_line,
-                       valor.loc->last_column);
-            } else {
-                printf("Error: ");
-            }
-            printf("%s", string_a_puntero(&valor.error));
+            printf("%s", string_a_puntero(&valor.error.mensaje));
             break;
         case TIPO_FUNCION_NATIVA:
             printf("[función nativa]");

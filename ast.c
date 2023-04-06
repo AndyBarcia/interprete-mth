@@ -12,14 +12,14 @@ void _imprimir_expresion(Expresion expresion) {
             _imprimir_valor(expresion.valor);
             break;
         case EXP_IDENTIFICADOR:
-            printf("%s", string_a_puntero(&expresion.identificador));
+            printf("%s", string_a_puntero(&expresion.identificador.nombre));
             break;
         case EXP_OP_LLAMADA:
             _imprimir_expresion(*(Expresion *) expresion.llamadaFuncion.funcion);
             _imprimir_lista_expresiones(expresion.llamadaFuncion.argumentos);
             break;
         case EXP_OP_ASIGNACION:
-            printf("%s = ", string_a_puntero(&expresion.asignacion.identificador));
+            printf("%s = ", string_a_puntero(&expresion.asignacion.identificador.nombre));
             _imprimir_expresion(*(Expresion *) expresion.asignacion.expresion);
             break;
         case EXP_OP_DEF_FUNCION:
@@ -62,7 +62,7 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
         case EXP_NULA:
             break;
         case EXP_IDENTIFICADOR:
-            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.identificador)))
+            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.identificador.nombre)))
                 push_lista_identificadores(lista, expresion.identificador);
             break;
         case EXP_OP_LLAMADA:

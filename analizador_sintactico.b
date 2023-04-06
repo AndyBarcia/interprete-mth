@@ -173,7 +173,10 @@ expresion:
     | "{" expression_block "}" { $$ = crear_exp_bloque($2, localization(@$)); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, localization(@$)); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
-    | ERROR { $$ = crear_exp_valor(crear_error(&localization(@1), "%s", string_a_puntero(&$1))); }
+    | ERROR {
+            Error error = crear_error("%s", string_a_puntero(&$1));
+            $$ = crear_exp_valor(crear_valor_error(error, &localization(@1)));
+         }
     ;
 
 %%
@@ -181,7 +184,8 @@ expresion:
 void yyerror(void *loc, Expresion *exp, const char* s) {
     YYLTYPE yyloc = *(YYLTYPE*) loc;
     Localizacion x = localization(yyloc);
-    *exp = crear_exp_valor(crear_error(&x, "%s", s));
+    Error error = crear_error("%s", s);
+    *exp = crear_exp_valor(crear_valor_error(error, &x));
 }
 
 int yywrap() {

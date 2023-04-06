@@ -43,7 +43,8 @@ Valor recuperar_valor_tabla(TablaSimbolos t, Identificador  identificador) {
             continue;
         }
     }
-    return crear_error(&identificador.loc, "\"%s\" es una variable no definida.", string_a_puntero(&identificador.nombre));
+    Error error = crear_error("\"%s\" es una variable no definida.", string_a_puntero(&identificador.nombre));
+    return crear_valor_error(error, &identificador.loc);
 }
 
 int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor valor, int inmutable) {

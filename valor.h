@@ -2,14 +2,13 @@
 #define PRACTICA3_VALOR_H
 
 #include "string.h"
+#include "error.h"
 #include "analizador_lexico.h"
 
 /// Tipo interno de un entero en el lenguaje
 typedef int Entero;
 /// Tipo interno de un bool en el lenguaje
 typedef int Bool;
-/// Tipo interno de un error.
-typedef String Error;
 
 /// Todos los tipos de valores que hay en el lenguaje
 typedef enum {
@@ -96,7 +95,7 @@ Valor crear_bool(Bool bool, Localizacion *loc);
 Valor crear_valor_string(String string, Localizacion *loc);
 Valor crear_funcion_nativa(FuncionNativa funcion, Localizacion *loc);
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc);
-Valor crear_error(Localizacion *loc, const char *formato, ...);
+Valor crear_valor_error(Error error, Localizacion *loc);
 
 /// Crea un clon "ligero" de un valor; esto es, incrementando
 /// la cuenta de referencias dinámicas del valor.

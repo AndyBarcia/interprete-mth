@@ -2,63 +2,39 @@
 #include "analizador_sintactico.h"
 #include "analizador_lexico.h"
 
-// Función interna que evalúa los componentes léxicos generados por un lexer
-// dado, ya sea un lexer que proviene de un archivo, entrada estándar, o un str.
-// Si "interactivo" es verdadero, se imprime por consola los valores de cada
-// expresión y los "> " típicos de las terminales.
-Valor _evaluar_con_lexer(TablaSimbolos *tabla, Lexer lexer, int interactivo) {
-    if (interactivo) printf("> ");
-
-    Valor ultimo_valor = crear_indefinido();
-    int status;
-    yypstate *ps = yypstate_new();
-
-    Localizacion loc = (Localizacion) {
-        .first_line = 1,
-        .last_line = 1,
-        .first_column = 1,
-        .last_column = 1
+Evaluador crear_evaluador(Lexer lexer) {
+    return (Evaluador) {
+        .lexer = lexer,
+        .ps = yypstate_new(),
+        .loc = {
+                .first_line = 1,
+                .last_line = 1,
+                .first_column = 1,
+                .last_column = 1
+        },
     };
+}
 
+void borrar_evaluador(Evaluador *evaluador) {
+    yypstate_delete((yypstate*) evaluador->ps);
+    borrar_analizador_lexico(evaluador->lexer);
+}
+
+int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tablaSimbolos, Valor *valor) {
+    int status;
     do {
         YYSTYPE token;
-        int c = siguiente_componente_lexico(lexer, &token, &loc);
+        int c = siguiente_componente_lexico(evaluador->lexer, &token, &evaluador->loc);
 
         Expresion exp = crear_exp_nula();
-        status = yypush_parse(ps, c, &token, (YYLTYPE*) &loc, &exp);
+        status = yypush_parse((yypstate*) evaluador->ps, c, &token, (YYLTYPE*) &evaluador->loc, &exp);
 
         if (exp.tipo != EXP_NULA) {
-            borrar_valor(&ultimo_valor);
-            ultimo_valor = evaluar_expresion(tabla, &exp);
-            if (ultimo_valor.tipoValor == TIPO_ERROR || interactivo) imprimir_valor(ultimo_valor);
-            if (interactivo) printf("> ");
+            *valor = evaluar_expresion(tablaSimbolos, &exp);
+            return 1;
         }
     } while (status == YYPUSH_MORE);
-    yypstate_delete (ps);
-    borrar_analizador_lexico(lexer);
-
-    return ultimo_valor;
-}
-
-Valor evaluar_fichero(TablaSimbolos *tabla, FILE *entrada) {
-    Lexer lexer = crear_lexer_fichero(entrada);
-    return _evaluar_con_lexer(tabla, lexer, entrada == stdin);
-}
-
-Valor evaluar_archivo(TablaSimbolos *tabla, char* archivo) {
-    FILE* entrada;
-    if ((entrada = fopen(archivo, "r")) == NULL) {
-        return crear_error(NULL, "No se pudo abrir el archivo \"%s\".", archivo);
-    }
-    Lexer lexer = crear_lexer_fichero(entrada);
-    Valor v = _evaluar_con_lexer(tabla, lexer, 0);
-    fclose(entrada);
-    return v;
-}
-
-Valor evaluar_str(TablaSimbolos *tabla, char* str) {
-    Lexer lexer = crear_lexer_str(str);
-    return _evaluar_con_lexer(tabla, lexer, 0);
+    return 0;
 }
 
 // Evalúa el valor de la expresión, liberando toda la memoria asociada
@@ -126,7 +102,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
 
                     if (fn.argumentos.longitud != args.longitud) {
                         borrar_lista_valores(&args);
-                        return crear_error(f.loc, "Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
+                        Error error = crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
+                        return crear_valor_error(error, f.loc);
                     }
 
                     // Introducir los argumentos en la tabla de símbolos.
@@ -158,7 +135,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     return v;
                 }
                 default: {
-                    return crear_error(f.loc, "Este valor no es una función!");
+                    return crear_valor_error(crear_error("Este valor no es una función!"), f.loc);
                 }
             }
         }
@@ -173,12 +150,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (exp->es_sentencia) return crear_indefinido();
                 return v;
             } else {
-                Valor error = crear_error(
-                        &exp->asignacion.identificador.loc,
+                Error error = crear_error(
                         "Intentando reasignar variable inmutable \"%s\"",
                         string_a_puntero(&exp->asignacion.identificador.nombre));
                 borrar_string(&exp->asignacion.identificador.nombre);
-                return error;
+                return crear_valor_error(error, &exp->asignacion.identificador.loc);
             }
         }
         case EXP_OP_DEF_FUNCION: {
@@ -225,7 +201,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
         }
         default: {
             borrar_expresion(exp);
-            return crear_error(NULL, "Expresión desconocida. What?");
+            return crear_valor_error(crear_error("Expresión desconocida. What?"), NULL);
         }
     }
 

@@ -2396,18 +2396,23 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 #line 207 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
-Lexer crear_lexer_fichero(FILE *fichero) {
-    Lexer lexer;
-    lexer.str_buffer = NULL;
+int crear_lexer_archivo(Lexer *lexer, char *archivo) {
+    FILE* fichero;
+    if ((fichero = fopen(archivo, "r")) == NULL) {
+        return 0;
+    }
 
-    yylex_init(&lexer.scanner);
-    yyset_in(fichero, lexer.scanner);
+    lexer->nombre_fichero = archivo;
+    lexer->str_buffer = NULL;
 
-    return lexer;
+    yylex_init(&lexer->scanner);
+    yyset_in(fichero, lexer->scanner);
+    return 1;
 }
 
 Lexer crear_lexer_str(char *str) {
      Lexer lexer;
+     lexer.nombre_fichero = NULL;
      yylex_init(&lexer.scanner);
 
      lexer.str_buffer = yy_scan_string(str, lexer.scanner);
@@ -2418,8 +2423,44 @@ Lexer crear_lexer_str(char *str) {
 void borrar_analizador_lexico(Lexer lexer) {
     if (lexer.str_buffer) {
         yy_delete_buffer(lexer.str_buffer, lexer.scanner);
+    } else if (yyget_in(lexer.scanner) != stdin) {
+        fclose(yyget_in(lexer.scanner));
     }
     yylex_destroy(lexer.scanner);
+}
+
+char* obtener_linea(Lexer lexer, int linea) {
+    if (lexer.str_buffer) {
+        // TODO hacer esto
+        return NULL;
+    } else {
+        FILE* archivo = yyget_in(lexer.scanner);
+
+        // Guardar posición actual en el archivo y movernos al inicio
+        long int pos = ftell(archivo);
+        fseek(archivo, 0, SEEK_SET);
+
+        char* buffer = NULL;
+        size_t bufsize = 0;
+        int current_line = 0;
+
+        while (current_line < linea && getline(&buffer, &bufsize, archivo) != -1) {
+            current_line++;
+        }
+
+        if (current_line < linea) {
+            free(buffer);
+            return NULL;
+        }
+
+        // Volver a la posición original y terminar.
+        fseek(archivo, pos, SEEK_SET);
+        return buffer;
+    }
+}
+
+char* obtener_nombre_fichero(Lexer lexer) {
+    return lexer.nombre_fichero;
 }
 
 int siguiente_componente_lexico(Lexer lexer, void* token, Localizacion *loc) {

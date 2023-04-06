@@ -4,30 +4,43 @@
 #include "ast.h"
 #include "tabla_simbolos.h"
 
-/**
- * Evalúa el código de un fichero dado, devolviendo el último valor resulto.
- * @param tabla tabla de símbolos a utilizar para la resolución de variables.
- * @param entrada fichero a evaluar.
- * @return último valor.
- */
-Valor evaluar_fichero(TablaSimbolos *tabla, FILE *entrada);
+/// Un evaluador del lenguaje matemático, con un
+/// lexer y localización actual.
+typedef struct {
+    /// Estado del analizador léxico.
+    Lexer lexer;
+    /// Estado del analizador sintáctico.
+    void *ps;
+    /// Posición actual
+    Localizacion loc;
+} Evaluador;
 
 /**
- * Evalúa el código de un archivo dado, devolviendo el último valor resulto
- * o un valor de error en caso de que no se haya conseguido abrir el archivo.
- * @param tabla tabla de símbolos a utilizar para la resolución de variables.
- * @param archivo fichero a evaluar.
- * @return último valor.
+ * Crea un nuevo evaluador de expresiones con un
+ * analizador léxico dado, que puede provenir
+ * de un archivo, cadena de caracteres, o entrada
+ * estándar.
+ * @param lexer
+ * @return
  */
-Valor evaluar_archivo(TablaSimbolos *tabla, char* archivo);
+Evaluador crear_evaluador(Lexer lexer);
 
 /**
- * Evalúa el código de una cadena dada, devolviendo su valor.
- * @param tabla tabla de símbolos a utilizar para la resolución de variables.
- * @param str cadena a evaluar.
- * @return valor de la cadena.
+ * Libera la memoria de un evaluador.
+ * @param evaluador
  */
-Valor evaluar_str(TablaSimbolos *tabla, char* str);
+void borrar_evaluador(Evaluador *evaluador);
+
+/**
+ * Obtiene el valor resultante de evaluar la siguiente
+ * expresión que hay en un evaluador.
+ * @param evaluador el evaluador a usar.
+ * @param tablaSimbolos la tabla de variables.
+ * @param valor donde se guardará el valor.
+ * @return 1 si se evaluó un valor, o 0 en caso de que
+ * ya no quedasen expresiones por evaluar.
+ */
+int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tablaSimbolos, Valor *valor);
 
 /**
  * Evalúa el valor de una expresión, liberando la memoria de la expresión

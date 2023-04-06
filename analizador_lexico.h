@@ -23,15 +23,20 @@ typedef struct {
     // estamos procesando un char*
     // en vez de un archivo.
     void* str_buffer;
+    // Nombre del fichero que se
+    // está analizando, o NULL en
+    // caso de estar procesando
+    // un archivo o un string.
+    char* nombre_fichero;
 } Lexer;
 
 /**
- * Crea un analizador léxico sobre un determinado fichero
- * ya abierto, que puede ser stdin.
- * @param fichero fichero a procesar.
- * @return el analizador léxico
+ * Crea un analizador léxico sobre un determinado archivo.
+ * @param lexer lugar donde se creará el analizador
+ * @param archivo fichero a procesar.
+ * @return 1 si se abrió el archivo y 0 en caso contrario.
  */
-Lexer crear_lexer_fichero(FILE *fichero);
+int crear_lexer_archivo(Lexer *lexer, char *archivo);
 
 /**
  * Crea un analizador léxico sobre una cadena de caracteres.
@@ -45,6 +50,16 @@ Lexer crear_lexer_str(char *str);
  * @param lexer
  */
 void borrar_analizador_lexico(Lexer lexer);
+
+/**
+ * Obtiene una línea del código fuente de un lexer dado.
+ * @param lexer el analizador léxico.
+ * @param loc la localización de la línea.
+ * @return la línea del código fuente
+ */
+char* obtener_linea(Lexer lexer, int linea);
+
+char* obtener_nombre_fichero(Lexer lexer);
 
 /**
  * Devuelve el siguiente componente léxico de un analizador

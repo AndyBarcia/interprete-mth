@@ -24,11 +24,11 @@ void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
                     break;
                 }
                 default:
-                    *retorno = crear_error(result.loc, "No se pueden sumar valores de este tipo.");
+                    *retorno = crear_valor_error(crear_error("No se pueden sumar valores de este tipo."), result.loc);
                     return;
             }
         } else {
-            *retorno = crear_error(v.loc, "Sumando valores de tipos distintos.");
+            *retorno = crear_valor_error(crear_error("Sumando valores de tipos distintos."), v.loc);
             return;
         }
     }
@@ -39,32 +39,32 @@ void restar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud == 1) {
         Valor v = ((Valor *) args.valores)[0];
         if (v.tipoValor != TIPO_ENTERO) {
-            *retorno = crear_error(v.loc, "No es de tipo entero.");
+            *retorno = crear_valor_error(crear_error("No es de tipo entero."), v.loc);
             return;
         }
         *retorno = crear_entero(-((Valor *) args.valores)[0].entero, v.loc);
     } else if (args.longitud == 2) {
         if (((Valor *) args.valores)[0].tipoValor != TIPO_ENTERO ||
             ((Valor *) args.valores)[1].tipoValor != TIPO_ENTERO) {
-            *retorno = crear_error(NULL, "No es de tipo entero.");
+            *retorno = crear_valor_error(crear_error("No es de tipo entero."), NULL);
             return;
         }
         *retorno = crear_entero(((Valor *) args.valores)[0].entero - ((Valor *) args.valores)[1].entero, NULL);
     } else {
-        *retorno = crear_error(NULL, "Se pasaron argumentos de más.");
+        *retorno = crear_valor_error(crear_error("Se pasaron argumentos de más."), NULL);
     }
 }
 
 void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud < 2) {
-        *retorno = crear_error(NULL, "Faltan argumentos.");
+        *retorno = crear_valor_error(crear_error("Faltan argumentos."), NULL);
         return;
     }
 
     int a = 1;
     for (int i = 0; i < args.longitud; ++i) {
         if (((Valor *) args.valores)[i].tipoValor != TIPO_ENTERO) {
-            *retorno = crear_error(NULL, "No es de tipo entero.");
+            *retorno = crear_valor_error(crear_error("No es de tipo entero."), NULL);
             return;
         }
         a *= ((Valor *) args.valores)[i].entero;
@@ -74,7 +74,7 @@ void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
 
 void igualdad(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud < 2) {
-        *retorno = crear_error(NULL, "Faltan argumentos.");
+        *retorno = crear_valor_error(crear_error("Faltan argumentos."), NULL);
         return;
     }
 
@@ -103,13 +103,13 @@ void _imprimir_solo_usuario(EntradaTablaHash entrada);
 
 void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_error(NULL, "Demasiados argumentos.");
+        *retorno = crear_valor_error(crear_error("Demasiados argumentos."), NULL);
         return;
     }
     if (args.longitud == 1) {
         Valor arg = ((Valor *) args.valores)[0];
         if (arg.tipoValor != TIPO_BOOL) {
-            *retorno = crear_error(NULL, "Se esperaba un booleano.");
+            *retorno = crear_valor_error(crear_error("Se esperaba un booleano."), NULL);
             return;
         }
         if (arg.bool) {
@@ -125,34 +125,40 @@ void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
 
 void eval(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_error(NULL, "Demasiados argumentos.");
+        *retorno = crear_valor_error(crear_error("Demasiados argumentos."), NULL);
         return;
     } else if (args.longitud == 0) {
-        *retorno = crear_error(NULL, "Se esperaba un string a evaluar.");
+        *retorno = crear_valor_error(crear_error("Se esperaba un string a evaluar."), NULL);
         return;
     }
     Valor arg = ((Valor *) args.valores)[0];
     if (arg.tipoValor != TIPO_STRING) {
-        *retorno = crear_error(NULL, "Se esperaba un string a evaluar.");
+        *retorno = crear_valor_error(crear_error("Se esperaba un string a evaluar."), NULL);
         return;
     }
-    *retorno = evaluar_str(tabla, string_a_puntero(&arg.string));
+
+    printf("Temporalmente no implementado"); // TODO import
+    exit(0);
+    //*retorno = evaluar_str(tabla, string_a_puntero(&arg.string));
 }
 
 void import(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_error(NULL, "Demasiados argumentos.");
+        *retorno = crear_valor_error(crear_error("Demasiados argumentos."), NULL);
         return;
     } else if (args.longitud == 0) {
-        *retorno = crear_error(NULL, "Se esperaba una dirección de un archivo.");
+        *retorno = crear_valor_error(crear_error("Se esperaba una dirección de un archivo."), NULL);
         return;
     }
     Valor arg = ((Valor *) args.valores)[0];
     if (arg.tipoValor != TIPO_STRING) {
-        *retorno = crear_error(NULL, "Se esperaba una dirección de un archivo.");
+        *retorno = crear_valor_error(crear_error("Se esperaba una dirección de un archivo."), NULL);
         return;
     }
-    *retorno = evaluar_archivo(tabla, string_a_puntero(&arg.string));
+
+    printf("Temporalmente no implementado"); // TODO import
+    exit(0);
+    //*retorno = evaluar_archivo(tabla, string_a_puntero(&arg.string));
 }
 
 typedef struct {
@@ -237,7 +243,7 @@ void _imprimir_solo_usuario(EntradaTablaHash entrada) {
 
 void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_error(NULL, "Sólo se acepta un argumento de entrada.");
+        *retorno = crear_valor_error(crear_error("Sólo se acepta un argumento de entrada."), NULL);
         return;
     }
     if (args.longitud == 0) {
