@@ -48,7 +48,7 @@ Valor evaluar_fichero(TablaSimbolos *tabla, FILE *entrada) {
 Valor evaluar_archivo(TablaSimbolos *tabla, char* archivo) {
     FILE* entrada;
     if ((entrada = fopen(archivo, "r")) == NULL) {
-        return crear_error("No se pudo abrir el archivo \"%s\".", archivo);
+        return crear_error(NULL, "No se pudo abrir el archivo \"%s\".", archivo);
     }
     Lexer lexer = crear_lexer_fichero(entrada);
     Valor v = _evaluar_con_lexer(tabla, lexer, 0);
@@ -81,7 +81,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
             Valor v = recuperar_valor_tabla(*tabla, exp->identificador);
             if (v.tipoValor == TIPO_ERROR) return v;
-            borrar_string(&exp->identificador);
+            borrar_string(&exp->identificador.nombre);
 
             if (exp->es_sentencia) return crear_indefinido();
             return v;
@@ -126,7 +126,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
 
                     if (fn.argumentos.longitud != args.longitud) {
                         borrar_lista_valores(&args);
-                        return crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
+                        return crear_error(f.loc, "Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
                     }
 
                     // Introducir los argumentos en la tabla de símbolos.
@@ -142,7 +142,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                             free(args.valores);
                             return arg;
                         }
-                        asignar_valor_tabla(tabla, clonar_string(fn.argumentos.valores[i]), arg, 0);
+                        asignar_valor_tabla(tabla, clonar_identificador(fn.argumentos.valores[i]), arg, 0);
                     }
                     // Introducir las variables capturadas por la función
                     asignar_clones_valores_tabla(tabla, *(TablaHash *) fn.variables_capturadas);
@@ -157,23 +157,28 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     if (exp->es_sentencia) return crear_indefinido();
                     return v;
                 }
-                default:
-                    return crear_error("Este valor no es una función!");
+                default: {
+                    return crear_error(f.loc, "Este valor no es una función!");
+                }
             }
         }
         case EXP_OP_ASIGNACION: {
             Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion);
             free(exp->asignacion.expresion);
             if (v.tipoValor == TIPO_ERROR) {
-                borrar_string(&exp->asignacion.identificador);
+                borrar_string(&exp->asignacion.identificador.nombre);
                 return v;
             }
             if (asignar_valor_tabla(tabla, exp->asignacion.identificador, clonar_valor(v), exp->asignacion.inmutable)) {
                 if (exp->es_sentencia) return crear_indefinido();
                 return v;
             } else {
-                borrar_string(&exp->asignacion.identificador);
-                return crear_error("Intentando reasignar variable inmutable \"%s\"", string_a_puntero(&exp->asignacion.identificador));
+                Valor error = crear_error(
+                        &exp->asignacion.identificador.loc,
+                        "Intentando reasignar variable inmutable \"%s\"",
+                        string_a_puntero(&exp->asignacion.identificador.nombre));
+                borrar_string(&exp->asignacion.identificador.nombre);
+                return error;
             }
         }
         case EXP_OP_DEF_FUNCION: {
@@ -193,11 +198,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     free(capturadas);
                     return v;
                 }
-                insertar_hash(capturadas, ids.valores[i], v, 1);
+                insertar_hash(capturadas, ids.valores[i].nombre, v, 1);
             }
-
             borrar_lista_identificadores(&ids);
-            return crear_funcion(exp->defFuncion.argumentos, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas);
+            return crear_funcion(exp->defFuncion.argumentos, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, &exp->defFuncion.loc);
         }
         case EXP_BLOQUE: {
             aumentar_nivel_tabla_simbolos(tabla);
@@ -221,7 +225,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
         }
         default: {
             borrar_expresion(exp);
-            return crear_error("What?");
+            return crear_error(NULL, "Expresión desconocida. What?");
         }
     }
 

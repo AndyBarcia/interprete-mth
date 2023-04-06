@@ -121,9 +121,12 @@ argument_list:
 identifier_list_many:
     IDENTIFICADOR {
             $$ = crear_lista_identificadores();
-            push_lista_identificadores(&$$, $1);
+            push_lista_identificadores(&$$, crear_identificador($1, localization(@1)));
         }
-    | identifier_list_many COMA IDENTIFICADOR { push_lista_identificadores(&$1, $3); $$ = $1; }
+    | identifier_list_many COMA IDENTIFICADOR {
+            push_lista_identificadores(&$1, crear_identificador($3, localization(@3)));
+            $$ = $1;
+        }
     ;
 identifier_list:
       identifier_list_many
@@ -139,27 +142,46 @@ expression_block:
 nombre_asignable: IDENTIFICADOR | OPERADOR ;
 
 expresion:
-    nombre_asignable { $$ = crear_exp_identificador($1, localization(@1)); }
-    | ENTERO { $$ = crear_exp_valor(crear_entero($1), localization(@1)); }
-    | STRING { $$ = crear_exp_valor(crear_valor_string($1), localization(@1)); }
-    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2, localization(@1)); }
-    | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3, localization(@1)); }
-    | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3, localization(@1)); }
-    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, localization(@1)); }
+      ENTERO { $$ = crear_exp_valor(crear_entero($1, &localization(@1))); }
+    | STRING { $$ = crear_exp_valor(crear_valor_string($1, &localization(@1))); }
+    | nombre_asignable {
+            Identificador id = crear_identificador($1, localization(@1));
+            $$ = crear_exp_identificador(id);
+        }
+    | OPERADOR expresion {
+            Identificador op = crear_identificador($1, localization(@1));
+            $$ = crear_exp_op_unaria(op, $2, localization(@$));
+        }
+    | expresion "*" expresion {
+            Identificador op = crear_identificador($2, localization(@2));
+            $$ = crear_exp_op_binaria(op, $1, $3, localization(@$));
+        }
+    | expresion "+" expresion {
+            Identificador op = crear_identificador($2, localization(@2));
+            $$ = crear_exp_op_binaria(op, $1, $3, localization(@$));
+         }
+    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, localization(@$)); }
     | "(" expresion ")" { $$ = $2; }
-    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0, localization(@1)); }
-    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1, localization(@1)); }
-    | "{" expression_block "}" { $$ = crear_exp_bloque($2, localization(@1)); }
-    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, localization(@1)); }
+    | nombre_asignable OPERADOR_ASIGNACION expresion {
+            Identificador id = crear_identificador($1, localization(@1));
+            $$ = crear_exp_asignacion(id, $3, 0, localization(@$));
+         }
+    | "const" nombre_asignable OPERADOR_ASIGNACION expresion {
+            Identificador id = crear_identificador($2, localization(@2));
+            $$ = crear_exp_asignacion(id, $4, 1, localization(@$));
+         }
+    | "{" expression_block "}" { $$ = crear_exp_bloque($2, localization(@$)); }
+    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, localization(@$)); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
-    | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1)), localization(@1)); }
+    | ERROR { $$ = crear_exp_valor(crear_error(&localization(@1), "%s", string_a_puntero(&$1))); }
     ;
 
 %%
 
 void yyerror(void *loc, Expresion *exp, const char* s) {
     YYLTYPE yyloc = *(YYLTYPE*) loc;
-    *exp = crear_exp_valor(crear_error("%s", s), localization(yyloc));
+    Localizacion x = localization(yyloc);
+    *exp = crear_exp_valor(crear_error(&x, "%s", s));
 }
 
 int yywrap() {

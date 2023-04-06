@@ -34,29 +34,29 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
     free(t->tablas);
 }
 
-Valor recuperar_valor_tabla(TablaSimbolos t, String identificador) {
+Valor recuperar_valor_tabla(TablaSimbolos t, Identificador  identificador) {
     EntradaTablaHash resultado;
     for (int i = t.nivel; i >= 0; --i) {
-        if (buscar_hash(t.tablas[i], string_a_puntero(&identificador), &resultado)) {
+        if (buscar_hash(t.tablas[i], string_a_puntero(&identificador.nombre), &resultado)) {
             return clonar_valor(resultado.valor);
         } else {
             continue;
         }
     }
-    return crear_error("\"%s\" es una variable no definida.", string_a_puntero(&identificador));
+    return crear_error(&identificador.loc, "\"%s\" es una variable no definida.", string_a_puntero(&identificador.nombre));
 }
 
-int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int inmutable) {
+int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor valor, int inmutable) {
     // Buscar sólo en el último nivel si esta variable ya estaba definida como inmutable.
     EntradaTablaHash entrada;
-    if (buscar_hash(t->tablas[t->nivel], string_a_puntero(&identificador), &entrada) && entrada.inmutable) {
+    if (buscar_hash(t->tablas[t->nivel], string_a_puntero(&identificador.nombre), &entrada) && entrada.inmutable) {
         // Se estaba intentando reasignar una variable inmutable
-        borrar_string(&identificador);
+        borrar_string(&identificador.nombre);
         borrar_valor(&valor);
         return 0;
     }
 
-    insertar_hash(&t->tablas[t->nivel], identificador, valor, inmutable);
+    insertar_hash(&t->tablas[t->nivel], identificador.nombre, valor, inmutable);
     return 1;
 }
 
@@ -66,8 +66,9 @@ int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {
         if (otro.buffer[i].distancia_posicion_ideal != -1) {
             EntradaTablaHash entrada = otro.buffer[i];
             String clave = clonar_string(entrada.clave);
+            Identificador id = (Identificador) { .nombre = clave };
             Valor v = clonar_valor(entrada.valor);
-            if (!asignar_valor_tabla(t, clave, v, entrada.inmutable))
+            if (!asignar_valor_tabla(t, id, v, entrada.inmutable))
                 return 0;
         }
     }

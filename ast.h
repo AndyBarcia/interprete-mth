@@ -12,6 +12,7 @@ typedef struct {
     int capacidad;
     int longitud;
     struct Expresion* valores;
+    Localizacion loc;
 } ListaExpresiones;
 
 /// Llamada a una expresión como si fuese
@@ -20,6 +21,7 @@ typedef struct {
 typedef struct {
     struct Expresion *funcion;
     ListaExpresiones argumentos;
+    Localizacion loc;
 } LlamadaFuncion;
 
 /// Asignación del valor de una expresión
@@ -27,9 +29,10 @@ typedef struct {
 /// Si la asignación es inmutable, ya no
 /// se puede volver a modificar.
 typedef struct {
-    String identificador;
+    Identificador identificador;
     struct Expresion *expresion;
     int inmutable;
+    Localizacion loc;
 } Asignacion;
 
 /// La definición de una función creada por
@@ -37,6 +40,7 @@ typedef struct {
 typedef struct {
     ListaIdentificadores argumentos;
     struct Expresion *cuerpo;
+    Localizacion loc;
 } DefinicionFuncion;
 
 /// El tipo de una expresión.
@@ -74,15 +78,13 @@ typedef enum {
 typedef struct {
     /// El tipo de la expresión.
     TipoExpresion tipo;
-    /// La posición de la expresión en el código.
-    Localizacion loc;
     /// Si es una sentencia o no (Ej, `5` vs `5;`).
     /// Una sentencia produce como valor siempre
     /// "indefinido".
     int es_sentencia;
     union {
         Valor valor;
-        String identificador;
+        Identificador identificador;
         LlamadaFuncion llamadaFuncion;
         Asignacion asignacion;
         DefinicionFuncion defFuncion;
@@ -95,12 +97,12 @@ typedef struct {
  */
 
 Expresion crear_exp_nula();
-Expresion crear_exp_valor(Valor valor, Localizacion loc);
-Expresion crear_exp_identificador(String identificador, Localizacion loc);
+Expresion crear_exp_valor(Valor valor);
+Expresion crear_exp_identificador(Identificador identificador);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc);
-Expresion crear_exp_op_unaria(String operador, Expresion x, Localizacion loc);
-Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b, Localizacion loc);
-Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable, Localizacion loc);
+Expresion crear_exp_op_unaria(Identificador operador, Expresion x, Localizacion loc);
+Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b, Localizacion loc);
+Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, int inmutable, Localizacion loc);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
 

@@ -2,11 +2,14 @@
 #define PRACTICA3_VALOR_H
 
 #include "string.h"
+#include "analizador_lexico.h"
 
 /// Tipo interno de un entero en el lenguaje
 typedef int Entero;
 /// Tipo interno de un bool en el lenguaje
 typedef int Bool;
+/// Tipo interno de un error.
+typedef String Error;
 
 /// Todos los tipos de valores que hay en el lenguaje
 typedef enum {
@@ -33,11 +36,17 @@ typedef enum {
 
 typedef void (*FuncionNativa)();
 
+/// Un identificador, con una localización en el código fuente.
+typedef struct {
+    String nombre;
+    Localizacion loc;
+} Identificador;
+
 /// Lista de Strings.
 typedef struct {
     int longitud;
     int capacidad;
-    String* valores;
+    Identificador* valores;
 } ListaIdentificadores;
 
 /// Una función definida por el usuario, con:
@@ -54,15 +63,19 @@ typedef struct {
 /// Los valores dinámicos (strings, errores, y funciones) llevan
 /// una cuenta de referencias activas para así evitar double free's.
 typedef struct {
+    //// El tipo de valor.
     TipoValor tipoValor;
+    /// El número de referencias dinámicas.
     int *referencias;
+    /// La localización en el código fuente, si existe.
+    Localizacion *loc;
     union {
         Entero entero;
         Bool bool;
         FuncionNativa funcion_nativa;
         Funcion funcion;
         String string;
-        String error;
+        Error error;
     };
 } Valor;
 
@@ -78,12 +91,12 @@ typedef struct {
 
 Valor crear_indefinido();
 Valor crear_nulo();
-Valor crear_entero(Entero entero);
-Valor crear_bool(Bool bool);
-Valor crear_valor_string(String string);
-Valor crear_funcion_nativa(FuncionNativa funcion);
-Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas);
-Valor crear_error(const char *formato, ...);
+Valor crear_entero(Entero entero, Localizacion *loc);
+Valor crear_bool(Bool bool, Localizacion *loc);
+Valor crear_valor_string(String string, Localizacion *loc);
+Valor crear_funcion_nativa(FuncionNativa funcion, Localizacion *loc);
+Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc);
+Valor crear_error(Localizacion *loc, const char *formato, ...);
 
 /// Crea un clon "ligero" de un valor; esto es, incrementando
 /// la cuenta de referencias dinámicas del valor.
@@ -101,8 +114,11 @@ void borrar_lista_valores(ListaValores *lista);
  * Funciones ayuda de creación de identificadores
  */
 
+Identificador crear_identificador(String nombre, Localizacion loc);
+Identificador clonar_identificador(Identificador id);
+
 ListaIdentificadores crear_lista_identificadores();
-void push_lista_identificadores(ListaIdentificadores *lista, String identificador);
+void push_lista_identificadores(ListaIdentificadores *lista, Identificador identificador);
 ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista);
 void borrar_lista_identificadores(ListaIdentificadores *lista);
 

@@ -26,9 +26,9 @@ void reducir_nivel_tabla_simbolos(TablaSimbolos *t);
  */
 void borrar_tabla_simbolos(TablaSimbolos *t);
 
-Valor recuperar_valor_tabla(TablaSimbolos t, String identificador);
+Valor recuperar_valor_tabla(TablaSimbolos t, Identificador identificador);
 
-int asignar_valor_tabla(TablaSimbolos *t, String identificador, Valor valor, int inmutable);
+int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor valor, int inmutable);
 
 int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro);
 

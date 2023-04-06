@@ -71,12 +71,12 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
                 _variables_capturadas(((Expresion *) expresion.llamadaFuncion.argumentos.valores)[i], locales, lista);
             break;
         case EXP_OP_ASIGNACION:
-            insertar_hash(locales, expresion.asignacion.identificador, crear_indefinido(), 0);
+            insertar_hash(locales, expresion.asignacion.identificador.nombre, crear_indefinido(), 0);
             _variables_capturadas(*(Expresion *) expresion.asignacion.expresion, locales, lista);
             break;
         case EXP_OP_DEF_FUNCION:
             for (int i = 0; i < expresion.defFuncion.argumentos.longitud; ++i)
-                insertar_hash(locales, expresion.defFuncion.argumentos.valores[i], crear_indefinido(), 0);
+                insertar_hash(locales, expresion.defFuncion.argumentos.valores[i].nombre, crear_indefinido(), 0);
             _variables_capturadas(*(Expresion *) expresion.defFuncion.cuerpo, locales, lista);
             break;
         case EXP_BLOQUE:
@@ -92,7 +92,7 @@ ListaIdentificadores variables_capturadas(DefinicionFuncion funcion) {
     ListaIdentificadores capturadas = crear_lista_identificadores();
     TablaHash locales = crear_tabla_hash(funcion.argumentos.longitud);
     for (int i = 0; i < funcion.argumentos.longitud; ++i)
-        insertar_hash(&locales, funcion.argumentos.valores[i], crear_indefinido(), 0);
+        insertar_hash(&locales, funcion.argumentos.valores[i].nombre, crear_indefinido(), 0);
 
     Expresion cuerpo = *(Expresion *) funcion.cuerpo;
     _variables_capturadas(cuerpo, &locales, &capturadas);
@@ -104,12 +104,12 @@ Expresion crear_exp_nula() {
     return (Expresion) {EXP_NULA};
 }
 
-Expresion crear_exp_valor(Valor valor, Localizacion loc) {
-    return (Expresion) {EXP_VALOR, loc, .valor = valor, .es_sentencia = 0};
+Expresion crear_exp_valor(Valor valor) {
+    return (Expresion) {EXP_VALOR, .valor = valor, .es_sentencia = 0};
 }
 
-Expresion crear_exp_identificador(String identificador, Localizacion loc) {
-    return (Expresion) {EXP_IDENTIFICADOR, loc, .identificador = identificador, .es_sentencia = 0};
+Expresion crear_exp_identificador(Identificador identificador) {
+    return (Expresion) {EXP_IDENTIFICADOR, .identificador = identificador, .es_sentencia = 0};
 }
 
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc) {
@@ -118,39 +118,39 @@ Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Loca
 
     return (Expresion) {
             .tipo = EXP_OP_LLAMADA,
-            .loc = loc,
             .llamadaFuncion = (LlamadaFuncion) {
                     .funcion = (struct Expresion *) e,
-                    .argumentos = argumentos
+                    .argumentos = argumentos,
+                    .loc = loc
             },
             .es_sentencia = 0,
     };
 }
 
-Expresion crear_exp_op_unaria(String operador, Expresion x, Localizacion loc) {
+Expresion crear_exp_op_unaria(Identificador operador, Expresion x, Localizacion loc) {
     ListaExpresiones args = crear_lista_expresiones();
     push_lista_expresiones(&args, x);
-    return crear_exp_llamada(crear_exp_identificador(operador, loc), args, loc);
+    return crear_exp_llamada(crear_exp_identificador(operador), args, loc);
 }
 
-Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b, Localizacion loc) {
+Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b, Localizacion loc) {
     ListaExpresiones args = crear_lista_expresiones();
     push_lista_expresiones(&args, a);
     push_lista_expresiones(&args, b);
-    return crear_exp_llamada(crear_exp_identificador(operador, loc), args, loc);
+    return crear_exp_llamada(crear_exp_identificador(operador), args, loc);
 }
 
-Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable, Localizacion loc) {
+Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, int inmutable, Localizacion loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = expresion;
 
     return (Expresion) {
             .tipo = EXP_OP_ASIGNACION,
-            .loc = loc,
             .asignacion = (Asignacion) {
                     .identificador = identificador,
                     .expresion = (struct Expresion *) e,
-                    .inmutable = inmutable
+                    .inmutable = inmutable,
+                    .loc = loc,
             },
             .es_sentencia = 0,
     };
@@ -187,7 +187,7 @@ Expresion clonar_expresion(Expresion exp) {
             e.valor = clonar_valor(exp.valor);
             break;
         case EXP_IDENTIFICADOR:
-            e.identificador = clonar_string(exp.identificador);
+            e.identificador.nombre = clonar_string(exp.identificador.nombre);
             break;
         case EXP_OP_LLAMADA:
             e.llamadaFuncion.funcion = malloc(sizeof(Expresion));
@@ -195,7 +195,7 @@ Expresion clonar_expresion(Expresion exp) {
             e.llamadaFuncion.argumentos = clonar_lista_expresiones(exp.llamadaFuncion.argumentos);
             break;
         case EXP_OP_ASIGNACION:
-            e.asignacion.identificador = clonar_string(exp.asignacion.identificador);
+            e.asignacion.identificador = clonar_identificador(exp.asignacion.identificador);
             *(Expresion *) e.asignacion.expresion = clonar_expresion(*(Expresion *) exp.asignacion.expresion);
             break;
         case EXP_OP_DEF_FUNCION:
@@ -217,7 +217,7 @@ void borrar_expresion(Expresion *exp) {
             borrar_valor(&exp->valor);
             break;
         case EXP_IDENTIFICADOR:
-            borrar_string(&exp->identificador);
+            borrar_string(&exp->identificador.nombre);
             break;
         case EXP_OP_LLAMADA:
             borrar_expresion((Expresion *) exp->llamadaFuncion.funcion);
@@ -227,7 +227,7 @@ void borrar_expresion(Expresion *exp) {
         case EXP_OP_ASIGNACION:
             borrar_expresion((Expresion *) exp->asignacion.expresion);
             free(exp->asignacion.expresion);
-            borrar_string(&exp->asignacion.identificador);
+            borrar_string(&exp->asignacion.identificador.nombre);
             break;
         case EXP_OP_DEF_FUNCION:
             borrar_expresion((Expresion *) exp->defFuncion.cuerpo);
