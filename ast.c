@@ -178,6 +178,18 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc) {
     };
 }
 
+Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc) {
+    return (Expresion) {
+        .tipo = EXP_IMPORT,
+        .importe = (Import) {
+            .archivo = archivo,
+            .foraneo = foraneo,
+            .loc = loc,
+        },
+        .es_sentencia = 0
+    };
+}
+
 Expresion clonar_expresion(Expresion exp) {
     Expresion e = exp;
     switch (e.tipo) {
@@ -204,6 +216,9 @@ Expresion clonar_expresion(Expresion exp) {
             break;
         case EXP_BLOQUE:
             e.bloque = clonar_lista_expresiones(exp.bloque);
+            break;
+        case EXP_IMPORT:
+            e.importe.archivo = clonar_string(e.importe.archivo);
             break;
     }
     return e;
@@ -236,6 +251,9 @@ void borrar_expresion(Expresion *exp) {
             break;
         case EXP_BLOQUE:
             borrar_lista_expresiones(&exp->bloque);
+            break;
+        case EXP_IMPORT:
+            borrar_string(&exp->importe.archivo);
             break;
     }
     exp->tipo = EXP_NULA;

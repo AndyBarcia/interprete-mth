@@ -43,6 +43,15 @@ typedef struct {
     Localizacion loc;
 } DefinicionFuncion;
 
+/// La importación de un archivo, ya sea
+/// del propio lenguaje, o una biblioteca
+/// foránea con funciones de C.
+typedef struct {
+    String archivo;
+    int foraneo;
+    Localizacion loc;
+} Import;
+
 /// El tipo de una expresión.
 typedef enum {
     /// Una expresión desconocida.
@@ -72,6 +81,9 @@ typedef enum {
     /// Una lista de expresiones dentro de un bloque.
     /// Ejemplo: `{ x=5; print(x); }`
     EXP_BLOQUE,
+    /// Una importación de métodos de un archivo.
+    /// Ejemplo: `import "math.mth"`, `import foreign "math.so"`
+    EXP_IMPORT,
 } TipoExpresion;
 
 /// Una expresión de un determinado tipo.
@@ -89,6 +101,7 @@ typedef struct {
         Asignacion asignacion;
         DefinicionFuncion defFuncion;
         ListaExpresiones bloque;
+        Import importe;
     };
 } Expresion;
 
@@ -105,6 +118,7 @@ Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b,
 Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, int inmutable, Localizacion loc);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
+Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc);
 
 /// Crea un clon profundo de una expresión.
 Expresion clonar_expresion(Expresion exp);

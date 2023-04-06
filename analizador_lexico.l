@@ -61,6 +61,8 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 %%
 
 const { return CONST; }
+import { return IMPORT; }
+foreign { return FOREIGN; }
 
 {ALFA_US}{ALFANUM_US}* {
          yylval->identificador = crear_string(yytext);

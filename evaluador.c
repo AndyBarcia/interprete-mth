@@ -199,6 +199,37 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             if (exp->es_sentencia) return crear_indefinido();
             return ultimo_valor;
         }
+        case EXP_IMPORT: {
+            //aumentar_nivel_tabla_simbolos(tabla);
+
+            if (exp->importe.foraneo) {
+                // TODO: importar funciones de C de un archivo ".so"
+            } else {
+                // Importar un archivo normal.
+                // Crear un nuevo evaluador y evaluar el archivo.
+
+                Lexer lexer;
+                if (!crear_lexer_archivo(&lexer, string_a_puntero(&exp->importe.archivo))) {
+                    Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_puntero(&exp->importe.archivo));
+                    borrar_string(&exp->importe.archivo);
+                    return crear_valor_error(error, &exp->importe.loc);
+                }
+
+                Evaluador evaluador = crear_evaluador(lexer);
+                Valor x;
+                while(evaluar_siguiente(&evaluador, tabla, &x)) {
+                    if (x.tipoValor == TIPO_ERROR) {
+                        char* linea = obtener_linea(lexer, x.loc->first_line);
+                        imprimir_error(x.error, string_a_puntero(&exp->importe.archivo), linea, x.loc);
+                    }
+                    borrar_valor(&x);
+                }
+            }
+
+            //reducir_nivel_tabla_simbolos(tabla);
+            borrar_string(&exp->importe.archivo);
+            return crear_indefinido();
+        }
         default: {
             borrar_expresion(exp);
             return crear_valor_error(crear_error("Expresión desconocida. What?"), NULL);

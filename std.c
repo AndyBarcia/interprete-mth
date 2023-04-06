@@ -142,25 +142,6 @@ void eval(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     //*retorno = evaluar_str(tabla, string_a_puntero(&arg.string));
 }
 
-void import(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud > 1) {
-        *retorno = crear_valor_error(crear_error("Demasiados argumentos."), NULL);
-        return;
-    } else if (args.longitud == 0) {
-        *retorno = crear_valor_error(crear_error("Se esperaba una dirección de un archivo."), NULL);
-        return;
-    }
-    Valor arg = ((Valor *) args.valores)[0];
-    if (arg.tipoValor != TIPO_STRING) {
-        *retorno = crear_valor_error(crear_error("Se esperaba una dirección de un archivo."), NULL);
-        return;
-    }
-
-    printf("Temporalmente no implementado"); // TODO import
-    exit(0);
-    //*retorno = evaluar_archivo(tabla, string_a_puntero(&arg.string));
-}
-
 typedef struct {
     char *nombres[2];
     Valor valor;
@@ -206,11 +187,6 @@ ValorLibreriaEstandar elementos[] = {
                 {TIPO_FUNCION_NATIVA, .funcion_nativa = eval},
                 "Evalúa el string que se le pasa como argumento, como si fuera parte del código fuente.\n\nNótese que "
                 "esto significa que evaluar strings como \"x=5\" crearán nuevas variables."
-        },
-        {
-                {"importar",    "import"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = import},
-                "Ejecuta el archivo que se pasa como argumento, como si fuera parte del código fuente."
         },
         {
                 {"help",        "ayuda"},

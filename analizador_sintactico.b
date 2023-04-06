@@ -39,6 +39,8 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
 
 %token CONST "const"
+%token IMPORT "import"
+%token FOREIGN "foreign"
 
 %token PARENTESIS_IZQ "("
 %token PARENTESIS_DER ")"
@@ -165,6 +167,8 @@ expresion:
          }
     | "{" expression_block "}" { $$ = crear_exp_bloque($2, @$); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, @$); }
+    | "import" STRING { $$ = crear_exp_importe($2, 0, @2); }
+    | "import" "foreign" STRING { $$ = crear_exp_importe($3, 1, @3); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_valor_error($1, &@1)); }
     ;

@@ -66,20 +66,22 @@ extern int yydebug;
     ERROR = 261,                   /* ERROR  */
     OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
     CONST = 263,                   /* "const"  */
-    PARENTESIS_IZQ = 264,          /* "("  */
-    PARENTESIS_DER = 265,          /* ")"  */
-    CORCHETE_IZQ = 266,            /* "["  */
-    CORCHETE_DER = 267,            /* "]"  */
-    LLAVE_IZQ = 268,               /* "{"  */
-    LLAVE_DER = 269,               /* "}"  */
-    FLECHA = 270,                  /* "=>"  */
-    SLASH_INVERTIDA = 271,         /* "\\"  */
-    NUEVA_LINEA = 272,             /* "\n"  */
-    PUNTO_Y_COMA = 273,            /* ";"  */
-    COMA = 274,                    /* ","  */
-    OPERADOR = 275,                /* "operador"  */
-    SUMA = 276,                    /* "+"  */
-    MULT = 277                     /* "*"  */
+    IMPORT = 264,                  /* "import"  */
+    FOREIGN = 265,                 /* "foreign"  */
+    PARENTESIS_IZQ = 266,          /* "("  */
+    PARENTESIS_DER = 267,          /* ")"  */
+    CORCHETE_IZQ = 268,            /* "["  */
+    CORCHETE_DER = 269,            /* "]"  */
+    LLAVE_IZQ = 270,               /* "{"  */
+    LLAVE_DER = 271,               /* "}"  */
+    FLECHA = 272,                  /* "=>"  */
+    SLASH_INVERTIDA = 273,         /* "\\"  */
+    NUEVA_LINEA = 274,             /* "\n"  */
+    PUNTO_Y_COMA = 275,            /* ";"  */
+    COMA = 276,                    /* ","  */
+    OPERADOR = 277,                /* "operador"  */
+    SUMA = 278,                    /* "+"  */
+    MULT = 279                     /* "*"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -100,7 +102,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 104 "../analizador_sintactico.h"
+#line 106 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
