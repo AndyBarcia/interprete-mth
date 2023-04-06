@@ -6,6 +6,10 @@
 #include "analizador_sintactico.h"
 #include "tabla_simbolos.h"
 
+#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
+                       yylloc->first_column = yylloc->last_column; \
+                       yylloc->last_column += yyleng - 1;
+
 #define OP_SUMAR 128
 #define OP_RESTAR 129
 #define OP_COMPARACION_IGUAL 130
@@ -70,7 +74,7 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 
 %x comentario_anidado
 %x comentario_bloque
-%option reentrant bison-bridge bison-locations
+%option reentrant bison-bridge bison-locations yylineno
 %%
 
 const { return CONST; }
@@ -150,7 +154,10 @@ const { return CONST; }
 
 ,   { return COMA; }
 
-\n  { return NUEVA_LINEA; }
+\n  {
+        yylloc->last_column = 1;
+        return NUEVA_LINEA;
+    }
 ;  { return PUNTO_Y_COMA; }
 
 =>  { return FLECHA;}
@@ -161,7 +168,8 @@ const { return CONST; }
 \/\* { BEGIN(comentario_bloque); }
 <comentario_bloque>{
 \*\/ { BEGIN(INITIAL); }
-.|\n { /* ignorar comentarios multilinea */ }
+\n  { yylloc->last_column = 1; }
+.   { /* ignorar comentarios multilinea */ }
 <<EOF>> {
         BEGIN(INITIAL);
         yylval->error = crear_error_lexico("Comentario de bloque no terminado.");
@@ -179,7 +187,8 @@ const { return CONST; }
         --nivel_comentario_anidado;
         if (nivel_comentario_anidado == 0) BEGIN(INITIAL);
     }
-.|\n { /* ignorar comentarios anidados */ }
+\n  { yylloc->last_column = 1; }
+.   { /* ignorar comentarios anidados */ }
 <<EOF>> {
         BEGIN(INITIAL);
         yylval->error = crear_error_lexico("Comentario anidado no terminado.");
@@ -223,6 +232,6 @@ void borrar_analizador_lexico(Lexer lexer) {
     yylex_destroy(lexer.scanner);
 }
 
-int siguiente_componente_lexico(Lexer lexer, ComponenteLexico *token, Localizacion *loc) {
-    return yylex(token, loc, lexer.scanner);
+int siguiente_componente_lexico(Lexer lexer, void* token, Localizacion *loc) {
+    return yylex((YYSTYPE*) token, (YYLTYPE*) loc, lexer.scanner);
 }

@@ -1,11 +1,16 @@
 #ifndef LEXER_ANALIZADOR_LEXICO_H
 #define LEXER_ANALIZADOR_LEXICO_H
 
-#include "tabla_simbolos.h"
-#include "analizador_sintactico.h"
+#include <stdio.h>
 
-typedef YYSTYPE ComponenteLexico;
-typedef YYLTYPE Localizacion;
+typedef void* ComponenteLexico;
+
+typedef struct {
+    int first_line;
+    int first_column;
+    int last_line;
+    int last_column;
+}  Localizacion;
 
 /// Un determinado analizador léxico que es
 /// abstracto respecto al origen del código
@@ -48,6 +53,6 @@ void borrar_analizador_lexico(Lexer lexer);
  * @param yylval_param variable en la que se guardará el token
  * @return tipo de token devuelto.
  */
-int siguiente_componente_lexico(Lexer lexer, ComponenteLexico *yylval_param, Localizacion *loc);
+int siguiente_componente_lexico(Lexer lexer, ComponenteLexico token, Localizacion *loc);
 
 #endif //LEXER_ANALIZADOR_LEXICO_H

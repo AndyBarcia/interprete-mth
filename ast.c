@@ -104,20 +104,21 @@ Expresion crear_exp_nula() {
     return (Expresion) {EXP_NULA};
 }
 
-Expresion crear_exp_valor(Valor valor) {
-    return (Expresion) {EXP_VALOR, .valor = valor, .es_sentencia = 0};
+Expresion crear_exp_valor(Valor valor, Localizacion loc) {
+    return (Expresion) {EXP_VALOR, loc, .valor = valor, .es_sentencia = 0};
 }
 
-Expresion crear_exp_identificador(String identificador) {
-    return (Expresion) {EXP_IDENTIFICADOR, .identificador = identificador, .es_sentencia = 0};
+Expresion crear_exp_identificador(String identificador, Localizacion loc) {
+    return (Expresion) {EXP_IDENTIFICADOR, loc, .identificador = identificador, .es_sentencia = 0};
 }
 
-Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos) {
+Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = funcion;
 
     return (Expresion) {
             .tipo = EXP_OP_LLAMADA,
+            .loc = loc,
             .llamadaFuncion = (LlamadaFuncion) {
                     .funcion = (struct Expresion *) e,
                     .argumentos = argumentos
@@ -126,25 +127,26 @@ Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos) {
     };
 }
 
-Expresion crear_exp_op_unaria(String operador, Expresion x) {
+Expresion crear_exp_op_unaria(String operador, Expresion x, Localizacion loc) {
     ListaExpresiones args = crear_lista_expresiones();
     push_lista_expresiones(&args, x);
-    return crear_exp_llamada(crear_exp_identificador(operador), args);
+    return crear_exp_llamada(crear_exp_identificador(operador, loc), args, loc);
 }
 
-Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b) {
+Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b, Localizacion loc) {
     ListaExpresiones args = crear_lista_expresiones();
     push_lista_expresiones(&args, a);
     push_lista_expresiones(&args, b);
-    return crear_exp_llamada(crear_exp_identificador(operador), args);
+    return crear_exp_llamada(crear_exp_identificador(operador, loc), args, loc);
 }
 
-Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable) {
+Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable, Localizacion loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = expresion;
 
     return (Expresion) {
             .tipo = EXP_OP_ASIGNACION,
+            .loc = loc,
             .asignacion = (Asignacion) {
                     .identificador = identificador,
                     .expresion = (struct Expresion *) e,
@@ -154,7 +156,7 @@ Expresion crear_exp_asignacion(String identificador, Expresion expresion, int in
     };
 }
 
-Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo) {
+Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = cuerpo;
 
@@ -168,7 +170,7 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
     };
 }
 
-Expresion crear_exp_bloque(ListaExpresiones expresiones) {
+Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc) {
     return (Expresion) {
             .tipo = EXP_BLOQUE,
             .bloque = expresiones,

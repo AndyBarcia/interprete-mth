@@ -1,9 +1,16 @@
 %{
 #include "analizador_lexico.h"
 #include "string.h"
-#include "evaluador.h"
+#include "ast.h"
 
-void yyerror(Localizacion *loc, Expresion *exp, const char* s);
+void yyerror(void *loc, Expresion *exp, const char* s);
+
+#define localization(x) ((Localizacion) {        \
+    .first_line = x.first_line,      \
+    .first_column = x.first_column,  \
+    .last_line = x.last_line,        \
+    .last_column = x.last_column,    \
+ })
 
 %}
 
@@ -132,26 +139,27 @@ expression_block:
 nombre_asignable: IDENTIFICADOR | OPERADOR ;
 
 expresion:
-    nombre_asignable { $$ = crear_exp_identificador($1); }
-    | ENTERO { $$ = crear_exp_valor(crear_entero($1)); }
-    | STRING { $$ = crear_exp_valor(crear_valor_string($1)); }
-    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2); }
-    | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3); }
-    | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3); }
-    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3); }
+    nombre_asignable { $$ = crear_exp_identificador($1, localization(@1)); }
+    | ENTERO { $$ = crear_exp_valor(crear_entero($1), localization(@1)); }
+    | STRING { $$ = crear_exp_valor(crear_valor_string($1), localization(@1)); }
+    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2, localization(@1)); }
+    | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3, localization(@1)); }
+    | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3, localization(@1)); }
+    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, localization(@1)); }
     | "(" expresion ")" { $$ = $2; }
-    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0); }
-    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1); }
-    | "{" expression_block "}" { $$ = crear_exp_bloque($2); }
-    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4); }
+    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, 0, localization(@1)); }
+    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, 1, localization(@1)); }
+    | "{" expression_block "}" { $$ = crear_exp_bloque($2, localization(@1)); }
+    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, localization(@1)); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
-    | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1))); }
+    | ERROR { $$ = crear_exp_valor(crear_error("%s", string_a_puntero(&$1)), localization(@1)); }
     ;
 
 %%
 
-void yyerror(Localizacion *loc, Expresion *exp, const char* s) {
-    *exp = crear_exp_valor(crear_error("%s", s));
+void yyerror(void *loc, Expresion *exp, const char* s) {
+    YYLTYPE yyloc = *(YYLTYPE*) loc;
+    *exp = crear_exp_valor(crear_error("%s", s), localization(yyloc));
 }
 
 int yywrap() {

@@ -3,6 +3,7 @@
 
 #include "string.h"
 #include "valor.h"
+#include "analizador_lexico.h"
 
 /// Una lista de expresiones, ya sea en un
 /// bloque de expresiones o los argumentos
@@ -73,6 +74,8 @@ typedef enum {
 typedef struct {
     /// El tipo de la expresión.
     TipoExpresion tipo;
+    /// La posición de la expresión en el código.
+    Localizacion loc;
     /// Si es una sentencia o no (Ej, `5` vs `5;`).
     /// Una sentencia produce como valor siempre
     /// "indefinido".
@@ -92,14 +95,14 @@ typedef struct {
  */
 
 Expresion crear_exp_nula();
-Expresion crear_exp_valor(Valor valor);
-Expresion crear_exp_identificador(String identificador);
-Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos);
-Expresion crear_exp_op_unaria(String operador, Expresion x);
-Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b);
-Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable);
-Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo);
-Expresion crear_exp_bloque(ListaExpresiones expresiones);
+Expresion crear_exp_valor(Valor valor, Localizacion loc);
+Expresion crear_exp_identificador(String identificador, Localizacion loc);
+Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc);
+Expresion crear_exp_op_unaria(String operador, Expresion x, Localizacion loc);
+Expresion crear_exp_op_binaria(String operador, Expresion a, Expresion b, Localizacion loc);
+Expresion crear_exp_asignacion(String identificador, Expresion expresion, int inmutable, Localizacion loc);
+Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
+Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
 
 /// Crea un clon profundo de una expresión.
 Expresion clonar_expresion(Expresion exp);

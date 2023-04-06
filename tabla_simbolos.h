@@ -2,7 +2,6 @@
 #define LEXER_TABLA_SIMBOLOS_H
 
 #include "tabla_hash.h"
-#include "ast.h"
 
 typedef struct {
     // Array de tablas; una por cada nivel

@@ -200,8 +200,27 @@ typedef size_t yy_size_t;
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
     
-    #define YY_LESS_LINENO(n)
-    #define YY_LINENO_REWIND_TO(ptr)
+    /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
+     *       access to the local variable yy_act. Since yyless() is a macro, it would break
+     *       existing scanners that call yyless() from OUTSIDE yylex.
+     *       One obvious solution it to make yy_act a global. I tried that, and saw
+     *       a 5% performance hit in a non-yylineno scanner, because yy_act is
+     *       normally declared as a register variable-- so it is not worth it.
+     */
+    #define  YY_LESS_LINENO(n) \
+            do { \
+                int yyl;\
+                for ( yyl = n; yyl < yyleng; ++yyl )\
+                    if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
+                        --yylineno;\
+            }while(0)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -360,8 +379,8 @@ static void yynoreturn yy_fatal_error ( const char* msg , yyscan_t yyscanner );
 	yyg->yy_hold_char = *yy_cp; \
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
-#define YY_NUM_RULES 38
-#define YY_END_OF_BUFFER 39
+#define YY_NUM_RULES 40
+#define YY_END_OF_BUFFER 41
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -369,15 +388,15 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static const flex_int16_t yy_accept[62] =
+static const flex_int16_t yy_accept[64] =
     {   0,
-        0,    0,    0,    0,    0,    0,   39,   37,   36,   24,
+        0,    0,    0,    0,    0,    0,   41,   39,   38,   24,
        13,    6,    7,   17,   18,    9,    8,   23,    7,    7,
         3,   25,    7,   14,    7,    2,   19,   27,   20,    2,
-       21,   22,   35,   35,   35,   31,   31,    6,    5,    0,
-       15,   16,   29,   32,   28,    3,    4,   12,   10,   26,
-       11,    2,    2,   34,   33,   30,   28,    2,    2,    1,
-        0
+       21,   22,   37,   36,   37,   37,   32,   31,   32,    6,
+        5,    0,   15,   16,   29,   33,   28,    3,    4,   12,
+       10,   26,   11,    2,    2,   35,   34,   30,   28,    2,
+        2,    1,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -419,59 +438,66 @@ static const YY_CHAR yy_meta[31] =
         1,    1,    3,    3,    3,    3,    3,    3,    1,    1
     } ;
 
-static const flex_int16_t yy_base[68] =
+static const flex_int16_t yy_base[70] =
     {   0,
-        0,    0,   21,   22,   64,   63,   71,   74,   74,   74,
-       74,   28,   74,   74,   74,   74,   53,   74,   52,   27,
-       24,   74,   51,   24,   49,    0,   74,   74,   74,   37,
-       74,   74,   74,   41,   43,   74,   38,   34,   74,    0,
-       74,   74,   74,   74,    0,   29,    0,   74,   74,   74,
-       74,    0,   25,   74,   74,   74,    0,   21,   18,    0,
-       74,   55,   58,   61,   42,   41,   64
+        0,    0,   28,   29,   31,   34,   77,   78,   78,   78,
+       78,   28,   78,   78,   78,   78,   59,   78,   57,   35,
+       32,   78,   54,   18,   45,    0,   78,   78,   78,   35,
+       78,   78,   78,   78,   47,   48,   78,   78,   44,   42,
+       78,    0,   78,   78,   78,   78,    0,   36,    0,   78,
+       78,   78,   78,    0,   31,   78,   78,   78,    0,   27,
+       25,    0,   78,   63,   66,   69,   49,   48,   72
     } ;
 
-static const flex_int16_t yy_def[68] =
+static const flex_int16_t yy_def[70] =
     {   0,
-       61,    1,   62,   62,   63,   63,   61,   61,   61,   61,
-       61,   64,   61,   61,   61,   61,   61,   61,   61,   61,
-       65,   61,   61,   61,   61,   66,   61,   61,   61,   66,
-       61,   61,   61,   61,   61,   61,   61,   64,   61,   64,
-       61,   61,   61,   61,   67,   65,   65,   61,   61,   61,
-       61,   66,   66,   61,   61,   61,   67,   66,   66,   66,
-        0,   61,   61,   61,   61,   61,   61
+       63,    1,   64,   64,   65,   65,   63,   63,   63,   63,
+       63,   66,   63,   63,   63,   63,   63,   63,   63,   63,
+       67,   63,   63,   63,   63,   68,   63,   63,   63,   68,
+       63,   63,   63,   63,   63,   63,   63,   63,   63,   66,
+       63,   66,   63,   63,   63,   63,   69,   67,   67,   63,
+       63,   63,   63,   68,   68,   63,   63,   63,   69,   68,
+       68,   68,    0,   63,   63,   63,   63,   63,   63
     } ;
 
-static const flex_int16_t yy_nxt[105] =
+static const flex_int16_t yy_nxt[109] =
     {   0,
         8,    9,   10,   11,   12,   13,   14,   15,   16,   17,
        18,   19,   20,   21,   22,   23,   24,   25,   26,   27,
        28,   29,   26,   30,   26,   26,   26,   26,   31,   32,
-       34,   34,   39,   35,   35,   43,   44,   46,   39,   45,
-       49,   50,   46,   52,   47,   60,   46,   59,   40,   58,
-       56,   46,   55,   54,   40,   33,   33,   33,   36,   36,
-       36,   38,   53,   38,   57,   51,   57,   48,   42,   41,
-       61,   37,   37,    7,   61,   61,   61,   61,   61,   61,
-       61,   61,   61,   61,   61,   61,   61,   61,   61,   61,
-       61,   61,   61,   61,   61,   61,   61,   61,   61,   61,
+       34,   34,   41,   38,   51,   52,   38,   35,   35,   39,
+       36,   36,   39,   45,   46,   48,   41,   47,   42,   48,
+       54,   49,   62,   61,   48,   60,   58,   57,   48,   56,
+       55,   53,   42,   33,   33,   33,   37,   37,   37,   40,
+       50,   40,   59,   44,   59,   43,   63,    7,   63,   63,
+       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
+       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
 
-       61,   61,   61,   61
+       63,   63,   63,   63,   63,   63,   63,   63
     } ;
 
-static const flex_int16_t yy_chk[105] =
+static const flex_int16_t yy_chk[109] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        3,    4,   12,    3,    4,   20,   20,   21,   38,   20,
-       24,   24,   46,   66,   65,   59,   21,   58,   12,   53,
-       37,   46,   35,   34,   38,   62,   62,   62,   63,   63,
-       63,   64,   30,   64,   67,   25,   67,   23,   19,   17,
-        7,    6,    5,   61,   61,   61,   61,   61,   61,   61,
-       61,   61,   61,   61,   61,   61,   61,   61,   61,   61,
-       61,   61,   61,   61,   61,   61,   61,   61,   61,   61,
+        3,    4,   12,    5,   24,   24,    6,    3,    4,    5,
+        3,    4,    6,   20,   20,   21,   40,   20,   12,   48,
+       68,   67,   61,   60,   21,   55,   39,   36,   48,   35,
+       30,   25,   40,   64,   64,   64,   65,   65,   65,   66,
+       23,   66,   69,   19,   69,   17,    7,   63,   63,   63,
+       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
+       63,   63,   63,   63,   63,   63,   63,   63,   63,   63,
 
-       61,   61,   61,   61
+       63,   63,   63,   63,   63,   63,   63,   63
     } ;
+
+/* Table of booleans, true if rule could match eol. */
+static const flex_int32_t yy_rule_can_match_eol[41] =
+    {   0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 
+    0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -488,6 +514,10 @@ static const flex_int16_t yy_chk[105] =
 #include "analizador_lexico.h"
 #include "analizador_sintactico.h"
 #include "tabla_simbolos.h"
+
+#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
+                       yylloc->first_column = yylloc->last_column; \
+                       yylloc->last_column += yyleng - 1;
 
 #define OP_SUMAR 128
 #define OP_RESTAR 129
@@ -514,9 +544,9 @@ String crear_error_lexico(const char *formato, ...) {
 }
 
 int nivel_comentario_anidado = 0;
-#line 518 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 548 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
-#line 520 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 550 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 #define INITIAL 0
 #define comentario_anidado 1
@@ -802,10 +832,10 @@ YY_DECL
 		}
 
 	{
-#line 74 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 78 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
-#line 809 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 839 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -832,13 +862,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 62 )
+				if ( yy_current_state >= 64 )
 					yy_c = yy_meta[yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 74 );
+		while ( yy_base[yy_current_state] != 78 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -850,6 +880,18 @@ yy_find_action:
 			}
 
 		YY_DO_BEFORE_ACTION;
+
+		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
+			{
+			int yyl;
+			for ( yyl = 0; yyl < yyleng; ++yyl )
+				if ( yytext[yyl] == '\n' )
+					
+    do{ yylineno++;
+        yycolumn=0;
+    }while(0)
+;
+			}
 
 do_action:	/* This label is used only to access EOF actions. */
 
@@ -864,12 +906,12 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 76 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 80 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return CONST; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 78 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 82 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
          yylval->identificador = crear_string(yytext);
          return IDENTIFICADOR;
@@ -877,7 +919,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 83 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 87 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->valorEntero = atoi(yytext);
         return ENTERO;
@@ -885,7 +927,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 87 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 91 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->error = crear_error_lexico("Número \"%s\" malformado.", yytext);
         return ERROR;
@@ -893,7 +935,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 92 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 96 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yytext[yyleng-1] = '\0';
         // TODO: escapar caracteres
@@ -903,7 +945,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 98 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 102 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->error = crear_error_lexico("String sin comillas de cierre.");
         return ERROR;
@@ -911,7 +953,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 103 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 107 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
@@ -919,7 +961,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 107 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 111 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return SUMA;
@@ -927,7 +969,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 111 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 115 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return MULT;
@@ -935,7 +977,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 115 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 119 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
@@ -943,7 +985,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 119 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 123 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
@@ -951,7 +993,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 123 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 127 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
@@ -959,7 +1001,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 127 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 131 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
@@ -967,7 +1009,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 131 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 135 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->tipoOperador = '=';
         return OPERADOR_ASIGNACION;
@@ -975,7 +1017,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 135 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 139 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->tipoOperador = OP_SUMAR;
         return OPERADOR_ASIGNACION;
@@ -983,7 +1025,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 139 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 143 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->tipoOperador = OP_RESTAR;
         return OPERADOR_ASIGNACION;
@@ -991,84 +1033,92 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 144 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 148 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return PARENTESIS_IZQ; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 145 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 149 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return PARENTESIS_DER; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 146 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 150 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return CORCHETE_IZQ; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 147 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 151 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return CORCHETE_DER; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 148 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 152 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return LLAVE_IZQ; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 149 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 153 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return LLAVE_DER; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 151 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 155 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return COMA; }
 	YY_BREAK
 case 24:
 /* rule 24 can match eol */
 YY_RULE_SETUP
-#line 153 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
-{ return NUEVA_LINEA; }
+#line 157 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+{
+        yylloc->last_column = 1;
+        return NUEVA_LINEA;
+    }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 154 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 161 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return PUNTO_Y_COMA; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 156 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 163 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return FLECHA;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 157 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 164 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return SLASH_INVERTIDA; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 159 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 166 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar comentarios de una línea */ }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 161 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 168 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { BEGIN(comentario_bloque); }
 	YY_BREAK
 
 case 30:
 YY_RULE_SETUP
-#line 163 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 170 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 164 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 171 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+{ yylloc->last_column = 1; }
+	YY_BREAK
+case 32:
+YY_RULE_SETUP
+#line 172 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar comentarios multilinea */ }
 	YY_BREAK
 case YY_STATE_EOF(comentario_bloque):
-#line 165 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 173 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         BEGIN(INITIAL);
         yylval->error = crear_error_lexico("Comentario de bloque no terminado.");
@@ -1076,36 +1126,41 @@ case YY_STATE_EOF(comentario_bloque):
     }
 	YY_BREAK
 
-case 32:
+case 33:
 YY_RULE_SETUP
-#line 172 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 180 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         nivel_comentario_anidado=1;
         BEGIN(comentario_anidado);
     }
 	YY_BREAK
 
-case 33:
-YY_RULE_SETUP
-#line 177 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
-{ ++nivel_comentario_anidado; }
-	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 178 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 185 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+{ ++nivel_comentario_anidado; }
+	YY_BREAK
+case 35:
+YY_RULE_SETUP
+#line 186 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         --nivel_comentario_anidado;
         if (nivel_comentario_anidado == 0) BEGIN(INITIAL);
     }
 	YY_BREAK
-case 35:
-/* rule 35 can match eol */
+case 36:
+/* rule 36 can match eol */
 YY_RULE_SETUP
-#line 182 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 190 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+{ yylloc->last_column = 1; }
+	YY_BREAK
+case 37:
+YY_RULE_SETUP
+#line 191 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar comentarios anidados */ }
 	YY_BREAK
 case YY_STATE_EOF(comentario_anidado):
-#line 183 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 192 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         BEGIN(INITIAL);
         yylval->error = crear_error_lexico("Comentario anidado no terminado.");
@@ -1113,30 +1168,30 @@ case YY_STATE_EOF(comentario_anidado):
     }
 	YY_BREAK
 
-case 36:
-/* rule 36 can match eol */
+case 38:
+/* rule 38 can match eol */
 YY_RULE_SETUP
-#line 190 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 199 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar espacios */ }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 192 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 201 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return YYEOF; }
 	YY_BREAK
-case 37:
+case 39:
 YY_RULE_SETUP
-#line 194 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 203 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->error = crear_error_lexico("Caracter no reconocido.");
         return ERROR;
     }
 	YY_BREAK
-case 38:
+case 40:
 YY_RULE_SETUP
-#line 198 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 207 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 ECHO;
 	YY_BREAK
-#line 1140 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 1195 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1433,7 +1488,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 62 )
+			if ( yy_current_state >= 64 )
 				yy_c = yy_meta[yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
@@ -1462,11 +1517,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 62 )
+		if ( yy_current_state >= 64 )
 			yy_c = yy_meta[yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
-	yy_is_jam = (yy_current_state == 61);
+	yy_is_jam = (yy_current_state == 63);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -1506,6 +1561,10 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		}
 
 	*--yy_cp = (char) c;
+
+    if ( c == '\n' ){
+        --yylineno;
+    }
 
 	yyg->yytext_ptr = yy_bp;
 	yyg->yy_hold_char = *yy_cp;
@@ -1584,6 +1643,13 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	c = *(unsigned char *) yyg->yy_c_buf_p;	/* cast for 8-bit char's */
 	*yyg->yy_c_buf_p = '\0';	/* preserve yytext */
 	yyg->yy_hold_char = *++yyg->yy_c_buf_p;
+
+	if ( c == '\n' )
+		
+    do{ yylineno++;
+        yycolumn=0;
+    }while(0)
+;
 
 	return c;
 }
@@ -2327,7 +2393,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 198 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 207 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
 Lexer crear_lexer_fichero(FILE *fichero) {
@@ -2356,6 +2422,6 @@ void borrar_analizador_lexico(Lexer lexer) {
     yylex_destroy(lexer.scanner);
 }
 
-int siguiente_componente_lexico(Lexer lexer, ComponenteLexico *token, Localizacion *loc) {
-    return yylex(token, loc, lexer.scanner);
+int siguiente_componente_lexico(Lexer lexer, void* token, Localizacion *loc) {
+    return yylex((YYSTYPE*) token, (YYLTYPE*) loc, lexer.scanner);
 }
