@@ -5,6 +5,7 @@
 #include "analizador_lexico.h"
 #include "analizador_sintactico.h"
 #include "tabla_simbolos.h"
+#include "error.h"
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
                        yylloc->first_column = yylloc->last_column; \
@@ -15,24 +16,6 @@
 #define OP_COMPARACION_IGUAL 130
 #define OP_COMPARACION_MAYOR_IGUAL 131
 #define OP_COMPARACION_MENOR_IGUAL 132
-
-String crear_error_lexico(const char *formato, ...) {
-    String error;
-    // Cosas mágicas para pasar un número variable de argumentos.
-    va_list args, args2;
-    va_start(args, formato);
-    va_copy(args2, args);
-    // Calcular la longitud total que tendrá el string final.
-    size_t longitud = vsnprintf(NULL, 0, formato, args);
-    error = crear_string_n(longitud);
-    // Escribir el resultado en el string creado.
-    char *str = string_a_puntero(&error);
-    vsnprintf(str, longitud + 1, formato, args2);
-    va_end(args);
-    va_end(args2);
-
-    return error;
-}
 
 int nivel_comentario_anidado = 0;
 %}
@@ -89,7 +72,7 @@ const { return CONST; }
         return ENTERO;
     }
 {INICIO_ENTERO}{CUERPO_ENTERO_MALFORMADO} {
-        yylval->error = crear_error_lexico("Número \"%s\" malformado.", yytext);
+        yylval->error_lexico = crear_error("Número \"%s\" malformado.", yytext);
         return ERROR;
     }
 
@@ -100,7 +83,7 @@ const { return CONST; }
         return STRING;
     }
 {STRING_MALFORMADO} {
-        yylval->error = crear_error_lexico("String sin comillas de cierre.");
+        yylval->error_lexico = crear_error("String sin comillas de cierre.");
         return ERROR;
     }
 
@@ -172,7 +155,7 @@ const { return CONST; }
 .   { /* ignorar comentarios multilinea */ }
 <<EOF>> {
         BEGIN(INITIAL);
-        yylval->error = crear_error_lexico("Comentario de bloque no terminado.");
+        yylval->error_lexico = crear_error("Comentario de bloque no terminado.");
         return ERROR;
     }
 }
@@ -191,7 +174,7 @@ const { return CONST; }
 .   { /* ignorar comentarios anidados */ }
 <<EOF>> {
         BEGIN(INITIAL);
-        yylval->error = crear_error_lexico("Comentario anidado no terminado.");
+        yylval->error_lexico = crear_error("Comentario anidado no terminado.");
         return ERROR;
     }
 }
@@ -201,7 +184,7 @@ const { return CONST; }
 <<EOF>> { return YYEOF; }
 
 .   {
-        yylval->error = crear_error_lexico("Caracter no reconocido.");
+        yylval->error_lexico = crear_error("Caracter no reconocido.");
         return ERROR;
     }
 %%

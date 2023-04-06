@@ -92,7 +92,7 @@ union YYSTYPE
 
     int tipoOperador;
     int valorEntero;
-    String error;
+    Error error_lexico;
     String identificador;
     String string;
     ListaExpresiones listaExpresiones;

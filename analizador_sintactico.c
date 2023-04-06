@@ -1860,14 +1860,13 @@ yyreduce:
   case 36: /* expresion: ERROR  */
 #line 169 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             {
-            Error error = crear_error("%s", string_a_puntero(&(yyvsp[0].error)));
-            (yyval.expresion) = crear_exp_valor(crear_valor_error(error, &(yylsp[0])));
+            (yyval.expresion) = crear_exp_valor(crear_valor_error((yyvsp[0].error_lexico), &(yylsp[0])));
          }
-#line 1867 "../analizador_sintactico.c"
+#line 1866 "../analizador_sintactico.c"
     break;
 
 
-#line 1871 "../analizador_sintactico.c"
+#line 1870 "../analizador_sintactico.c"
 
       default: break;
     }
@@ -2112,7 +2111,7 @@ yypushreturn:
 #undef yyls
 #undef yylsp
 #undef yystacksize
-#line 175 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 174 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
 
 void yyerror(Localizacion *loc, Expresion *exp, const char* s) {
