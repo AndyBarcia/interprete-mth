@@ -24,10 +24,12 @@ void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
                     break;
                 }
                 default:
+                    borrar_valor(&result);
                     *retorno = crear_valor_error(crear_error("No se pueden sumar valores de este tipo."), result.loc);
                     return;
             }
         } else {
+            borrar_valor(&result);
             *retorno = crear_valor_error(crear_error("Sumando valores de tipos distintos."), v.loc);
             return;
         }

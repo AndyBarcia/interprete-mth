@@ -139,6 +139,7 @@ void _insertar_hash_precalculado(TablaHash *t, String lexema, Valor valor, int i
                 // Liberar la memoria que ya estaba en la entrada, porque la vamos
                 // a sobreescribir con la que nos pasó como argumento.
                 borrar_string(&entrada_actual->clave);
+                borrar_valor(&entrada_actual->valor);
                 *entrada_actual = entrada_a_insertar;
                 return;
             }
