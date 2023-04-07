@@ -43,8 +43,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
     switch (exp->tipo) {
         case EXP_VALOR: {
             // La expresión es un valor; devolverlo si no es una sentencia.
-            if (exp->es_sentencia && exp->valor.tipoValor != TIPO_ERROR)
+            if (exp->es_sentencia && exp->valor.tipoValor != TIPO_ERROR) {
+                borrar_valor(&exp->valor);
                 return crear_indefinido();
+            }
             return exp->valor;
         }
         case EXP_IDENTIFICADOR: {
@@ -53,7 +55,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             if (v.tipoValor == TIPO_ERROR) return v;
             borrar_string(&exp->identificador.nombre);
 
-            if (exp->es_sentencia) return crear_indefinido();
+            if (exp->es_sentencia) {
+                borrar_valor(&v);
+                return crear_indefinido();
+            }
             return v;
         }
         case EXP_OP_LLAMADA: {
@@ -87,7 +92,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     borrar_lista_valores(&args);
                     borrar_valor(&f);
 
-                    if (exp->es_sentencia) return crear_indefinido();
+                    if (exp->es_sentencia) {
+                        borrar_valor(&result);
+                        return crear_indefinido();
+                    }
                     return result;
                 }
                 case TIPO_FUNCION: {
@@ -125,7 +133,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     free(args.valores);
                     borrar_valor(&f);
 
-                    if (exp->es_sentencia) return crear_indefinido();
+                    if (exp->es_sentencia) {
+                        borrar_valor(&v);
+                        return crear_indefinido();
+                    }
                     return v;
                 }
                 default: {
@@ -140,9 +151,13 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 borrar_string(&exp->asignacion.identificador.nombre);
                 return v;
             }
-            if (asignar_valor_tabla(tabla, exp->asignacion.identificador, clonar_valor(v), exp->asignacion.tipo)) {
-                if (exp->es_sentencia) return crear_indefinido();
-                return v;
+
+            // Si la asignación es una sentencia, simplemente devolvemos indefinido.
+            // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
+            Valor retorno = exp->es_sentencia ? crear_indefinido() : clonar_valor(v);
+
+            if (asignar_valor_tabla(tabla, exp->asignacion.identificador, v, exp->asignacion.tipo)) {
+                return retorno;
             } else {
                 Error error = crear_error(
                         "Intentando reasignar variable inmutable \"%s\"",
@@ -171,7 +186,14 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 insertar_hash(capturadas, ids.valores[i].nombre, v, 1);
             }
             borrar_lista_identificadores(&ids);
-            return crear_funcion(exp->defFuncion.argumentos, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, &exp->defFuncion.loc);
+
+            Valor funcion = crear_funcion(exp->defFuncion.argumentos, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, &exp->defFuncion.loc);
+            if (exp->es_sentencia) {
+                borrar_valor(&funcion);
+                return crear_indefinido();
+            } else {
+                return funcion;
+            }
         }
         case EXP_BLOQUE: {
             aumentar_nivel_tabla_simbolos(tabla);
@@ -190,7 +212,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             reducir_nivel_tabla_simbolos(tabla);
 
             free(lista.valores);
-            if (exp->es_sentencia) return crear_indefinido();
+            if (exp->es_sentencia) {
+                borrar_valor(&ultimo_valor);
+                return crear_indefinido();
+            }
             return ultimo_valor;
         }
         case EXP_IMPORT: {

@@ -209,10 +209,12 @@ Expresion clonar_expresion(Expresion exp) {
             break;
         case EXP_OP_ASIGNACION:
             e.asignacion.identificador = clonar_identificador(exp.asignacion.identificador);
+            e.asignacion.expresion = malloc(sizeof(Expresion)); // Y esto??
             *(Expresion *) e.asignacion.expresion = clonar_expresion(*(Expresion *) exp.asignacion.expresion);
             break;
         case EXP_OP_DEF_FUNCION:
             e.defFuncion.argumentos = clonar_lista_identificadores(exp.defFuncion.argumentos);
+            e.defFuncion.cuerpo = malloc(sizeof(Expresion)); // Esto es necesario
             *(Expresion *) e.defFuncion.cuerpo = clonar_expresion(*(Expresion *) exp.defFuncion.cuerpo);
             break;
         case EXP_BLOQUE:
