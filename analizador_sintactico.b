@@ -70,6 +70,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token <identificador> SUMA "+"
 %token <identificador> MULT "*"
 
+%precedence ";"
 %precedence CONST
 %precedence OPERADOR_ASIGNACION
 %precedence "=>"
