@@ -200,6 +200,12 @@ int crear_lexer_archivo(Lexer *lexer, char *archivo) {
 
     lexer->nombre_fichero = archivo;
     lexer->str_buffer = NULL;
+    lexer->loc = (Localizacion) {
+             .first_line = 1,
+             .last_line = 1,
+             .first_column = 1,
+             .last_column = 1
+     };
 
     yylex_init(&lexer->scanner);
     yyset_in(fichero, lexer->scanner);
@@ -212,6 +218,12 @@ Lexer crear_lexer_str(char *str) {
      yylex_init(&lexer.scanner);
 
      lexer.str_buffer = yy_scan_string(str, lexer.scanner);
+     lexer.loc = (Localizacion) {
+              .first_line = 1,
+              .last_line = 1,
+              .first_column = 1,
+              .last_column = 1
+      };
 
      return lexer;
 }
@@ -259,6 +271,10 @@ char* obtener_nombre_fichero(Lexer lexer) {
     return lexer.nombre_fichero;
 }
 
-int siguiente_componente_lexico(Lexer lexer, void* token, Localizacion *loc) {
-    return yylex((YYSTYPE*) token, loc, lexer.scanner);
+Localizacion obtener_localizacion(Lexer lexer) {
+    return lexer.loc;
+}
+
+int siguiente_componente_lexico(Lexer *lexer, void* token) {
+    return yylex((YYSTYPE*) token, &lexer->loc, lexer->scanner);
 }

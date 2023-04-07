@@ -11,8 +11,6 @@ typedef struct {
     Lexer lexer;
     /// Estado del analizador sintáctico.
     void *ps;
-    /// Posición actual
-    Localizacion loc;
 } Evaluador;
 
 /**

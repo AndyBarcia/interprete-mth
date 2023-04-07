@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-typedef void* ComponenteLexico;
-
+/// Localización de un componente léxico en
+/// el código fuente que se esté procesando.
 typedef struct {
     int first_line;
     int first_column;
@@ -28,6 +28,8 @@ typedef struct {
     // caso de estar procesando
     // un archivo o un string.
     char* nombre_fichero;
+    // Posición actual del analizador.
+    Localizacion loc;
 } Lexer;
 
 /**
@@ -59,15 +61,30 @@ void borrar_analizador_lexico(Lexer lexer);
  */
 char* obtener_linea(Lexer lexer, int linea);
 
+/**
+ * Obtiene el nombre del fichero que está procesando
+ * un lexer dado, o NULL si no está procesando un fichero.
+ * @param lexer
+ * @return
+ */
 char* obtener_nombre_fichero(Lexer lexer);
+
+/**
+ * Obtiene la localización actual de un analizador
+ * léxico dado.
+ * @param lexer
+ * @return
+ */
+Localizacion obtener_localizacion(Lexer lexer);
 
 /**
  * Devuelve el siguiente componente léxico de un analizador
  * léxico dado.
  * @param lexer analizador léxico a utilizar.
- * @param yylval_param variable en la que se guardará el token
+ * @param token tipo opaco en el que se guardará el componente
+ * léxico devuelto.
  * @return tipo de token devuelto.
  */
-int siguiente_componente_lexico(Lexer lexer, ComponenteLexico token, Localizacion *loc);
+int siguiente_componente_lexico(Lexer *lexer, void* token);
 
 #endif //LEXER_ANALIZADOR_LEXICO_H

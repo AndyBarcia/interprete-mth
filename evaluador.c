@@ -6,12 +6,6 @@ Evaluador crear_evaluador(Lexer lexer) {
     return (Evaluador) {
         .lexer = lexer,
         .ps = yypstate_new(),
-        .loc = {
-                .first_line = 1,
-                .last_line = 1,
-                .first_column = 1,
-                .last_column = 1
-        },
     };
 }
 
@@ -24,10 +18,10 @@ int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor
     int status;
     do {
         YYSTYPE token;
-        int c = siguiente_componente_lexico(evaluador->lexer, &token, &evaluador->loc);
+        int c = siguiente_componente_lexico(&evaluador->lexer, &token);
 
         Expresion exp = crear_exp_nula();
-        status = yypush_parse((yypstate*) evaluador->ps, c, &token, (YYLTYPE*) &evaluador->loc, &exp);
+        status = yypush_parse((yypstate*) evaluador->ps, c, &token, (YYLTYPE*) &evaluador->lexer.loc, &exp);
 
         if (exp.tipo != EXP_NULA) {
             *valor = evaluar_expresion(tabla_simbolos, &exp);
