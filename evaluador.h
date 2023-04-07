@@ -35,12 +35,12 @@ void borrar_evaluador(Evaluador *evaluador);
  * Obtiene el valor resultante de evaluar la siguiente
  * expresión que hay en un evaluador.
  * @param evaluador el evaluador a usar.
- * @param tablaSimbolos la tabla de variables.
+ * @param tabla_simbolos la tabla de variables.
  * @param valor donde se guardará el valor.
  * @return 1 si se evaluó un valor, o 0 en caso de que
  * ya no quedasen expresiones por evaluar.
  */
-int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tablaSimbolos, Valor *valor);
+int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor *valor);
 
 /**
  * Evalúa el valor de una expresión, liberando la memoria de la expresión

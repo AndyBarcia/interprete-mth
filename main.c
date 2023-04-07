@@ -5,7 +5,7 @@
 #include "std.h"
 #include "evaluador.h"
 
-void modo_interactivo(TablaSimbolos simbolos) {
+void modo_interactivo(TablaSimbolos *tabla_simbolos) {
     char* linea = NULL;
     size_t len = 0;
     ssize_t read;
@@ -18,7 +18,7 @@ void modo_interactivo(TablaSimbolos simbolos) {
         Evaluador evaluador = crear_evaluador(lexer);
 
         Valor x;
-        if(evaluar_siguiente(&evaluador, &simbolos, &x)) {
+        if(evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
             if (x.tipoValor == TIPO_ERROR) {
                 imprimir_error(x.error, NULL, linea, x.loc);
             } else {
@@ -30,9 +30,10 @@ void modo_interactivo(TablaSimbolos simbolos) {
 
         printf("> ");
     }
+    free(linea);
 }
 
-void modo_fichero(TablaSimbolos simbolos, char* fichero) {
+void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
     Lexer lexer;
     if (!crear_lexer_archivo(&lexer, fichero)) {
         printf("No se pudo abrir el archivo \"%s\".", fichero);
@@ -42,7 +43,7 @@ void modo_fichero(TablaSimbolos simbolos, char* fichero) {
     Evaluador evaluador = crear_evaluador(lexer);
 
     Valor x;
-    while(evaluar_siguiente(&evaluador, &simbolos, &x)) {
+    while(evaluar_siguiente(&evaluador, simbolos, &x)) {
         if (x.tipoValor == TIPO_ERROR) {
             char* linea = obtener_linea(lexer, x.loc->first_line);
             imprimir_error(x.error, fichero, linea, x.loc);
@@ -58,10 +59,10 @@ int main(int argc, char *argv[]) {
     inicializar_libreria_estandar(&simbolos);
 
     if (argc <= 1) {
-        modo_interactivo(simbolos);
+        modo_interactivo(&simbolos);
     }else {
         if (argc > 2) printf("Demasiados argumentos; ignorando.\n");
-        modo_fichero(simbolos, argv[1]);
+        modo_fichero(&simbolos, argv[1]);
     }
 
     borrar_tabla_simbolos(&simbolos);

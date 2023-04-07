@@ -90,8 +90,14 @@ Valor clonar_valor(Valor v) {
     Valor copia = v;
     // Al clonar aumentar el número de referencias si es un
     // valor dinámico (string, error, función, etc).
-    if (copia.referencias)
+    if (copia.referencias) {
         *copia.referencias += 1;
+    } else if (v.loc) {
+        // Si no, clonar también la información de
+        // localización del código fuente si fuese necesario.
+        copia.loc = malloc(sizeof(Localizacion));
+        *copia.loc = *v.loc;
+    }
     return copia;
 }
 
@@ -102,8 +108,10 @@ void borrar_valor(Valor *valor) {
     if (valor->referencias) {
         *valor->referencias -= 1;
         if (*valor->referencias <= 0) {
-            if (valor->loc)
+            if (valor->loc) {
                 free(valor->loc);
+                valor->loc = NULL;
+            }
             switch (valor->tipoValor) {
                 case TIPO_ERROR:
                     borrar_error(&valor->error);
@@ -123,6 +131,14 @@ void borrar_valor(Valor *valor) {
             }
             free(valor->referencias);
             valor->referencias = NULL;
+        }
+    } else {
+        // Si no es un valor dinámico, entonces liberar la
+        // memoria sobre localización en el código fuente, si
+        // la había , y terminar.
+        if (valor->loc) {
+            free(valor->loc);
+            valor->loc = NULL;
         }
     }
     valor->tipoValor = TIPO_INDEFINIDO;

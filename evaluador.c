@@ -20,7 +20,7 @@ void borrar_evaluador(Evaluador *evaluador) {
     borrar_analizador_lexico(evaluador->lexer);
 }
 
-int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tablaSimbolos, Valor *valor) {
+int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor *valor) {
     int status;
     do {
         YYSTYPE token;
@@ -30,7 +30,7 @@ int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tablaSimbolos, Valor 
         status = yypush_parse((yypstate*) evaluador->ps, c, &token, (YYLTYPE*) &evaluador->loc, &exp);
 
         if (exp.tipo != EXP_NULA) {
-            *valor = evaluar_expresion(tablaSimbolos, &exp);
+            *valor = evaluar_expresion(tabla_simbolos, &exp);
             return 1;
         }
     } while (status == YYPUSH_MORE);

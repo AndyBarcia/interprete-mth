@@ -4,12 +4,12 @@
 #include "string.h"
 
 TablaSimbolos crear_tabla_simbolos() {
-    TablaSimbolos t;
-    t.capacidad = 1;
-    t.nivel = 0;
+    TablaSimbolos t = {
+            .capacidad = 1,
+            .nivel = 0,
+    };
     t.tablas = malloc(t.capacidad*sizeof(TablaHash));
-
-    t.tablas[0] = crear_tabla_hash(16);
+    t.tablas[t.nivel] = crear_tabla_hash(16);
     return t;
 }
 
