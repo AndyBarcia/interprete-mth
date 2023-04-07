@@ -5,7 +5,7 @@
 void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud == 0) return;
 
-    Valor result = ((Valor*) args.valores)[0];
+    Valor result = clonar_valor(((Valor*) args.valores)[0]);
     for (int i = 1; i < args.longitud; ++i) {
         Valor v = ((Valor *) args.valores)[i];
         if (result.tipoValor == v.tipoValor) {
