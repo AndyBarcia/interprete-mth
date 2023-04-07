@@ -7,7 +7,7 @@
 #include "tabla_simbolos.h"
 #include "error.h"
 
-#define YY_USER_ACTION yylloc->first_line = yylloc->last_line = yylineno; \
+#define YY_USER_ACTION yylloc->first_line = yylloc->last_line; \
                        yylloc->first_column = yylloc->last_column; \
                        yylloc->last_column += yyleng;
 
@@ -57,7 +57,7 @@ OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 
 %x comentario_anidado
 %x comentario_bloque
-%option reentrant bison-bridge bison-locations yylineno
+%option reentrant bison-bridge bison-locations
 %%
 
 const { return CONST; }

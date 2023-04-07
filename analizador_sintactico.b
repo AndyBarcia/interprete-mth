@@ -97,9 +97,10 @@ program:
 nuevas_lineas: %empty | nuevas_lineas "\n"
 
 statement_list:
+      %empty
     | nuevas_lineas
     | statement_list expresion nuevas_lineas { *exp = $2; }
-    | statement_list error expresion
+    | statement_list error nuevas_lineas { yyerrok; }
     ;
 
 argument_list_many:
