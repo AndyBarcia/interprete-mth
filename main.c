@@ -50,6 +50,8 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
         }
         borrar_valor(&x);
     }
+
+    borrar_evaluador(&evaluador);
 }
 
 int main(int argc, char *argv[]) {
