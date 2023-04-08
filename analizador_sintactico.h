@@ -65,26 +65,26 @@ extern int yydebug;
     STRING = 260,                  /* "string"  */
     ERROR = 261,                   /* ERROR  */
     OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
-    CONST = 263,                   /* "const"  */
-    EXPORT = 264,                  /* "export"  */
-    IMPORT = 265,                  /* "import"  */
-    FOREIGN = 266,                 /* "foreign"  */
-    AS = 267,                      /* "as"  */
-    PARENTESIS_IZQ = 268,          /* "("  */
-    PARENTESIS_DER = 269,          /* ")"  */
-    CORCHETE_IZQ = 270,            /* "["  */
-    CORCHETE_DER = 271,            /* "]"  */
-    LLAVE_IZQ = 272,               /* "{"  */
-    LLAVE_DER = 273,               /* "}"  */
-    PUNTO = 274,                   /* "."  */
-    FLECHA = 275,                  /* "=>"  */
-    SLASH_INVERTIDA = 276,         /* "\\"  */
-    NUEVA_LINEA = 277,             /* "\n"  */
-    PUNTO_Y_COMA = 278,            /* ";"  */
-    COMA = 279,                    /* ","  */
-    OPERADOR = 280,                /* "operador"  */
-    SUMA = 281,                    /* "+"  */
-    MULT = 282                     /* "*"  */
+    OPERADOR = 263,                /* "operador"  */
+    SUMA = 264,                    /* "+"  */
+    MULT = 265,                    /* "*"  */
+    CONST = 266,                   /* "const"  */
+    EXPORT = 267,                  /* "export"  */
+    IMPORT = 268,                  /* "import"  */
+    FOREIGN = 269,                 /* "foreign"  */
+    AS = 270,                      /* "as"  */
+    PARENTESIS_IZQ = 271,          /* "("  */
+    PARENTESIS_DER = 272,          /* ")"  */
+    CORCHETE_IZQ = 273,            /* "["  */
+    CORCHETE_DER = 274,            /* "]"  */
+    LLAVE_IZQ = 275,               /* "{"  */
+    LLAVE_DER = 276,               /* "}"  */
+    PUNTO = 277,                   /* "."  */
+    FLECHA = 278,                  /* "=>"  */
+    SLASH_INVERTIDA = 279,         /* "\\"  */
+    NUEVA_LINEA = 280,             /* "\n"  */
+    PUNTO_Y_COMA = 281,            /* ";"  */
+    COMA = 282                     /* ","  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -98,7 +98,7 @@ union YYSTYPE
     int tipoOperador;
     int valorEntero;
     Error error_lexico;
-    String identificador;
+    Identificador identificador;
     String string;
     ListaExpresiones listaExpresiones;
     ListaIdentificadores listaIdentificadores;

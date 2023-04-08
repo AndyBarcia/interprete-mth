@@ -200,13 +200,29 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc) {
     };
 }
 
-Expresion crear_exp_importe(String archivo, int foraneo, Identificador as, Localizacion loc) {
+Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc) {
+    return (Expresion) {
+            .tipo = EXP_IMPORT,
+            .importe = (Import) {
+                    .archivo = archivo,
+                    .foraneo = foraneo,
+                    .as = NULL,
+                    .loc = loc,
+            },
+            .es_sentencia = 0
+    };
+}
+
+Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion loc) {
+    Identificador *as_p = malloc(sizeof(Identificador));
+    *as_p = as;
+
     return (Expresion) {
         .tipo = EXP_IMPORT,
         .importe = (Import) {
             .archivo = archivo,
             .foraneo = foraneo,
-            .as = as,
+            .as = as_p,
             .loc = loc,
         },
         .es_sentencia = 0
@@ -244,7 +260,10 @@ Expresion clonar_expresion(Expresion exp) {
             break;
         case EXP_IMPORT:
             e.importe.archivo = clonar_string(exp.importe.archivo);
-            e.importe.as = clonar_identificador(exp.importe.as);
+            if (e.importe.as) {
+                e.importe.as = malloc(sizeof(Identificador));
+                *e.importe.as = clonar_identificador(*exp.importe.as);
+            }
             break;
         case EXP_ACCESO_MIEMBRO:
             e.acceso.miembro = clonar_identificador(exp.acceso.miembro);
@@ -285,7 +304,10 @@ void borrar_expresion(Expresion *exp) {
             break;
         case EXP_IMPORT:
             borrar_string(&exp->importe.archivo);
-            borrar_string(&exp->importe.as.nombre);
+            if (exp->importe.as) {
+                borrar_identificador(exp->importe.as);
+                free(exp->importe.as);
+            }
             break;
         case EXP_ACCESO_MIEMBRO:
             borrar_string(&exp->acceso.miembro.nombre);
@@ -302,6 +324,12 @@ ListaExpresiones crear_lista_expresiones() {
             .capacidad = 0,
             .valores = NULL
     };
+}
+
+ListaExpresiones crear_lista_expresiones1(Expresion expresion) {
+    ListaExpresiones lista = crear_lista_expresiones();
+    push_lista_expresiones(&lista, expresion);
+    return lista;
 }
 
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion) {

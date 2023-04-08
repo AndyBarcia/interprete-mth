@@ -1,7 +1,7 @@
 %{
 #include "analizador_lexico.h"
 #include "string.h"
-#include "ast.h"
+#include "ast/ast.h"
 
 void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 
@@ -17,14 +17,14 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %locations
 
 %code requires {
-    #include "ast.h"
+    #include "ast/ast.h"
 }
 
 %union {
     int tipoOperador;
     int valorEntero;
     Error error_lexico;
-    String identificador;
+    Identificador identificador;
     String string;
     ListaExpresiones listaExpresiones;
     ListaIdentificadores listaIdentificadores;
@@ -37,6 +37,9 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token <string> STRING "string"
 %token <error_lexico> ERROR
 %token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
+%token <identificador> OPERADOR "operador"
+%token <identificador> SUMA "+"
+%token <identificador> MULT "*"
 
 %token CONST "const"
 %token EXPORT "export"
@@ -51,13 +54,10 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token LLAVE_IZQ "{"
 %token LLAVE_DER "}"
 %token PUNTO "."
-
 %token FLECHA "=>"
 %token SLASH_INVERTIDA "\\"
-
 %token NUEVA_LINEA "\n"
 %token PUNTO_Y_COMA ";"
-
 %token COMA ","
 
 %type <identificador> nombre_asignable
@@ -68,10 +68,6 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
 
-%token <identificador> OPERADOR "operador"
-%token <identificador> SUMA "+"
-%token <identificador> MULT "*"
-
 %precedence ";"
 %precedence CONST
 %precedence OPERADOR_ASIGNACION
@@ -81,9 +77,9 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %left "*"
 %precedence "("
 
-%destructor { borrar_string(&$$); } IDENTIFICADOR
+%destructor { borrar_identificador(&$$); } IDENTIFICADOR
 %destructor { borrar_string(&$$); } STRING
-%destructor { borrar_string(&$$); } nombre_asignable
+%destructor { borrar_identificador(&$$); } nombre_asignable
 %destructor { borrar_lista_expresiones(&$$); } argument_list
 %destructor { borrar_lista_expresiones(&$$); } argument_list_many
 %destructor { borrar_lista_expresiones(&$$); } expression_block
@@ -93,11 +89,9 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 
 %%
 
-program:
-    statement_list
-    ;
+program: statement_list ;
 
-nuevas_lineas: %empty | nuevas_lineas "\n"
+nuevas_lineas: %empty | nuevas_lineas "\n" ;
 
 statement_list:
       %empty
@@ -107,28 +101,17 @@ statement_list:
     ;
 
 argument_list_many:
-    expresion {
-            $$ = crear_lista_expresiones();
-            push_lista_expresiones(&$$, $1);
-        }
+    expresion { $$ = crear_lista_expresiones1($1); }
     | argument_list_many "," expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
     ;
-argument_list:
-      argument_list_many
+argument_list: argument_list_many
     | %empty { $$ = crear_lista_expresiones(); }
 
 identifier_list_many:
-    IDENTIFICADOR {
-            $$ = crear_lista_identificadores();
-            push_lista_identificadores(&$$, crear_identificador($1, @1));
-        }
-    | identifier_list_many COMA IDENTIFICADOR {
-            push_lista_identificadores(&$1, crear_identificador($3, @3));
-            $$ = $1;
-        }
+    IDENTIFICADOR { $$ = crear_lista_identificadores1($1); }
+    | identifier_list_many "," IDENTIFICADOR { push_lista_identificadores(&$1, $3); $$ = $1; }
     ;
-identifier_list:
-      identifier_list_many
+identifier_list:  identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
 
 expression_block:
@@ -141,50 +124,20 @@ nombre_asignable: IDENTIFICADOR | OPERADOR ;
 expresion:
       ENTERO { $$ = crear_exp_valor(crear_entero($1, &@1)); }
     | STRING { $$ = crear_exp_valor(crear_valor_string($1, &@1)); }
-    | nombre_asignable {
-            Identificador id = crear_identificador($1, @1);
-            $$ = crear_exp_nombre(id);
-        }
-    | OPERADOR expresion {
-            Identificador op = crear_identificador($1, @1);
-            $$ = crear_exp_op_unaria(op, $2, @$);
-        }
-    | expresion "*" expresion {
-            Identificador op = crear_identificador($2, @2);
-            $$ = crear_exp_op_binaria(op, $1, $3, @$);
-        }
-    | expresion "+" expresion {
-            Identificador op = crear_identificador($2, @2);
-            $$ = crear_exp_op_binaria(op, $1, $3, @$);
-         }
+    | nombre_asignable { $$ = crear_exp_nombre($1); }
+    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2, @$); }
+    | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3, @$); }
+    | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3, @$); }
     | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, @$); }
     | "(" expresion ")" { $$ = $2; }
-    | expresion "." IDENTIFICADOR {
-            Identificador miembro = crear_identificador($3, @3);
-            $$ = crear_exp_acceso($1, miembro, @$);
-         }
-    | nombre_asignable OPERADOR_ASIGNACION expresion {
-            Identificador id = crear_identificador($1, @1);
-            $$ = crear_exp_asignacion(id, $3, ASIGNACION_NORMAL, @$);
-         }
-    | "const" nombre_asignable OPERADOR_ASIGNACION expresion {
-            Identificador id = crear_identificador($2, @2);
-            $$ = crear_exp_asignacion(id, $4, ASIGNACION_INMUTABLE, @$);
-         }
-    | "export" nombre_asignable OPERADOR_ASIGNACION expresion {
-            Identificador id = crear_identificador($2, @2);
-            $$ = crear_exp_asignacion(id, $4, ASIGNACION_EXPORT, @$);
-         }
+    | expresion "." IDENTIFICADOR { $$ = crear_exp_acceso($1, $3, @$); }
+    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, @$); }
+    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, @$); }
+    | "export" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, @$); }
     | "{" expression_block "}" { $$ = crear_exp_bloque($2, @$); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, @$); }
-    | "import" STRING {
-             Identificador as = crear_identificador(crear_string_vacio(), @2); // TODO: cambiar
-             $$ = crear_exp_importe($2, 0, as, @2);
-         }
-    | "import" "foreign" STRING "as" IDENTIFICADOR {
-            Identificador as = crear_identificador($5, @5);
-            $$ = crear_exp_importe($3, 1, as, @3);
-         }
+    | "import" STRING {$$ = crear_exp_importe($2, 0, @2); }
+    | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, @3); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_valor_error($1, &@1)); }
     ;

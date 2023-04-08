@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
     String archivo;
     int foraneo;
-    Identificador as;
+    Identificador *as;
     Localizacion loc;
 } Import;
 
@@ -142,7 +142,8 @@ Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b,
 Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion loc);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
-Expresion crear_exp_importe(String archivo, int foraneo, Identificador as, Localizacion loc);
+Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc);
+Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion loc);
 
 /// Crea un clon profundo de una expresión.
 Expresion clonar_expresion(Expresion exp);
@@ -154,6 +155,7 @@ void borrar_expresion(Expresion *exp);
  */
 
 ListaExpresiones crear_lista_expresiones();
+ListaExpresiones crear_lista_expresiones1(Expresion expresion);
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
 ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista);
 void borrar_lista_expresiones(ListaExpresiones *lista);

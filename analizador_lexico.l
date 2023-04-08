@@ -67,7 +67,7 @@ foreign { return FOREIGN; }
 as { return AS; }
 
 {ALFA_US}{ALFANUM_US}* {
-         yylval->identificador = crear_string(yytext);
+         yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
          return IDENTIFICADOR;
      }
 
@@ -92,31 +92,31 @@ as { return AS; }
     }
 
 [\-/<>&|] {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 \+  {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return SUMA;
     }
 \*  {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return MULT;
     }
 \=\=   {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 >=  {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 \<=  {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 !   {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 = {

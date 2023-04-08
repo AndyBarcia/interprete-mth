@@ -23,6 +23,7 @@ Identificador clonar_identificador(Identificador id);
 char* identificador_a_str(Identificador *id);
 
 ListaIdentificadores crear_lista_identificadores();
+ListaIdentificadores crear_lista_identificadores1(Identificador identificador);
 void push_lista_identificadores(ListaIdentificadores *lista, Identificador identificador);
 ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista);
 void borrar_lista_identificadores(ListaIdentificadores *lista);

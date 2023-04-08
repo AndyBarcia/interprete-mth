@@ -897,7 +897,7 @@ case 6:
 YY_RULE_SETUP
 #line 69 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-         yylval->identificador = crear_string(yytext);
+         yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
          return IDENTIFICADOR;
      }
 	YY_BREAK
@@ -939,7 +939,7 @@ case 11:
 YY_RULE_SETUP
 #line 94 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 	YY_BREAK
@@ -947,7 +947,7 @@ case 12:
 YY_RULE_SETUP
 #line 98 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return SUMA;
     }
 	YY_BREAK
@@ -955,7 +955,7 @@ case 13:
 YY_RULE_SETUP
 #line 102 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return MULT;
     }
 	YY_BREAK
@@ -963,7 +963,7 @@ case 14:
 YY_RULE_SETUP
 #line 106 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 	YY_BREAK
@@ -971,7 +971,7 @@ case 15:
 YY_RULE_SETUP
 #line 110 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 	YY_BREAK
@@ -979,7 +979,7 @@ case 16:
 YY_RULE_SETUP
 #line 114 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 	YY_BREAK
@@ -987,7 +987,7 @@ case 17:
 YY_RULE_SETUP
 #line 118 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylval->identificador = crear_string(yytext);
+        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
         return OPERADOR;
     }
 	YY_BREAK

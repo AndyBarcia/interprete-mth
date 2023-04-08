@@ -165,8 +165,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
 
                     if (fn.nombres_args.longitud != args.longitud) {
                         borrar_lista_valores(&args);
-                        Error error = crear_error("Se pasaron %d nombres_args, pero se esperaban %d.", args.longitud, fn.nombres_args.longitud);
-                        return crear_valor_error(error, f.loc);
+                        Error error = crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.nombres_args.longitud);
+                        return crear_valor_error(error, &exp->llamada_funcion.loc);
                     }
 
                     // Introducir los nombres_args en la tabla de símbolos.
@@ -287,16 +287,22 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (!bib) {
                     Error error = crear_error("No se pudo abrir la biblioteca dinámica.");
                     borrar_string(&exp->importe.archivo);
-                    borrar_identificador(&exp->importe.as);
+                    if (exp->importe.as) {
+                        borrar_identificador(exp->importe.as);
+                        free(exp->importe.as);
+                    }
                     return crear_valor_error(error, &exp->importe.loc);
                 }
 
-                Valor v = crear_valor_biblioteca(bib, &exp->importe.as.loc);
-                if (!asignar_valor_tabla(tabla, exp->importe.as, v, ASIGNACION_INMUTABLE)) {
+                Valor v = crear_valor_biblioteca(bib, &exp->importe.as->loc);
+                if (!asignar_valor_tabla(tabla, *exp->importe.as, v, ASIGNACION_INMUTABLE)) {
                     Error error = crear_error("Ya hay un objeto definido con este nombre");
                     borrar_string(&exp->importe.archivo);
-                    borrar_identificador(&exp->importe.as);
-                    return crear_valor_error(error, &exp->importe.as.loc);
+                    if (exp->importe.as) {
+                        borrar_identificador(exp->importe.as);
+                        free(exp->importe.as);
+                    }
+                    return crear_valor_error(error, &exp->importe.as->loc);
                 }
             } else {
                 // Importar un archivo normal.
@@ -306,7 +312,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (!crear_lexer_archivo(&lexer, string_a_puntero(&exp->importe.archivo))) {
                     Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_puntero(&exp->importe.archivo));
                     borrar_string(&exp->importe.archivo);
-                    borrar_identificador(&exp->importe.as);
+                    if (exp->importe.as) {
+                        borrar_identificador(exp->importe.as);
+                        free(exp->importe.as);
+                    }
                     return crear_valor_error(error, &exp->importe.loc);
                 }
 
@@ -325,7 +334,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             }
 
             borrar_string(&exp->importe.archivo);
-            borrar_identificador(&exp->importe.as);
+            if (exp->importe.as) {
+                borrar_identificador(exp->importe.as);
+                free(exp->importe.as);
+            }
             return crear_indefinido();
         }
         default: {

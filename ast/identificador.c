@@ -31,6 +31,12 @@ ListaIdentificadores crear_lista_identificadores() {
     };
 }
 
+ListaIdentificadores crear_lista_identificadores1(Identificador identificador) {
+    ListaIdentificadores lista = crear_lista_identificadores();
+    push_lista_identificadores(&lista, identificador);
+    return lista;
+}
+
 void push_lista_identificadores(ListaIdentificadores *lista, Identificador identificador) {
     if (lista->longitud >= lista->capacidad) {
         lista->valores = realloc(lista->valores, (lista->capacidad + 1) * sizeof(Identificador));
