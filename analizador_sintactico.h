@@ -69,20 +69,22 @@ extern int yydebug;
     EXPORT = 264,                  /* "export"  */
     IMPORT = 265,                  /* "import"  */
     FOREIGN = 266,                 /* "foreign"  */
-    PARENTESIS_IZQ = 267,          /* "("  */
-    PARENTESIS_DER = 268,          /* ")"  */
-    CORCHETE_IZQ = 269,            /* "["  */
-    CORCHETE_DER = 270,            /* "]"  */
-    LLAVE_IZQ = 271,               /* "{"  */
-    LLAVE_DER = 272,               /* "}"  */
-    FLECHA = 273,                  /* "=>"  */
-    SLASH_INVERTIDA = 274,         /* "\\"  */
-    NUEVA_LINEA = 275,             /* "\n"  */
-    PUNTO_Y_COMA = 276,            /* ";"  */
-    COMA = 277,                    /* ","  */
-    OPERADOR = 278,                /* "operador"  */
-    SUMA = 279,                    /* "+"  */
-    MULT = 280                     /* "*"  */
+    AS = 267,                      /* "as"  */
+    PARENTESIS_IZQ = 268,          /* "("  */
+    PARENTESIS_DER = 269,          /* ")"  */
+    CORCHETE_IZQ = 270,            /* "["  */
+    CORCHETE_DER = 271,            /* "]"  */
+    LLAVE_IZQ = 272,               /* "{"  */
+    LLAVE_DER = 273,               /* "}"  */
+    PUNTO = 274,                   /* "."  */
+    FLECHA = 275,                  /* "=>"  */
+    SLASH_INVERTIDA = 276,         /* "\\"  */
+    NUEVA_LINEA = 277,             /* "\n"  */
+    PUNTO_Y_COMA = 278,            /* ";"  */
+    COMA = 279,                    /* ","  */
+    OPERADOR = 280,                /* "operador"  */
+    SUMA = 281,                    /* "+"  */
+    MULT = 282                     /* "*"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -103,7 +105,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 107 "../analizador_sintactico.h"
+#line 109 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

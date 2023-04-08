@@ -155,44 +155,44 @@ void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno);
 ValorLibreriaEstandar elementos[] = {
         {
                 {"sumar",       "+"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = sumar},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = sumar},
                 "Suma un conjunto de enteros."
         },
         {
                 {"restar",      "-"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = restar},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = restar},
                 "Resta un número a otro, o convierte un número positivo a negativo."
         },
         {
                 {"multiplicar", "*"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = multiplicar},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = multiplicar},
                 "Multiplica un conjunto de enteros."
         },
         {
                 {"igualdad",    "=="},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = igualdad},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = igualdad},
                 "Comprueba si un conjunto de valores son iguales."
         },
         {
                 {"print",       "imprimir"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = print},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = print},
                 "Imprime un conjunto de valores."
         },
         {
                 {"print_ws",    "imprimir_ws"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = print_ws},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = print_ws},
                 "Imprime todas las variables del conjunto de trabajo (workspace).\nSi recibe \"verdadero\" como primer "
                 "argumento, imprime todas las variables, incluidas las de la librería estándar."
         },
         {
                 {"eval",    NULL},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = eval},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = eval},
                 "Evalúa el string que se le pasa como argumento, como si fuera parte del código fuente.\n\nNótese que "
                 "esto significa que evaluar strings como \"x=5\" crearán nuevas variables."
         },
         {
                 {"help",        "ayuda"},
-                {TIPO_FUNCION_NATIVA, .funcion_nativa = ayuda},
+                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = ayuda},
                 "Imprime la documentación de una función de la librería estándar."
         },
         {

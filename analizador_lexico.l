@@ -64,6 +64,7 @@ const { return CONST; }
 export { return EXPORT; }
 import { return IMPORT; }
 foreign { return FOREIGN; }
+as { return AS; }
 
 {ALFA_US}{ALFANUM_US}* {
          yylval->identificador = crear_string(yytext);
@@ -90,7 +91,7 @@ foreign { return FOREIGN; }
         return ERROR;
     }
 
-[\-/.<>&|] {
+[\-/<>&|] {
         yylval->identificador = crear_string(yytext);
         return OPERADOR;
     }
@@ -145,6 +146,7 @@ foreign { return FOREIGN; }
         return NUEVA_LINEA;
     }
 ;  { return PUNTO_Y_COMA; }
+\. { return PUNTO; }
 
 =>  { return FLECHA;}
 \\  { return SLASH_INVERTIDA; }

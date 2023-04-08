@@ -42,13 +42,13 @@ Valor crear_valor_string(String string, Localizacion *loc) {
     return (Valor) {TIPO_STRING, referencias, loc, .string = string};
 }
 
-Valor crear_funcion_nativa(FuncionNativa funcion, Localizacion *loc) {
+Valor crear_funcion_nativa(FuncionIntrinseca funcion, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
         *loc_copy = *loc;
         loc = loc_copy;
     }
-    return (Valor) {TIPO_FUNCION_NATIVA, NULL, loc, .funcion_nativa = funcion};
+    return (Valor) {TIPO_FUNCION_INTRINSECA, NULL, loc, .funcion_nativa = funcion};
 }
 
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc) {
@@ -69,6 +69,31 @@ Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, s
                     .cuerpo = cuerpo,
                     .variables_capturadas = capturadas
             }
+    };
+}
+
+Valor crear_funcion_foranea(FuncionForanea foranea) {
+    return (Valor) {
+        .tipoValor = TIPO_FUNCION_FORANEA,
+        .referencias = NULL,
+        .loc = NULL,
+        .funcion_foranea = foranea
+    };
+}
+
+Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = *loc;
+        loc = loc_copy;
+    }
+    int *referencias = malloc(sizeof(int));
+    *referencias = 1;
+    return (Valor) {
+        .tipoValor = TIPO_BIBLIOTECA_FORANEA,
+        .referencias = referencias,
+        .loc = loc,
+        .biblioteca = biblioteca
     };
 }
 
@@ -126,6 +151,8 @@ void borrar_valor(Valor *valor) {
                     borrar_tabla_hash((TablaHash *) valor->funcion.variables_capturadas);
                     free(valor->funcion.variables_capturadas);
                     break;
+                case TIPO_BIBLIOTECA_FORANEA:
+                    cerrar_biblioteca_dinamica(&valor->biblioteca);
                 default:
                     break;
             }
@@ -153,7 +180,7 @@ int comparar_valor(Valor a, Valor b) {
             return 1;
         case TIPO_ERROR:
             return 1;
-        case TIPO_FUNCION_NATIVA:
+        case TIPO_FUNCION_INTRINSECA:
             return a.funcion_nativa == b.funcion_nativa;
         case TIPO_FUNCION:
             return 0;
@@ -245,11 +272,14 @@ void _imprimir_valor(Valor valor) {
         case TIPO_ERROR:
             printf("%s", string_a_puntero(&valor.error.mensaje));
             break;
-        case TIPO_FUNCION_NATIVA:
+        case TIPO_FUNCION_INTRINSECA:
             printf("[función nativa]");
             break;
         case TIPO_FUNCION:
             printf("[función]");
+            break;
+        case TIPO_FUNCION_FORANEA:
+            printf("[función foránea]");
             break;
         case TIPO_ENTERO:
             printf("%d", valor.entero);
@@ -259,6 +289,9 @@ void _imprimir_valor(Valor valor) {
             break;
         case TIPO_STRING:
             printf("%s", string_a_puntero(&valor.string));
+            break;
+        case TIPO_BIBLIOTECA_FORANEA:
+            printf("[biblioteca]");
             break;
     }
 }

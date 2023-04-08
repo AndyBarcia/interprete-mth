@@ -51,15 +51,48 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
         }
         case EXP_IDENTIFICADOR: {
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
-            Valor v = recuperar_valor_tabla(*tabla, exp->identificador);
+            Valor v = recuperar_valor_tabla(*tabla, exp->nombre);
             if (v.tipoValor == TIPO_ERROR) return v;
-            borrar_string(&exp->identificador.nombre);
+            borrar_string(&exp->nombre.nombre);
 
             if (exp->es_sentencia) {
                 borrar_valor(&v);
                 return crear_indefinido();
             }
             return v;
+        }
+        case EXP_ACCESO_MIEMBRO: {
+            Valor v = evaluar_expresion(tabla, (Expresion *) exp->acceso.valor);
+            free(exp->acceso.valor);
+            if (v.tipoValor == TIPO_ERROR) return v;
+
+            Valor result = crear_indefinido();
+            switch (v.tipoValor) {
+                case TIPO_BIBLIOTECA_FORANEA: {
+                    BibilotecaDinamica bib = v.biblioteca;
+                    FuncionForanea f = cargar_funcion_biblioteca(bib, string_a_puntero(&exp->acceso.miembro.nombre));
+                    if (f) {
+                        result = crear_funcion_foranea(f);
+                    } else {
+                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.", string_a_puntero(&exp->acceso.miembro.nombre));
+                        result = crear_valor_error(error, &exp->acceso.miembro.loc);
+                    }
+                    break;
+                }
+                default: {
+                    Error error = crear_error("No se puede acceder al miembro \"%s\".", string_a_puntero(&exp->acceso.miembro.nombre));
+                    result = crear_valor_error(error, &exp->acceso.miembro.loc);
+                    break;
+                }
+            }
+
+            borrar_valor(&v);
+            borrar_string(&exp->acceso.miembro.nombre);
+            if (exp->es_sentencia && result.tipoValor != TIPO_ERROR) {
+                borrar_valor(&result);
+                return crear_indefinido();
+            }
+            return result;
         }
         case EXP_OP_LLAMADA: {
             // Si es una llamada, evaluar la expresión que queremos llamar como función,
@@ -71,8 +104,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 case TIPO_ERROR:
                     borrar_lista_expresiones(&exp->llamadaFuncion.argumentos);
                     return f;
-                case TIPO_FUNCION_NATIVA: {
-                    FuncionNativa fn = f.funcion_nativa;
+                case TIPO_FUNCION_INTRINSECA: {
+                    FuncionIntrinseca fn = f.funcion_nativa;
                     ListaValores args = evaluar_expresiones(tabla, &exp->llamadaFuncion.argumentos);
 
                     for(int i = 0; i < args.longitud; ++i) {
@@ -97,6 +130,34 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                         return crear_indefinido();
                     }
                     return result;
+                }
+                case TIPO_FUNCION_FORANEA: {
+                    FuncionForanea fn = f.funcion_foranea;
+                    ListaValores args = evaluar_expresiones(tabla, &exp->llamadaFuncion.argumentos);
+
+                    for(int i = 0; i < args.longitud; ++i) {
+                        Valor v = ((Valor*)args.valores)[i];
+                        if (v.tipoValor == TIPO_ERROR) {
+                            // Borrar todos los valores menos el que vamos a devolver.
+                            for (int j = 0; j < args.longitud; ++j) {
+                                if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
+                            }
+                            free(args.valores);
+                            return v;
+                        }
+                    }
+
+                    int a = ((Valor*) args.valores)[0].entero;
+                    int b = ((Valor*) args.valores)[1].entero;
+                    int r = fn(a,b);
+
+                    borrar_lista_valores(&args);
+                    borrar_valor(&f);
+
+                    if (exp->es_sentencia) {
+                        return crear_indefinido();
+                    }
+                    return crear_entero(r, NULL);
                 }
                 case TIPO_FUNCION: {
                     Funcion fn = f.funcion;
@@ -219,10 +280,24 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             return ultimo_valor;
         }
         case EXP_IMPORT: {
-            aumentar_nivel_tabla_simbolos(tabla);
-
             if (exp->importe.foraneo) {
-                // TODO: importar funciones de C de un archivo ".so"
+                // Importar una biblioteca dinámica de C
+
+                BibilotecaDinamica bib = cargar_biblioteca_dinamica(string_a_puntero(&exp->importe.archivo));
+                if (!bib) {
+                    Error error = crear_error("No se pudo abrir la biblioteca dinámica.");
+                    borrar_string(&exp->importe.archivo);
+                    borrar_string(&exp->importe.as.nombre);
+                    return crear_valor_error(error, &exp->importe.loc);
+                }
+
+                Valor v = crear_valor_biblioteca(bib, &exp->importe.as.loc);
+                if (!asignar_valor_tabla(tabla, exp->importe.as, v, ASIGNACION_INMUTABLE)) {
+                    Error error = crear_error("Ya hay un objeto definido con este nombre");
+                    borrar_string(&exp->importe.archivo);
+                    borrar_string(&exp->importe.as.nombre);
+                    return crear_valor_error(error, &exp->importe.as.loc);
+                }
             } else {
                 // Importar un archivo normal.
                 // Crear un nuevo evaluador y evaluar el archivo.
@@ -231,11 +306,14 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (!crear_lexer_archivo(&lexer, string_a_puntero(&exp->importe.archivo))) {
                     Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_puntero(&exp->importe.archivo));
                     borrar_string(&exp->importe.archivo);
+                    borrar_string(&exp->importe.as.nombre);
                     return crear_valor_error(error, &exp->importe.loc);
                 }
 
                 Evaluador evaluador = crear_evaluador(lexer);
                 Valor x;
+
+                aumentar_nivel_tabla_simbolos(tabla);
                 while(evaluar_siguiente(&evaluador, tabla, &x)) {
                     if (x.tipoValor == TIPO_ERROR) {
                         char* linea = obtener_linea(lexer, x.loc->first_line);
@@ -243,10 +321,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     }
                     borrar_valor(&x);
                 }
+                reducir_nivel_tabla_simbolos(tabla);
             }
 
-            reducir_nivel_tabla_simbolos(tabla);
             borrar_string(&exp->importe.archivo);
+            borrar_string(&exp->importe.as.nombre);
             return crear_indefinido();
         }
         default: {

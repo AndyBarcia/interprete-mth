@@ -3,6 +3,7 @@
 
 #include "string.h"
 #include "error.h"
+#include "biblioteca_dinamica.h"
 #include "analizador_lexico.h"
 
 /// Tipo interno de un entero en el lenguaje
@@ -28,12 +29,16 @@ typedef enum {
     /// Valor string. Ejemplo `"string"`
     TIPO_STRING,
     /// Valor de puntero a función nativa. Ejemplo `+`
-    TIPO_FUNCION_NATIVA,
+    TIPO_FUNCION_INTRINSECA,
+    /// Valor de puntero a función de C.
+    TIPO_FUNCION_FORANEA,
     /// Valor de función definida por el usuario.
-    TIPO_FUNCION
+    TIPO_FUNCION,
+    /// Una biblioteca de C
+    TIPO_BIBLIOTECA_FORANEA
 } TipoValor;
 
-typedef void (*FuncionNativa)();
+typedef void (*FuncionIntrinseca)();
 
 /// Un identificador, con una localización en el código fuente.
 typedef struct {
@@ -47,6 +52,9 @@ typedef struct {
     int capacidad;
     Identificador* valores;
 } ListaIdentificadores;
+
+/// Un valor asignable en una expresión de asignación.
+typedef Identificador NombreAsignable;
 
 /// Una función definida por el usuario, con:
 ///     * Una serie de nombres como argumentos de entrada.
@@ -71,9 +79,11 @@ typedef struct {
     union {
         Entero entero;
         Bool bool;
-        FuncionNativa funcion_nativa;
-        Funcion funcion;
         String string;
+        FuncionIntrinseca funcion_nativa;
+        Funcion funcion;
+        FuncionForanea funcion_foranea;
+        BibilotecaDinamica biblioteca;
         Error error;
     };
 } Valor;
@@ -93,8 +103,10 @@ Valor crear_nulo();
 Valor crear_entero(Entero entero, Localizacion *loc);
 Valor crear_bool(Bool bool, Localizacion *loc);
 Valor crear_valor_string(String string, Localizacion *loc);
-Valor crear_funcion_nativa(FuncionNativa funcion, Localizacion *loc);
+Valor crear_funcion_nativa(FuncionIntrinseca funcion, Localizacion *loc);
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc);
+Valor crear_funcion_foranea(FuncionForanea foranea);
+Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc);
 Valor crear_valor_error(Error error, Localizacion *loc);
 
 /// Crea un clon "ligero" de un valor; esto es, incrementando

@@ -57,8 +57,18 @@ typedef struct {
 typedef struct {
     String archivo;
     int foraneo;
+    Identificador as;
     Localizacion loc;
 } Import;
+
+/// Una expresión de acceso al miembro
+/// de un valor estructurado.
+/// Ejemplo: `diccionario.test`
+typedef struct {
+    struct Expresion *valor;
+    Identificador miembro;
+    Localizacion loc;
+} AccesoMiembro;
 
 /// El tipo de una expresión.
 typedef enum {
@@ -71,6 +81,10 @@ typedef enum {
     /// Una expresión que es un simple identificador.
     /// Ejemplo: `x`
     EXP_IDENTIFICADOR,
+    /// Una expresión de acceso al miembro
+    /// de un valor estructurado.
+    /// Ejemplo: `diccionario.test`
+    EXP_ACCESO_MIEMBRO,
     /// Una expresión que es una llamada a una función
     /// con ciertos argumentos.
     /// Ejemplo: `f(5)`, `(\x=>x+1)(2)`
@@ -104,7 +118,8 @@ typedef struct {
     int es_sentencia;
     union {
         Valor valor;
-        Identificador identificador;
+        NombreAsignable nombre;
+        AccesoMiembro acceso;
         LlamadaFuncion llamadaFuncion;
         Asignacion asignacion;
         DefinicionFuncion defFuncion;
@@ -119,14 +134,15 @@ typedef struct {
 
 Expresion crear_exp_nula();
 Expresion crear_exp_valor(Valor valor);
-Expresion crear_exp_identificador(Identificador identificador);
+Expresion crear_exp_nombre(NombreAsignable nombre);
+Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion loc);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc);
 Expresion crear_exp_op_unaria(Identificador operador, Expresion x, Localizacion loc);
 Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b, Localizacion loc);
 Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion loc);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
-Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc);
+Expresion crear_exp_importe(String archivo, int foraneo, Identificador as, Localizacion loc);
 
 /// Crea un clon profundo de una expresión.
 Expresion clonar_expresion(Expresion exp);

@@ -116,31 +116,33 @@ enum yysymbol_kind_t
   YYSYMBOL_EXPORT = 9,                     /* "export"  */
   YYSYMBOL_IMPORT = 10,                    /* "import"  */
   YYSYMBOL_FOREIGN = 11,                   /* "foreign"  */
-  YYSYMBOL_PARENTESIS_IZQ = 12,            /* "("  */
-  YYSYMBOL_PARENTESIS_DER = 13,            /* ")"  */
-  YYSYMBOL_CORCHETE_IZQ = 14,              /* "["  */
-  YYSYMBOL_CORCHETE_DER = 15,              /* "]"  */
-  YYSYMBOL_LLAVE_IZQ = 16,                 /* "{"  */
-  YYSYMBOL_LLAVE_DER = 17,                 /* "}"  */
-  YYSYMBOL_FLECHA = 18,                    /* "=>"  */
-  YYSYMBOL_SLASH_INVERTIDA = 19,           /* "\\"  */
-  YYSYMBOL_NUEVA_LINEA = 20,               /* "\n"  */
-  YYSYMBOL_PUNTO_Y_COMA = 21,              /* ";"  */
-  YYSYMBOL_COMA = 22,                      /* ","  */
-  YYSYMBOL_OPERADOR = 23,                  /* "operador"  */
-  YYSYMBOL_SUMA = 24,                      /* "+"  */
-  YYSYMBOL_MULT = 25,                      /* "*"  */
-  YYSYMBOL_YYACCEPT = 26,                  /* $accept  */
-  YYSYMBOL_program = 27,                   /* program  */
-  YYSYMBOL_nuevas_lineas = 28,             /* nuevas_lineas  */
-  YYSYMBOL_statement_list = 29,            /* statement_list  */
-  YYSYMBOL_argument_list_many = 30,        /* argument_list_many  */
-  YYSYMBOL_argument_list = 31,             /* argument_list  */
-  YYSYMBOL_identifier_list_many = 32,      /* identifier_list_many  */
-  YYSYMBOL_identifier_list = 33,           /* identifier_list  */
-  YYSYMBOL_expression_block = 34,          /* expression_block  */
-  YYSYMBOL_nombre_asignable = 35,          /* nombre_asignable  */
-  YYSYMBOL_expresion = 36                  /* expresion  */
+  YYSYMBOL_AS = 12,                        /* "as"  */
+  YYSYMBOL_PARENTESIS_IZQ = 13,            /* "("  */
+  YYSYMBOL_PARENTESIS_DER = 14,            /* ")"  */
+  YYSYMBOL_CORCHETE_IZQ = 15,              /* "["  */
+  YYSYMBOL_CORCHETE_DER = 16,              /* "]"  */
+  YYSYMBOL_LLAVE_IZQ = 17,                 /* "{"  */
+  YYSYMBOL_LLAVE_DER = 18,                 /* "}"  */
+  YYSYMBOL_PUNTO = 19,                     /* "."  */
+  YYSYMBOL_FLECHA = 20,                    /* "=>"  */
+  YYSYMBOL_SLASH_INVERTIDA = 21,           /* "\\"  */
+  YYSYMBOL_NUEVA_LINEA = 22,               /* "\n"  */
+  YYSYMBOL_PUNTO_Y_COMA = 23,              /* ";"  */
+  YYSYMBOL_COMA = 24,                      /* ","  */
+  YYSYMBOL_OPERADOR = 25,                  /* "operador"  */
+  YYSYMBOL_SUMA = 26,                      /* "+"  */
+  YYSYMBOL_MULT = 27,                      /* "*"  */
+  YYSYMBOL_YYACCEPT = 28,                  /* $accept  */
+  YYSYMBOL_program = 29,                   /* program  */
+  YYSYMBOL_nuevas_lineas = 30,             /* nuevas_lineas  */
+  YYSYMBOL_statement_list = 31,            /* statement_list  */
+  YYSYMBOL_argument_list_many = 32,        /* argument_list_many  */
+  YYSYMBOL_argument_list = 33,             /* argument_list  */
+  YYSYMBOL_identifier_list_many = 34,      /* identifier_list_many  */
+  YYSYMBOL_identifier_list = 35,           /* identifier_list  */
+  YYSYMBOL_expression_block = 36,          /* expression_block  */
+  YYSYMBOL_nombre_asignable = 37,          /* nombre_asignable  */
+  YYSYMBOL_expresion = 38                  /* expresion  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -447,19 +449,19 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  4
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   122
+#define YYLAST   135
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  26
+#define YYNTOKENS  28
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  11
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  37
+#define YYNRULES  38
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  61
+#define YYNSTATES  65
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   280
+#define YYMAXUTOK   282
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -501,17 +503,17 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25
+      25,    26,    27
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    95,    95,    98,    98,   101,   102,   103,   104,   108,
-     112,   115,   116,   119,   123,   129,   130,   133,   134,   137,
-     137,   140,   141,   142,   146,   150,   154,   158,   159,   160,
-     164,   168,   172,   173,   174,   175,   176,   177
+       0,    97,    97,   100,   100,   103,   104,   105,   106,   110,
+     114,   117,   118,   121,   125,   131,   132,   135,   136,   139,
+     139,   142,   143,   144,   148,   152,   156,   160,   161,   162,
+     166,   170,   174,   178,   179,   180,   184,   188,   189
 };
 #endif
 
@@ -529,12 +531,12 @@ static const char *const yytname[] =
 {
   "\"end of file\"", "error", "\"invalid token\"", "\"número entero\"",
   "\"identificador\"", "\"string\"", "ERROR", "\"operador de asignación\"",
-  "\"const\"", "\"export\"", "\"import\"", "\"foreign\"", "\"(\"", "\")\"",
-  "\"[\"", "\"]\"", "\"{\"", "\"}\"", "\"=>\"", "\"\\\\\"", "\"\\n\"",
-  "\";\"", "\",\"", "\"operador\"", "\"+\"", "\"*\"", "$accept", "program",
-  "nuevas_lineas", "statement_list", "argument_list_many", "argument_list",
-  "identifier_list_many", "identifier_list", "expression_block",
-  "nombre_asignable", "expresion", YY_NULLPTR
+  "\"const\"", "\"export\"", "\"import\"", "\"foreign\"", "\"as\"",
+  "\"(\"", "\")\"", "\"[\"", "\"]\"", "\"{\"", "\"}\"", "\".\"", "\"=>\"",
+  "\"\\\\\"", "\"\\n\"", "\";\"", "\",\"", "\"operador\"", "\"+\"",
+  "\"*\"", "$accept", "program", "nuevas_lineas", "statement_list",
+  "argument_list_many", "argument_list", "identifier_list_many",
+  "identifier_list", "expression_block", "nombre_asignable", "expresion", YY_NULLPTR
 };
 
 static const char *
@@ -544,7 +546,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-20)
+#define YYPACT_NINF (-15)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -558,13 +560,13 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -20,     8,   -19,    33,   -20,   -20,   -20,   -20,   -20,   -20,
-     -20,     1,     1,    16,    75,   -20,     5,    96,     3,    -8,
-     -19,   -20,    21,    22,   -20,     7,    97,   -19,    54,   -20,
-      24,    29,     6,    75,    75,   -20,    75,    75,   -19,    75,
-      75,   -20,   -20,   -20,    -8,    46,    75,     6,    31,    38,
-      -8,    23,    42,     6,     6,   -19,   -20,     6,    75,   -20,
-      -8
+     -15,     5,   -13,    45,   -15,   -15,   -15,   -15,   -15,   -15,
+     -15,    -3,    -3,     1,    91,   -15,     4,   114,     9,    56,
+     -13,   -15,    21,    27,   -15,    33,    16,   -13,    68,   -15,
+       8,    20,    -9,    91,    91,    40,   -15,    91,    91,   -13,
+      91,    91,    44,   -15,   -15,    56,    48,    91,    -9,    35,
+      43,    56,   -15,    -6,    12,    -9,    -9,    57,   -13,   -15,
+      -9,    91,   -15,   -15,    56
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -573,25 +575,25 @@ static const yytype_int8 yypact[] =
 static const yytype_int8 yydefact[] =
 {
        3,     0,     6,     0,     1,     4,     3,    21,    19,    22,
-      37,     0,     0,     0,     0,     3,    16,    20,    23,     3,
-       8,    20,     0,     0,    34,     0,     0,    17,     0,    13,
-      15,     0,    24,     0,    12,    36,     0,     0,     7,     0,
-       0,    35,    28,    32,     3,     0,     0,    29,    11,     0,
-       9,    26,    25,    30,    31,    18,    14,    33,     0,    27,
-      10
+      38,     0,     0,     0,     0,     3,    16,    20,    23,     3,
+       8,    20,     0,     0,    35,     0,     0,    17,     0,    13,
+      15,     0,    24,     0,    12,     0,    37,     0,     0,     7,
+       0,     0,     0,    28,    33,     3,     0,     0,    30,    11,
+       0,     9,    29,    26,    25,    31,    32,     0,    18,    14,
+      34,     0,    27,    36,    10
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -20,   -20,    -4,   -20,   -20,   -20,   -20,   -20,   -20,    -5,
+     -15,   -15,    -4,   -15,   -15,   -15,   -15,   -15,   -15,    25,
      -14
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     1,     2,     3,    48,    49,    30,    31,    28,    18,
+       0,     1,     2,     3,    49,    50,    30,    31,    28,    18,
       19
 };
 
@@ -600,58 +602,60 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      26,     5,    20,    32,    34,     8,    22,    23,     4,    29,
-      33,    27,    41,    35,    44,    38,    36,    37,    34,    47,
-      50,    24,    51,    52,    21,    53,    54,    25,    39,    40,
-      36,    37,    57,    -2,     6,    34,     7,     8,     9,    10,
-      55,    11,    12,    13,    60,    14,    45,    46,    37,    15,
-      56,    59,    16,    58,    34,     0,    17,     7,     8,     9,
-      10,     0,    11,    12,    13,     0,    14,     0,     0,     0,
-      15,    43,     0,    16,     0,     0,     0,    17,     7,     8,
-       9,    10,     0,    11,    12,    13,     0,    14,     0,     0,
-       0,    15,     0,     0,    16,     0,     0,     0,    17,     7,
-       8,     9,    10,     0,     0,    12,    13,     0,    14,    34,
-      42,     0,    15,     0,     0,    16,     0,     0,    35,     0,
-       0,    36,    37
+      26,     8,    20,    32,    34,     4,    24,    34,    29,     5,
+      35,    27,    25,    35,    45,    39,    33,    37,    38,    48,
+      51,    38,    21,    53,    54,    34,    55,    56,    40,    34,
+      43,    35,    46,    60,    41,    35,    22,    23,    42,    36,
+      47,    58,    37,    38,    52,    -2,     6,    64,     7,     8,
+       9,    10,    59,    11,    12,    13,    57,    62,    14,    61,
+       0,    63,    15,     0,     0,     0,    16,     0,     0,    34,
+      17,     7,     8,     9,    10,    35,    11,    12,    13,    36,
+       0,    14,    37,    38,     0,    15,    44,     0,     0,    16,
+       0,     0,     0,    17,     7,     8,     9,    10,     0,    11,
+      12,    13,     0,     0,    14,     0,     0,     0,    15,     0,
+       0,     0,    16,     0,     0,     0,    17,     7,     8,     9,
+      10,     0,     0,    12,    13,     0,     0,    14,     0,     0,
+       0,    15,     0,     0,     0,    16
 };
 
 static const yytype_int8 yycheck[] =
 {
-      14,    20,     6,    17,    12,     4,    11,    12,     0,     4,
-       7,    15,     5,    21,    28,    19,    24,    25,    12,    33,
-      34,     5,    36,    37,    23,    39,    40,    11,     7,     7,
-      24,    25,    46,     0,     1,    12,     3,     4,     5,     6,
-      44,     8,     9,    10,    58,    12,    22,    18,    25,    16,
-       4,    13,    19,    22,    12,    -1,    23,     3,     4,     5,
-       6,    -1,     8,     9,    10,    -1,    12,    -1,    -1,    -1,
-      16,    17,    -1,    19,    -1,    -1,    -1,    23,     3,     4,
-       5,     6,    -1,     8,     9,    10,    -1,    12,    -1,    -1,
-      -1,    16,    -1,    -1,    19,    -1,    -1,    -1,    23,     3,
-       4,     5,     6,    -1,    -1,     9,    10,    -1,    12,    12,
-      13,    -1,    16,    -1,    -1,    19,    -1,    -1,    21,    -1,
-      -1,    24,    25
+      14,     4,     6,    17,    13,     0,     5,    13,     4,    22,
+      19,    15,    11,    19,    28,    19,     7,    26,    27,    33,
+      34,    27,    25,    37,    38,    13,    40,    41,     7,    13,
+      14,    19,    24,    47,     7,    19,    11,    12,     5,    23,
+      20,    45,    26,    27,     4,     0,     1,    61,     3,     4,
+       5,     6,     4,     8,     9,    10,    12,    14,    13,    24,
+      -1,     4,    17,    -1,    -1,    -1,    21,    -1,    -1,    13,
+      25,     3,     4,     5,     6,    19,     8,     9,    10,    23,
+      -1,    13,    26,    27,    -1,    17,    18,    -1,    -1,    21,
+      -1,    -1,    -1,    25,     3,     4,     5,     6,    -1,     8,
+       9,    10,    -1,    -1,    13,    -1,    -1,    -1,    17,    -1,
+      -1,    -1,    21,    -1,    -1,    -1,    25,     3,     4,     5,
+       6,    -1,    -1,     9,    10,    -1,    -1,    13,    -1,    -1,
+      -1,    17,    -1,    -1,    -1,    21
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,    27,    28,    29,     0,    20,     1,     3,     4,     5,
-       6,     8,     9,    10,    12,    16,    19,    23,    35,    36,
-      28,    23,    35,    35,     5,    11,    36,    28,    34,     4,
-      32,    33,    36,     7,    12,    21,    24,    25,    28,     7,
-       7,     5,    13,    17,    36,    22,    18,    36,    30,    31,
-      36,    36,    36,    36,    36,    28,     4,    36,    22,    13,
-      36
+       0,    29,    30,    31,     0,    22,     1,     3,     4,     5,
+       6,     8,     9,    10,    13,    17,    21,    25,    37,    38,
+      30,    25,    37,    37,     5,    11,    38,    30,    36,     4,
+      34,    35,    38,     7,    13,    19,    23,    26,    27,    30,
+       7,     7,     5,    14,    18,    38,    24,    20,    38,    32,
+      33,    38,     4,    38,    38,    38,    38,    12,    30,     4,
+      38,    24,    14,     4,    38
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    26,    27,    28,    28,    29,    29,    29,    29,    30,
-      30,    31,    31,    32,    32,    33,    33,    34,    34,    35,
-      35,    36,    36,    36,    36,    36,    36,    36,    36,    36,
-      36,    36,    36,    36,    36,    36,    36,    36
+       0,    28,    29,    30,    30,    31,    31,    31,    31,    32,
+      32,    33,    33,    34,    34,    35,    35,    36,    36,    37,
+      37,    38,    38,    38,    38,    38,    38,    38,    38,    38,
+      38,    38,    38,    38,    38,    38,    38,    38,    38
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -660,7 +664,7 @@ static const yytype_int8 yyr2[] =
        0,     2,     1,     0,     2,     0,     1,     3,     3,     1,
        3,     1,     0,     1,     3,     1,     0,     1,     3,     1,
        1,     1,     1,     1,     2,     3,     3,     4,     3,     3,
-       4,     4,     3,     4,     2,     3,     2,     1
+       3,     4,     4,     3,     4,     2,     5,     2,     1
 };
 
 
@@ -1263,57 +1267,57 @@ yydestruct (const char *yymsg,
   switch (yykind)
     {
     case YYSYMBOL_IDENTIFICADOR: /* "identificador"  */
-#line 82 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 84 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_string(&((*yyvaluep).identificador)); }
-#line 1269 "../analizador_sintactico.c"
+#line 1273 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_STRING: /* "string"  */
-#line 83 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 85 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_string(&((*yyvaluep).string)); }
-#line 1275 "../analizador_sintactico.c"
+#line 1279 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_argument_list_many: /* argument_list_many  */
-#line 86 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 88 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_lista_expresiones(&((*yyvaluep).listaExpresiones)); }
-#line 1281 "../analizador_sintactico.c"
+#line 1285 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_argument_list: /* argument_list  */
-#line 85 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 87 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_lista_expresiones(&((*yyvaluep).listaExpresiones)); }
-#line 1287 "../analizador_sintactico.c"
+#line 1291 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_identifier_list_many: /* identifier_list_many  */
-#line 89 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 91 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_lista_identificadores(&((*yyvaluep).listaIdentificadores)); }
-#line 1293 "../analizador_sintactico.c"
+#line 1297 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_identifier_list: /* identifier_list  */
-#line 88 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 90 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_lista_identificadores(&((*yyvaluep).listaIdentificadores)); }
-#line 1299 "../analizador_sintactico.c"
+#line 1303 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_expression_block: /* expression_block  */
-#line 87 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 89 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_lista_expresiones(&((*yyvaluep).listaExpresiones)); }
-#line 1305 "../analizador_sintactico.c"
+#line 1309 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_nombre_asignable: /* nombre_asignable  */
-#line 84 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 86 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_string(&((*yyvaluep).identificador)); }
-#line 1311 "../analizador_sintactico.c"
+#line 1315 "../analizador_sintactico.c"
         break;
 
     case YYSYMBOL_expresion: /* expresion  */
-#line 90 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 92 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { borrar_expresion(&((*yyvaluep).expresion)); }
-#line 1317 "../analizador_sintactico.c"
+#line 1321 "../analizador_sintactico.c"
         break;
 
       default:
@@ -1680,199 +1684,214 @@ yyreduce:
   switch (yyn)
     {
   case 7: /* statement_list: statement_list expresion nuevas_lineas  */
-#line 103 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 105 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                              { *exp = (yyvsp[-1].expresion); }
-#line 1686 "../analizador_sintactico.c"
+#line 1690 "../analizador_sintactico.c"
     break;
 
   case 8: /* statement_list: statement_list error nuevas_lineas  */
-#line 104 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 106 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                          { yyerrok; }
-#line 1692 "../analizador_sintactico.c"
+#line 1696 "../analizador_sintactico.c"
     break;
 
   case 9: /* argument_list_many: expresion  */
-#line 108 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 110 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
               {
             (yyval.listaExpresiones) = crear_lista_expresiones();
             push_lista_expresiones(&(yyval.listaExpresiones), (yyvsp[0].expresion));
         }
-#line 1701 "../analizador_sintactico.c"
+#line 1705 "../analizador_sintactico.c"
     break;
 
   case 10: /* argument_list_many: argument_list_many "," expresion  */
-#line 112 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 114 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                        { push_lista_expresiones(&(yyvsp[-2].listaExpresiones), (yyvsp[0].expresion)); (yyval.listaExpresiones) = (yyvsp[-2].listaExpresiones); }
-#line 1707 "../analizador_sintactico.c"
+#line 1711 "../analizador_sintactico.c"
     break;
 
   case 12: /* argument_list: %empty  */
-#line 116 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 118 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
              { (yyval.listaExpresiones) = crear_lista_expresiones(); }
-#line 1713 "../analizador_sintactico.c"
+#line 1717 "../analizador_sintactico.c"
     break;
 
   case 13: /* identifier_list_many: "identificador"  */
-#line 119 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 121 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                   {
             (yyval.listaIdentificadores) = crear_lista_identificadores();
             push_lista_identificadores(&(yyval.listaIdentificadores), crear_identificador((yyvsp[0].identificador), (yylsp[0])));
         }
-#line 1722 "../analizador_sintactico.c"
+#line 1726 "../analizador_sintactico.c"
     break;
 
   case 14: /* identifier_list_many: identifier_list_many "," "identificador"  */
-#line 123 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 125 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                               {
             push_lista_identificadores(&(yyvsp[-2].listaIdentificadores), crear_identificador((yyvsp[0].identificador), (yylsp[0])));
             (yyval.listaIdentificadores) = (yyvsp[-2].listaIdentificadores);
         }
-#line 1731 "../analizador_sintactico.c"
+#line 1735 "../analizador_sintactico.c"
     break;
 
   case 16: /* identifier_list: %empty  */
-#line 130 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 132 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
              { (yyval.listaIdentificadores) = crear_lista_identificadores(); }
-#line 1737 "../analizador_sintactico.c"
+#line 1741 "../analizador_sintactico.c"
     break;
 
   case 17: /* expression_block: nuevas_lineas  */
-#line 133 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 135 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                    { (yyval.listaExpresiones) = crear_lista_expresiones(); }
-#line 1743 "../analizador_sintactico.c"
+#line 1747 "../analizador_sintactico.c"
     break;
 
   case 18: /* expression_block: expression_block expresion nuevas_lineas  */
-#line 134 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 136 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                                { push_lista_expresiones(&(yyvsp[-2].listaExpresiones), (yyvsp[-1].expresion)); (yyval.listaExpresiones) = (yyvsp[-2].listaExpresiones); }
-#line 1749 "../analizador_sintactico.c"
+#line 1753 "../analizador_sintactico.c"
     break;
 
   case 21: /* expresion: "número entero"  */
-#line 140 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 142 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
              { (yyval.expresion) = crear_exp_valor(crear_entero((yyvsp[0].valorEntero), &(yylsp[0]))); }
-#line 1755 "../analizador_sintactico.c"
+#line 1759 "../analizador_sintactico.c"
     break;
 
   case 22: /* expresion: "string"  */
-#line 141 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 143 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
              { (yyval.expresion) = crear_exp_valor(crear_valor_string((yyvsp[0].string), &(yylsp[0]))); }
-#line 1761 "../analizador_sintactico.c"
+#line 1765 "../analizador_sintactico.c"
     break;
 
   case 23: /* expresion: nombre_asignable  */
-#line 142 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 144 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                        {
             Identificador id = crear_identificador((yyvsp[0].identificador), (yylsp[0]));
-            (yyval.expresion) = crear_exp_identificador(id);
+            (yyval.expresion) = crear_exp_nombre(id);
         }
-#line 1770 "../analizador_sintactico.c"
+#line 1774 "../analizador_sintactico.c"
     break;
 
   case 24: /* expresion: "operador" expresion  */
-#line 146 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 148 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                          {
             Identificador op = crear_identificador((yyvsp[-1].identificador), (yylsp[-1]));
             (yyval.expresion) = crear_exp_op_unaria(op, (yyvsp[0].expresion), (yyloc));
         }
-#line 1779 "../analizador_sintactico.c"
+#line 1783 "../analizador_sintactico.c"
     break;
 
   case 25: /* expresion: expresion "*" expresion  */
-#line 150 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 152 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                               {
             Identificador op = crear_identificador((yyvsp[-1].identificador), (yylsp[-1]));
             (yyval.expresion) = crear_exp_op_binaria(op, (yyvsp[-2].expresion), (yyvsp[0].expresion), (yyloc));
         }
-#line 1788 "../analizador_sintactico.c"
+#line 1792 "../analizador_sintactico.c"
     break;
 
   case 26: /* expresion: expresion "+" expresion  */
-#line 154 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 156 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                               {
             Identificador op = crear_identificador((yyvsp[-1].identificador), (yylsp[-1]));
             (yyval.expresion) = crear_exp_op_binaria(op, (yyvsp[-2].expresion), (yyvsp[0].expresion), (yyloc));
          }
-#line 1797 "../analizador_sintactico.c"
+#line 1801 "../analizador_sintactico.c"
     break;
 
   case 27: /* expresion: expresion "(" argument_list ")"  */
-#line 158 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 160 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                       { (yyval.expresion) = crear_exp_llamada((yyvsp[-3].expresion), (yyvsp[-1].listaExpresiones), (yyloc)); }
-#line 1803 "../analizador_sintactico.c"
+#line 1807 "../analizador_sintactico.c"
     break;
 
   case 28: /* expresion: "(" expresion ")"  */
-#line 159 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 161 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                         { (yyval.expresion) = (yyvsp[-1].expresion); }
-#line 1809 "../analizador_sintactico.c"
+#line 1813 "../analizador_sintactico.c"
     break;
 
-  case 29: /* expresion: nombre_asignable "operador de asignación" expresion  */
-#line 160 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 29: /* expresion: expresion "." "identificador"  */
+#line 162 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+                                  {
+            Identificador miembro = crear_identificador((yyvsp[0].identificador), (yylsp[0]));
+            (yyval.expresion) = crear_exp_acceso((yyvsp[-2].expresion), miembro, (yyloc));
+         }
+#line 1822 "../analizador_sintactico.c"
+    break;
+
+  case 30: /* expresion: nombre_asignable "operador de asignación" expresion  */
+#line 166 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                                      {
             Identificador id = crear_identificador((yyvsp[-2].identificador), (yylsp[-2]));
             (yyval.expresion) = crear_exp_asignacion(id, (yyvsp[0].expresion), ASIGNACION_NORMAL, (yyloc));
          }
-#line 1818 "../analizador_sintactico.c"
+#line 1831 "../analizador_sintactico.c"
     break;
 
-  case 30: /* expresion: "const" nombre_asignable "operador de asignación" expresion  */
-#line 164 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 31: /* expresion: "const" nombre_asignable "operador de asignación" expresion  */
+#line 170 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                                              {
             Identificador id = crear_identificador((yyvsp[-2].identificador), (yylsp[-2]));
             (yyval.expresion) = crear_exp_asignacion(id, (yyvsp[0].expresion), ASIGNACION_INMUTABLE, (yyloc));
          }
-#line 1827 "../analizador_sintactico.c"
+#line 1840 "../analizador_sintactico.c"
     break;
 
-  case 31: /* expresion: "export" nombre_asignable "operador de asignación" expresion  */
-#line 168 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 32: /* expresion: "export" nombre_asignable "operador de asignación" expresion  */
+#line 174 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                                               {
             Identificador id = crear_identificador((yyvsp[-2].identificador), (yylsp[-2]));
             (yyval.expresion) = crear_exp_asignacion(id, (yyvsp[0].expresion), ASIGNACION_EXPORT, (yyloc));
          }
-#line 1836 "../analizador_sintactico.c"
+#line 1849 "../analizador_sintactico.c"
     break;
 
-  case 32: /* expresion: "{" expression_block "}"  */
-#line 172 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 33: /* expresion: "{" expression_block "}"  */
+#line 178 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                { (yyval.expresion) = crear_exp_bloque((yyvsp[-1].listaExpresiones), (yyloc)); }
-#line 1842 "../analizador_sintactico.c"
+#line 1855 "../analizador_sintactico.c"
     break;
 
-  case 33: /* expresion: "\\" identifier_list "=>" expresion  */
-#line 173 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 34: /* expresion: "\\" identifier_list "=>" expresion  */
+#line 179 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                                           { (yyval.expresion) = crear_exp_def_funcion((yyvsp[-2].listaIdentificadores), (yyvsp[0].expresion), (yyloc)); }
-#line 1848 "../analizador_sintactico.c"
+#line 1861 "../analizador_sintactico.c"
     break;
 
-  case 34: /* expresion: "import" "string"  */
-#line 174 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                      { (yyval.expresion) = crear_exp_importe((yyvsp[0].string), 0, (yylsp[0])); }
-#line 1854 "../analizador_sintactico.c"
+  case 35: /* expresion: "import" "string"  */
+#line 180 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+                      {
+             Identificador as = crear_identificador(crear_string_vacio(), (yylsp[0])); // TODO: cambiar
+             (yyval.expresion) = crear_exp_importe((yyvsp[0].string), 0, as, (yylsp[0]));
+         }
+#line 1870 "../analizador_sintactico.c"
     break;
 
-  case 35: /* expresion: "import" "foreign" "string"  */
-#line 175 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                                { (yyval.expresion) = crear_exp_importe((yyvsp[0].string), 1, (yylsp[0])); }
-#line 1860 "../analizador_sintactico.c"
+  case 36: /* expresion: "import" "foreign" "string" "as" "identificador"  */
+#line 184 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+                                                   {
+            Identificador as = crear_identificador((yyvsp[0].identificador), (yylsp[0]));
+            (yyval.expresion) = crear_exp_importe((yyvsp[-2].string), 1, as, (yylsp[-2]));
+         }
+#line 1879 "../analizador_sintactico.c"
     break;
 
-  case 36: /* expresion: expresion ";"  */
-#line 176 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 37: /* expresion: expresion ";"  */
+#line 188 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
                     { (yyval.expresion) = (yyvsp[-1].expresion); (yyval.expresion).es_sentencia = 1; }
-#line 1866 "../analizador_sintactico.c"
+#line 1885 "../analizador_sintactico.c"
     break;
 
-  case 37: /* expresion: ERROR  */
-#line 177 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+  case 38: /* expresion: ERROR  */
+#line 189 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
             { (yyval.expresion) = crear_exp_valor(crear_valor_error((yyvsp[0].error_lexico), &(yylsp[0]))); }
-#line 1872 "../analizador_sintactico.c"
+#line 1891 "../analizador_sintactico.c"
     break;
 
 
-#line 1876 "../analizador_sintactico.c"
+#line 1895 "../analizador_sintactico.c"
 
       default: break;
     }
@@ -2117,7 +2136,7 @@ yypushreturn:
 #undef yyls
 #undef yylsp
 #undef yystacksize
-#line 180 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 192 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
 
 void yyerror(Localizacion *loc, Expresion *exp, const char* s) {

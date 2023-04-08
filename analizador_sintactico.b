@@ -42,6 +42,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token EXPORT "export"
 %token IMPORT "import"
 %token FOREIGN "foreign"
+%token AS "as"
 
 %token PARENTESIS_IZQ "("
 %token PARENTESIS_DER ")"
@@ -49,6 +50,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token CORCHETE_DER "]"
 %token LLAVE_IZQ "{"
 %token LLAVE_DER "}"
+%token PUNTO "."
 
 %token FLECHA "=>"
 %token SLASH_INVERTIDA "\\"
@@ -141,7 +143,7 @@ expresion:
     | STRING { $$ = crear_exp_valor(crear_valor_string($1, &@1)); }
     | nombre_asignable {
             Identificador id = crear_identificador($1, @1);
-            $$ = crear_exp_identificador(id);
+            $$ = crear_exp_nombre(id);
         }
     | OPERADOR expresion {
             Identificador op = crear_identificador($1, @1);
@@ -157,6 +159,10 @@ expresion:
          }
     | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, @$); }
     | "(" expresion ")" { $$ = $2; }
+    | expresion "." IDENTIFICADOR {
+            Identificador miembro = crear_identificador($3, @3);
+            $$ = crear_exp_acceso($1, miembro, @$);
+         }
     | nombre_asignable OPERADOR_ASIGNACION expresion {
             Identificador id = crear_identificador($1, @1);
             $$ = crear_exp_asignacion(id, $3, ASIGNACION_NORMAL, @$);
@@ -171,8 +177,14 @@ expresion:
          }
     | "{" expression_block "}" { $$ = crear_exp_bloque($2, @$); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, @$); }
-    | "import" STRING { $$ = crear_exp_importe($2, 0, @2); }
-    | "import" "foreign" STRING { $$ = crear_exp_importe($3, 1, @3); }
+    | "import" STRING {
+             Identificador as = crear_identificador(crear_string_vacio(), @2); // TODO: cambiar
+             $$ = crear_exp_importe($2, 0, as, @2);
+         }
+    | "import" "foreign" STRING "as" IDENTIFICADOR {
+            Identificador as = crear_identificador($5, @5);
+            $$ = crear_exp_importe($3, 1, as, @3);
+         }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_valor_error($1, &@1)); }
     ;

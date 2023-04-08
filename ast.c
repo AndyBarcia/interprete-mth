@@ -5,6 +5,7 @@
 #include <string.h>
 
 void _imprimir_lista_expresiones(ListaExpresiones listaValores);
+void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
 
 void _imprimir_expresion(Expresion expresion) {
     switch (expresion.tipo) {
@@ -12,7 +13,7 @@ void _imprimir_expresion(Expresion expresion) {
             _imprimir_valor(expresion.valor);
             break;
         case EXP_IDENTIFICADOR:
-            printf("%s", string_a_puntero(&expresion.identificador.nombre));
+            printf("%s", string_a_puntero(&expresion.nombre.nombre));
             break;
         case EXP_OP_LLAMADA:
             _imprimir_expresion(*(Expresion *) expresion.llamadaFuncion.funcion);
@@ -33,6 +34,12 @@ void _imprimir_expresion(Expresion expresion) {
             break;
         case EXP_BLOQUE:
             _imprimir_lista_expresiones(expresion.bloque);
+            break;
+        case EXP_ACCESO_MIEMBRO:
+            // TODO:
+            break;
+        case EXP_IMPORT:
+            // TODO:
             break;
     }
 }
@@ -62,8 +69,8 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
         case EXP_NULA:
             break;
         case EXP_IDENTIFICADOR:
-            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.identificador.nombre)))
-                push_lista_identificadores(lista, expresion.identificador);
+            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.nombre.nombre)))
+                push_lista_identificadores(lista, expresion.nombre);
             break;
         case EXP_OP_LLAMADA:
             _variables_capturadas(*(Expresion *) expresion.llamadaFuncion.funcion, locales, lista);
@@ -108,8 +115,22 @@ Expresion crear_exp_valor(Valor valor) {
     return (Expresion) {EXP_VALOR, .valor = valor, .es_sentencia = 0};
 }
 
-Expresion crear_exp_identificador(Identificador identificador) {
-    return (Expresion) {EXP_IDENTIFICADOR, .identificador = identificador, .es_sentencia = 0};
+Expresion crear_exp_nombre(NombreAsignable nombre) {
+    return (Expresion) {EXP_IDENTIFICADOR, .nombre = nombre, .es_sentencia = 0};
+}
+
+Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion loc) {
+    Expresion *e = malloc(sizeof(Expresion));
+    *e = valor;
+
+    return (Expresion) {
+        .tipo = EXP_ACCESO_MIEMBRO,
+        .acceso = (AccesoMiembro) {
+            .valor = (struct Expresion*) e,
+            .miembro = miembro,
+            .loc = loc
+        }
+    };
 }
 
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc) {
@@ -130,14 +151,14 @@ Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Loca
 Expresion crear_exp_op_unaria(Identificador operador, Expresion x, Localizacion loc) {
     ListaExpresiones args = crear_lista_expresiones();
     push_lista_expresiones(&args, x);
-    return crear_exp_llamada(crear_exp_identificador(operador), args, loc);
+    return crear_exp_llamada(crear_exp_nombre(operador), args, loc);
 }
 
 Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b, Localizacion loc) {
     ListaExpresiones args = crear_lista_expresiones();
     push_lista_expresiones(&args, a);
     push_lista_expresiones(&args, b);
-    return crear_exp_llamada(crear_exp_identificador(operador), args, loc);
+    return crear_exp_llamada(crear_exp_nombre(operador), args, loc);
 }
 
 Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion loc) {
@@ -179,12 +200,13 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc) {
     };
 }
 
-Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc) {
+Expresion crear_exp_importe(String archivo, int foraneo, Identificador as, Localizacion loc) {
     return (Expresion) {
         .tipo = EXP_IMPORT,
         .importe = (Import) {
             .archivo = archivo,
             .foraneo = foraneo,
+            .as = as,
             .loc = loc,
         },
         .es_sentencia = 0
@@ -200,7 +222,7 @@ Expresion clonar_expresion(Expresion exp) {
             e.valor = clonar_valor(exp.valor);
             break;
         case EXP_IDENTIFICADOR:
-            e.identificador.nombre = clonar_string(exp.identificador.nombre);
+            e.nombre.nombre = clonar_string(exp.nombre.nombre);
             break;
         case EXP_OP_LLAMADA:
             e.llamadaFuncion.funcion = malloc(sizeof(Expresion));
@@ -221,7 +243,13 @@ Expresion clonar_expresion(Expresion exp) {
             e.bloque = clonar_lista_expresiones(exp.bloque);
             break;
         case EXP_IMPORT:
-            e.importe.archivo = clonar_string(e.importe.archivo);
+            e.importe.archivo = clonar_string(exp.importe.archivo);
+            e.importe.as = clonar_identificador(exp.importe.as);
+            break;
+        case EXP_ACCESO_MIEMBRO:
+            e.acceso.miembro = clonar_identificador(exp.acceso.miembro);
+            e.acceso.valor = malloc(sizeof(Expresion));
+            *(Expresion *) e.acceso.valor = clonar_expresion(*(Expresion *) exp.acceso.valor);
             break;
     }
     return e;
@@ -235,7 +263,7 @@ void borrar_expresion(Expresion *exp) {
             borrar_valor(&exp->valor);
             break;
         case EXP_IDENTIFICADOR:
-            borrar_string(&exp->identificador.nombre);
+            borrar_string(&exp->nombre.nombre);
             break;
         case EXP_OP_LLAMADA:
             borrar_expresion((Expresion *) exp->llamadaFuncion.funcion);
@@ -257,6 +285,12 @@ void borrar_expresion(Expresion *exp) {
             break;
         case EXP_IMPORT:
             borrar_string(&exp->importe.archivo);
+            borrar_string(&exp->importe.as.nombre);
+            break;
+        case EXP_ACCESO_MIEMBRO:
+            borrar_string(&exp->acceso.miembro.nombre);
+            borrar_expresion((Expresion*) exp->acceso.valor);
+            free(exp->acceso.valor);
             break;
     }
     exp->tipo = EXP_NULA;
