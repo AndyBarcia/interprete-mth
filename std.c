@@ -8,8 +8,8 @@ void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     Valor result = clonar_valor(((Valor*) args.valores)[0]);
     for (int i = 1; i < args.longitud; ++i) {
         Valor v = ((Valor *) args.valores)[i];
-        if (result.tipoValor == v.tipoValor) {
-            switch (result.tipoValor) {
+        if (result.tipo_valor == v.tipo_valor) {
+            switch (result.tipo_valor) {
                 case TIPO_ENTERO:
                     result.entero += v.entero;
                     break;
@@ -40,32 +40,32 @@ void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
 void restar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud == 1) {
         Valor v = ((Valor *) args.valores)[0];
-        if (v.tipoValor != TIPO_ENTERO) {
+        if (v.tipo_valor != TIPO_ENTERO) {
             *retorno = crear_valor_error(crear_error("No es de tipo entero."), v.loc);
             return;
         }
         *retorno = crear_entero(-((Valor *) args.valores)[0].entero, v.loc);
     } else if (args.longitud == 2) {
-        if (((Valor *) args.valores)[0].tipoValor != TIPO_ENTERO ||
-            ((Valor *) args.valores)[1].tipoValor != TIPO_ENTERO) {
+        if (((Valor *) args.valores)[0].tipo_valor != TIPO_ENTERO ||
+            ((Valor *) args.valores)[1].tipo_valor != TIPO_ENTERO) {
             *retorno = crear_valor_error(crear_error("No es de tipo entero."), NULL);
             return;
         }
         *retorno = crear_entero(((Valor *) args.valores)[0].entero - ((Valor *) args.valores)[1].entero, NULL);
     } else {
-        *retorno = crear_valor_error(crear_error("Se pasaron argumentos de más."), NULL);
+        *retorno = crear_valor_error(crear_error("Se pasaron nombres_args de más."), NULL);
     }
 }
 
 void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud < 2) {
-        *retorno = crear_valor_error(crear_error("Faltan argumentos."), NULL);
+        *retorno = crear_valor_error(crear_error("Faltan nombres_args."), NULL);
         return;
     }
 
     int a = 1;
     for (int i = 0; i < args.longitud; ++i) {
-        if (((Valor *) args.valores)[i].tipoValor != TIPO_ENTERO) {
+        if (((Valor *) args.valores)[i].tipo_valor != TIPO_ENTERO) {
             *retorno = crear_valor_error(crear_error("No es de tipo entero."), NULL);
             return;
         }
@@ -76,7 +76,7 @@ void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
 
 void igualdad(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud < 2) {
-        *retorno = crear_valor_error(crear_error("Faltan argumentos."), NULL);
+        *retorno = crear_valor_error(crear_error("Faltan nombres_args."), NULL);
         return;
     }
 
@@ -105,12 +105,12 @@ void _imprimir_solo_usuario(EntradaTablaHash entrada);
 
 void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_valor_error(crear_error("Demasiados argumentos."), NULL);
+        *retorno = crear_valor_error(crear_error("Demasiados nombres_args."), NULL);
         return;
     }
     if (args.longitud == 1) {
         Valor arg = ((Valor *) args.valores)[0];
-        if (arg.tipoValor != TIPO_BOOL) {
+        if (arg.tipo_valor != TIPO_BOOL) {
             *retorno = crear_valor_error(crear_error("Se esperaba un booleano."), NULL);
             return;
         }
@@ -127,14 +127,14 @@ void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
 
 void eval(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
     if (args.longitud > 1) {
-        *retorno = crear_valor_error(crear_error("Demasiados argumentos."), NULL);
+        *retorno = crear_valor_error(crear_error("Demasiados nombres_args."), NULL);
         return;
     } else if (args.longitud == 0) {
         *retorno = crear_valor_error(crear_error("Se esperaba un string a evaluar."), NULL);
         return;
     }
     Valor arg = ((Valor *) args.valores)[0];
-    if (arg.tipoValor != TIPO_STRING) {
+    if (arg.tipo_valor != TIPO_STRING) {
         *retorno = crear_valor_error(crear_error("Se esperaba un string a evaluar."), NULL);
         return;
     }
@@ -155,44 +155,44 @@ void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno);
 ValorLibreriaEstandar elementos[] = {
         {
                 {"sumar",       "+"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = sumar},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = sumar},
                 "Suma un conjunto de enteros."
         },
         {
                 {"restar",      "-"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = restar},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = restar},
                 "Resta un número a otro, o convierte un número positivo a negativo."
         },
         {
                 {"multiplicar", "*"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = multiplicar},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = multiplicar},
                 "Multiplica un conjunto de enteros."
         },
         {
                 {"igualdad",    "=="},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = igualdad},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = igualdad},
                 "Comprueba si un conjunto de valores son iguales."
         },
         {
                 {"print",       "imprimir"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = print},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = print},
                 "Imprime un conjunto de valores."
         },
         {
                 {"print_ws",    "imprimir_ws"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = print_ws},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = print_ws},
                 "Imprime todas las variables del conjunto de trabajo (workspace).\nSi recibe \"verdadero\" como primer "
                 "argumento, imprime todas las variables, incluidas las de la librería estándar."
         },
         {
                 {"eval",    NULL},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = eval},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = eval},
                 "Evalúa el string que se le pasa como argumento, como si fuera parte del código fuente.\n\nNótese que "
                 "esto significa que evaluar strings como \"x=5\" crearán nuevas variables."
         },
         {
                 {"help",        "ayuda"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_nativa = ayuda},
+                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = ayuda},
                 "Imprime la documentación de una función de la librería estándar."
         },
         {

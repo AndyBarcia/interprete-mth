@@ -3,7 +3,7 @@
 
 Error crear_error(const char *formato, ...) {
     String mensaje;
-    // Cosas mágicas para pasar un número variable de argumentos.
+    // Cosas mágicas para pasar un número variable de nombres_args.
     va_list args, args2;
     va_start(args, formato);
     va_copy(args2, args);

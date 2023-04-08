@@ -7,7 +7,7 @@
 #include "../tabla_simbolos.h"
 
 /// Una lista de expresiones, ya sea en un
-/// bloque de expresiones o los argumentos
+/// bloque de expresiones o los nombres_args
 /// de una llamada a una función.
 typedef struct {
     int capacidad;
@@ -18,10 +18,10 @@ typedef struct {
 
 /// Llamada a una expresión como si fuese
 /// una función, utilizando uns determinados
-/// argumentos.
+/// nombres_args.
 typedef struct {
     struct Expresion *funcion;
-    ListaExpresiones argumentos;
+    ListaExpresiones args;
     Localizacion loc;
 } LlamadaFuncion;
 
@@ -46,7 +46,7 @@ typedef struct {
 /// La definición de una función creada por
 /// el usuario.
 typedef struct {
-    ListaIdentificadores argumentos;
+    ListaIdentificadores nombres_args;
     struct Expresion *cuerpo;
     Localizacion loc;
 } DefinicionFuncion;
@@ -86,7 +86,7 @@ typedef enum {
     /// Ejemplo: `diccionario.test`
     EXP_ACCESO_MIEMBRO,
     /// Una expresión que es una llamada a una función
-    /// con ciertos argumentos.
+    /// con ciertos nombres_args.
     /// Ejemplo: `f(5)`, `(\x=>x+1)(2)`
     EXP_OP_LLAMADA,
     /// Una expresión que es una asignación de un valor
@@ -120,9 +120,9 @@ typedef struct {
         Valor valor;
         NombreAsignable nombre;
         AccesoMiembro acceso;
-        LlamadaFuncion llamadaFuncion;
+        LlamadaFuncion llamada_funcion;
         Asignacion asignacion;
-        DefinicionFuncion defFuncion;
+        DefinicionFuncion def_funcion;
         ListaExpresiones bloque;
         Import importe;
     };
@@ -172,7 +172,7 @@ void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
 /**
  * Funciones que calcula la lista de identificadores que una determinada
  * definición de función ha capturado del exterior. Estos se determinan
- * como aquellos identificadores que no son ni argumentos de la función
+ * como aquellos identificadores que no son ni nombres_args de la función
  * ni variables locales. Por ejemplo,
  *
  *      const five = 5

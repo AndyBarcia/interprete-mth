@@ -19,7 +19,7 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 
         Valor x;
         if(evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
-            if (x.tipoValor == TIPO_ERROR) {
+            if (x.tipo_valor == TIPO_ERROR) {
                 imprimir_error(x.error, NULL, linea, x.loc);
             } else {
                 imprimir_valor(x);
@@ -44,7 +44,7 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
 
     Valor x;
     while(evaluar_siguiente(&evaluador, simbolos, &x)) {
-        if (x.tipoValor == TIPO_ERROR) {
+        if (x.tipo_valor == TIPO_ERROR) {
             char* linea = obtener_linea(lexer, x.loc->first_line);
             imprimir_error(x.error, fichero, linea, x.loc);
         }
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     if (argc <= 1) {
         modo_interactivo(&simbolos);
     }else {
-        if (argc > 2) printf("Demasiados argumentos; ignorando.\n");
+        if (argc > 2) printf("Demasiados nombres_args; ignorando.\n");
         modo_fichero(&simbolos, argv[1]);
     }
 

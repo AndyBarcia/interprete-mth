@@ -46,11 +46,11 @@ typedef void (*FuncionIntrinseca)();
 typedef Identificador NombreAsignable;
 
 /// Una función definida por el usuario, con:
-///     * Una serie de nombres como argumentos de entrada.
+///     * Una serie de nombres como nombres_args de entrada.
 ///     * Un conjunto de variables capturadas de su entorno.
 ///     * El cuerpo de la función en sí.
 typedef struct {
-    ListaIdentificadores argumentos;
+    ListaIdentificadores nombres_args;
     struct TablaHash *variables_capturadas;
     struct Expresion *cuerpo;
 } Funcion;
@@ -60,7 +60,7 @@ typedef struct {
 /// una cuenta de referencias activas para así evitar double free's.
 typedef struct {
     //// El tipo de valor.
-    TipoValor tipoValor;
+    TipoValor tipo_valor;
     /// El número de referencias dinámicas.
     int *referencias;
     /// La localización en el código fuente, si existe.
@@ -69,7 +69,7 @@ typedef struct {
         Entero entero;
         Bool bool;
         String string;
-        FuncionIntrinseca funcion_nativa;
+        FuncionIntrinseca funcion_intrinseca;
         Funcion funcion;
         FuncionForanea funcion_foranea;
         BibilotecaDinamica biblioteca;

@@ -46,7 +46,7 @@ Valor crear_funcion_nativa(FuncionIntrinseca funcion, Localizacion *loc) {
         *loc_copy = *loc;
         loc = loc_copy;
     }
-    return (Valor) {TIPO_FUNCION_INTRINSECA, NULL, loc, .funcion_nativa = funcion};
+    return (Valor) {TIPO_FUNCION_INTRINSECA, NULL, loc, .funcion_intrinseca = funcion};
 }
 
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc) {
@@ -59,11 +59,11 @@ Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, s
     *referencias = 1;
 
     return (Valor) {
-            .tipoValor = TIPO_FUNCION,
+            .tipo_valor = TIPO_FUNCION,
             .referencias = referencias,
             .loc = loc,
             .funcion = (Funcion) {
-                    .argumentos = argumentos,
+                    .nombres_args = argumentos,
                     .cuerpo = cuerpo,
                     .variables_capturadas = capturadas
             }
@@ -72,7 +72,7 @@ Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, s
 
 Valor crear_funcion_foranea(FuncionForanea foranea) {
     return (Valor) {
-        .tipoValor = TIPO_FUNCION_FORANEA,
+        .tipo_valor = TIPO_FUNCION_FORANEA,
         .referencias = NULL,
         .loc = NULL,
         .funcion_foranea = foranea
@@ -88,7 +88,7 @@ Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc) {
     int *referencias = malloc(sizeof(int));
     *referencias = 1;
     return (Valor) {
-        .tipoValor = TIPO_BIBLIOTECA_FORANEA,
+        .tipo_valor = TIPO_BIBLIOTECA_FORANEA,
         .referencias = referencias,
         .loc = loc,
         .biblioteca = biblioteca
@@ -103,7 +103,7 @@ Valor crear_valor_error(Error error, Localizacion *loc) {
     }
 
     return (Valor) {
-            .tipoValor = TIPO_ERROR,
+            .tipo_valor = TIPO_ERROR,
             .loc = loc,
             .error = error
     };
@@ -135,7 +135,7 @@ void borrar_valor(Valor *valor) {
                 free(valor->loc);
                 valor->loc = NULL;
             }
-            switch (valor->tipoValor) {
+            switch (valor->tipo_valor) {
                 case TIPO_ERROR:
                     borrar_error(&valor->error);
                     break;
@@ -143,7 +143,7 @@ void borrar_valor(Valor *valor) {
                     borrar_string(&valor->string);
                     break;
                 case TIPO_FUNCION:
-                    borrar_lista_identificadores(&valor->funcion.argumentos);
+                    borrar_lista_identificadores(&valor->funcion.nombres_args);
                     borrar_expresion((Expresion *) valor->funcion.cuerpo);
                     free(valor->funcion.cuerpo);
                     borrar_tabla_hash((TablaHash *) valor->funcion.variables_capturadas);
@@ -166,12 +166,12 @@ void borrar_valor(Valor *valor) {
             valor->loc = NULL;
         }
     }
-    valor->tipoValor = TIPO_INDEFINIDO;
+    valor->tipo_valor = TIPO_INDEFINIDO;
 }
 
 int comparar_valor(Valor a, Valor b) {
-    if (a.tipoValor != b.tipoValor) return 0;
-    switch (a.tipoValor) {
+    if (a.tipo_valor != b.tipo_valor) return 0;
+    switch (a.tipo_valor) {
         case TIPO_INDEFINIDO:
             return 0;
         case TIPO_NULO:
@@ -179,7 +179,7 @@ int comparar_valor(Valor a, Valor b) {
         case TIPO_ERROR:
             return 1;
         case TIPO_FUNCION_INTRINSECA:
-            return a.funcion_nativa == b.funcion_nativa;
+            return a.funcion_intrinseca == b.funcion_intrinseca;
         case TIPO_FUNCION:
             return 0;
         case TIPO_ENTERO:
@@ -200,7 +200,7 @@ void borrar_lista_valores(ListaValores *lista) {
 }
 
 void _imprimir_valor(Valor valor) {
-    switch (valor.tipoValor) {
+    switch (valor.tipo_valor) {
         case TIPO_INDEFINIDO: /*printf("indefinido");*/ break;
         case TIPO_NULO:
             printf("null");
@@ -234,5 +234,5 @@ void _imprimir_valor(Valor valor) {
 
 void imprimir_valor(Valor valor) {
     _imprimir_valor(valor);
-    if (valor.tipoValor != TIPO_INDEFINIDO) printf("\n");
+    if (valor.tipo_valor != TIPO_INDEFINIDO) printf("\n");
 }

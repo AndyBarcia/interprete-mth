@@ -43,7 +43,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
     switch (exp->tipo) {
         case EXP_VALOR: {
             // La expresión es un valor; devolverlo si no es una sentencia.
-            if (exp->es_sentencia && exp->valor.tipoValor != TIPO_ERROR) {
+            if (exp->es_sentencia && exp->valor.tipo_valor != TIPO_ERROR) {
                 borrar_valor(&exp->valor);
                 return crear_indefinido();
             }
@@ -52,7 +52,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
         case EXP_IDENTIFICADOR: {
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
             Valor v = recuperar_valor_tabla(*tabla, exp->nombre);
-            if (v.tipoValor == TIPO_ERROR) return v;
+            if (v.tipo_valor == TIPO_ERROR) return v;
             borrar_identificador(&exp->nombre);
 
             if (exp->es_sentencia) {
@@ -64,10 +64,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
         case EXP_ACCESO_MIEMBRO: {
             Valor v = evaluar_expresion(tabla, (Expresion *) exp->acceso.valor);
             free(exp->acceso.valor);
-            if (v.tipoValor == TIPO_ERROR) return v;
+            if (v.tipo_valor == TIPO_ERROR) return v;
 
             Valor result = crear_indefinido();
-            switch (v.tipoValor) {
+            switch (v.tipo_valor) {
                 case TIPO_BIBLIOTECA_FORANEA: {
                     BibilotecaDinamica bib = v.biblioteca;
                     FuncionForanea f = cargar_funcion_biblioteca(bib, identificador_a_str(&exp->acceso.miembro));
@@ -88,7 +88,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
 
             borrar_valor(&v);
             borrar_identificador(&exp->acceso.miembro);
-            if (exp->es_sentencia && result.tipoValor != TIPO_ERROR) {
+            if (exp->es_sentencia && result.tipo_valor != TIPO_ERROR) {
                 borrar_valor(&result);
                 return crear_indefinido();
             }
@@ -98,19 +98,19 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             // Si es una llamada, evaluar la expresión que queremos llamar como función,
             // y comprobar que efectivamente es una función, y distinguir entre si es
             // una función nativa o si es una función definida por el usuario.
-            Valor f = evaluar_expresion(tabla, (Expresion*)exp->llamadaFuncion.funcion);
-            free(exp->llamadaFuncion.funcion);
-            switch (f.tipoValor) {
+            Valor f = evaluar_expresion(tabla, (Expresion*)exp->llamada_funcion.funcion);
+            free(exp->llamada_funcion.funcion);
+            switch (f.tipo_valor) {
                 case TIPO_ERROR:
-                    borrar_lista_expresiones(&exp->llamadaFuncion.argumentos);
+                    borrar_lista_expresiones(&exp->llamada_funcion.args);
                     return f;
                 case TIPO_FUNCION_INTRINSECA: {
-                    FuncionIntrinseca fn = f.funcion_nativa;
-                    ListaValores args = evaluar_expresiones(tabla, &exp->llamadaFuncion.argumentos);
+                    FuncionIntrinseca fn = f.funcion_intrinseca;
+                    ListaValores args = evaluar_expresiones(tabla, &exp->llamada_funcion.args);
 
                     for(int i = 0; i < args.longitud; ++i) {
                         Valor v = ((Valor*)args.valores)[i];
-                        if (v.tipoValor == TIPO_ERROR) {
+                        if (v.tipo_valor == TIPO_ERROR) {
                             // Borrar todos los valores menos el que vamos a devolver.
                             for (int j = 0; j < args.longitud; ++j) {
                                 if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
@@ -133,11 +133,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 }
                 case TIPO_FUNCION_FORANEA: {
                     FuncionForanea fn = f.funcion_foranea;
-                    ListaValores args = evaluar_expresiones(tabla, &exp->llamadaFuncion.argumentos);
+                    ListaValores args = evaluar_expresiones(tabla, &exp->llamada_funcion.args);
 
                     for(int i = 0; i < args.longitud; ++i) {
                         Valor v = ((Valor*)args.valores)[i];
-                        if (v.tipoValor == TIPO_ERROR) {
+                        if (v.tipo_valor == TIPO_ERROR) {
                             // Borrar todos los valores menos el que vamos a devolver.
                             for (int j = 0; j < args.longitud; ++j) {
                                 if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
@@ -161,19 +161,19 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 }
                 case TIPO_FUNCION: {
                     Funcion fn = f.funcion;
-                    ListaValores args = evaluar_expresiones(tabla, &exp->llamadaFuncion.argumentos);
+                    ListaValores args = evaluar_expresiones(tabla, &exp->llamada_funcion.args);
 
-                    if (fn.argumentos.longitud != args.longitud) {
+                    if (fn.nombres_args.longitud != args.longitud) {
                         borrar_lista_valores(&args);
-                        Error error = crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.argumentos.longitud);
+                        Error error = crear_error("Se pasaron %d nombres_args, pero se esperaban %d.", args.longitud, fn.nombres_args.longitud);
                         return crear_valor_error(error, f.loc);
                     }
 
-                    // Introducir los argumentos en la tabla de símbolos.
+                    // Introducir los nombres_args en la tabla de símbolos.
                     aumentar_nivel_tabla_simbolos(tabla);
                     for (int i = 0; i < args.longitud; ++i) {
                         Valor arg = ((Valor*)args.valores)[i];
-                        if (arg.tipoValor == TIPO_ERROR) {
+                        if (arg.tipo_valor == TIPO_ERROR) {
                             reducir_nivel_tabla_simbolos(tabla);
                             // Borrar todos los valores menos los que ya metimos en la
                             // tabla y menos el que vamos a devolver.
@@ -182,7 +182,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                             free(args.valores);
                             return arg;
                         }
-                        asignar_valor_tabla(tabla, clonar_identificador(fn.argumentos.valores[i]), arg, ASIGNACION_NORMAL);
+                        asignar_valor_tabla(tabla, clonar_identificador(fn.nombres_args.valores[i]), arg, ASIGNACION_NORMAL);
                     }
                     // Introducir las variables capturadas por la función
                     asignar_clones_valores_tabla(tabla, *(TablaHash *) fn.variables_capturadas);
@@ -208,7 +208,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
         case EXP_OP_ASIGNACION: {
             Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion);
             free(exp->asignacion.expresion);
-            if (v.tipoValor == TIPO_ERROR) {
+            if (v.tipo_valor == TIPO_ERROR) {
                 borrar_identificador(&exp->asignacion.identificador);
                 return v;
             }
@@ -228,15 +228,15 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             }
         }
         case EXP_OP_DEF_FUNCION: {
-            Expresion *cuerpo = (Expresion*) exp->defFuncion.cuerpo;
-            ListaIdentificadores ids = variables_capturadas(exp->defFuncion);
+            Expresion *cuerpo = (Expresion*) exp->def_funcion.cuerpo;
+            ListaIdentificadores ids = variables_capturadas(exp->def_funcion);
 
             TablaHash *capturadas = malloc(sizeof(TablaHash));
             *capturadas = crear_tabla_hash(ids.longitud);
 
             for(int i = 0; i < ids.longitud; ++i) {
                 Valor v = recuperar_valor_tabla(*tabla, ids.valores[i]);
-                if (v.tipoValor == TIPO_ERROR) {
+                if (v.tipo_valor == TIPO_ERROR) {
                     borrar_expresion(cuerpo);
                     free(cuerpo);
                     borrar_lista_identificadores(&ids);
@@ -248,7 +248,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             }
             borrar_lista_identificadores(&ids);
 
-            Valor funcion = crear_funcion(exp->defFuncion.argumentos, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, &exp->defFuncion.loc);
+            Valor funcion = crear_funcion(exp->def_funcion.nombres_args, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, &exp->def_funcion.loc);
             if (exp->es_sentencia) {
                 borrar_valor(&funcion);
                 return crear_indefinido();
@@ -263,7 +263,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             for (int i = 0; i < lista.longitud; ++i) {
                 borrar_valor(&ultimo_valor);
                 ultimo_valor = evaluar_expresion(tabla, &((Expresion*) lista.valores)[i]);
-                if (ultimo_valor.tipoValor == TIPO_ERROR) {
+                if (ultimo_valor.tipo_valor == TIPO_ERROR) {
                     for (int j = i+1; j < lista.longitud; ++j)
                         borrar_expresion(&((Expresion*) lista.valores)[j]);
                     free(lista.valores);
@@ -315,7 +315,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
 
                 aumentar_nivel_tabla_simbolos(tabla);
                 while(evaluar_siguiente(&evaluador, tabla, &x)) {
-                    if (x.tipoValor == TIPO_ERROR) {
+                    if (x.tipo_valor == TIPO_ERROR) {
                         char* linea = obtener_linea(lexer, x.loc->first_line);
                         imprimir_error(x.error, string_a_puntero(&exp->importe.archivo), linea, x.loc);
                     }
