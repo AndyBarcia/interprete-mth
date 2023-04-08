@@ -2,7 +2,7 @@
 #define LEXER_TABLA_HASH_H
 
 #include "string.h"
-#include "valor.h"
+#include "ast/valor.h"
 
 #include <stdio.h>
 #include <stdlib.h>

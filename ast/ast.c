@@ -1,5 +1,5 @@
 #include "ast.h"
-#include "tabla_simbolos.h"
+#include "../tabla_simbolos.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

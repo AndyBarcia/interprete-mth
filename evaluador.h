@@ -1,7 +1,7 @@
 #ifndef PRACTICA3_EVALUADOR_H
 #define PRACTICA3_EVALUADOR_H
 
-#include "ast.h"
+#include "ast/ast.h"
 #include "tabla_simbolos.h"
 
 /// Un evaluador del lenguaje matemático, con un

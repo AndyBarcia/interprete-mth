@@ -1,10 +1,10 @@
 #ifndef PRACTICA3_AST_H
 #define PRACTICA3_AST_H
 
-#include "string.h"
+#include "../string.h"
 #include "valor.h"
-#include "analizador_lexico.h"
-#include "tabla_simbolos.h"
+#include "../analizador_lexico.h"
+#include "../tabla_simbolos.h"
 
 /// Una lista de expresiones, ya sea en un
 /// bloque de expresiones o los argumentos

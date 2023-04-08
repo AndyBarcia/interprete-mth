@@ -71,7 +71,7 @@
 
 #include "analizador_lexico.h"
 #include "string.h"
-#include "ast.h"
+#include "ast/ast.h"
 
 void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 

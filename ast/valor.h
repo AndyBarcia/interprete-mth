@@ -1,10 +1,12 @@
 #ifndef PRACTICA3_VALOR_H
 #define PRACTICA3_VALOR_H
 
-#include "string.h"
-#include "error.h"
-#include "biblioteca_dinamica.h"
-#include "analizador_lexico.h"
+#include "../string.h"
+#include "../error.h"
+#include "../biblioteca_dinamica.h"
+#include "../analizador_lexico.h"
+
+#include "identificador.h"
 
 /// Tipo interno de un entero en el lenguaje
 typedef int Entero;
@@ -39,19 +41,6 @@ typedef enum {
 } TipoValor;
 
 typedef void (*FuncionIntrinseca)();
-
-/// Un identificador, con una localización en el código fuente.
-typedef struct {
-    String nombre;
-    Localizacion loc;
-} Identificador;
-
-/// Lista de Strings.
-typedef struct {
-    int longitud;
-    int capacidad;
-    Identificador* valores;
-} ListaIdentificadores;
 
 /// Un valor asignable en una expresión de asignación.
 typedef Identificador NombreAsignable;
@@ -122,23 +111,9 @@ int comparar_valor(Valor a, Valor b);
 void borrar_lista_valores(ListaValores *lista);
 
 /*
- * Funciones ayuda de creación de identificadores
- */
-
-Identificador crear_identificador(String nombre, Localizacion loc);
-Identificador clonar_identificador(Identificador id);
-
-ListaIdentificadores crear_lista_identificadores();
-void push_lista_identificadores(ListaIdentificadores *lista, Identificador identificador);
-ListaIdentificadores clonar_lista_identificadores(ListaIdentificadores lista);
-void borrar_lista_identificadores(ListaIdentificadores *lista);
-
-/*
  * Funciones ayuda de impresión
  */
 
-void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
-void imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
 void _imprimir_valor(Valor valor);
 void imprimir_valor(Valor valor);
 

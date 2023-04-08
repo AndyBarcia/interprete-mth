@@ -53,7 +53,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
             Valor v = recuperar_valor_tabla(*tabla, exp->nombre);
             if (v.tipoValor == TIPO_ERROR) return v;
-            borrar_string(&exp->nombre.nombre);
+            borrar_identificador(&exp->nombre);
 
             if (exp->es_sentencia) {
                 borrar_valor(&v);
@@ -70,24 +70,24 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             switch (v.tipoValor) {
                 case TIPO_BIBLIOTECA_FORANEA: {
                     BibilotecaDinamica bib = v.biblioteca;
-                    FuncionForanea f = cargar_funcion_biblioteca(bib, string_a_puntero(&exp->acceso.miembro.nombre));
+                    FuncionForanea f = cargar_funcion_biblioteca(bib, identificador_a_str(&exp->acceso.miembro));
                     if (f) {
                         result = crear_funcion_foranea(f);
                     } else {
-                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.", string_a_puntero(&exp->acceso.miembro.nombre));
+                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.", identificador_a_str(&exp->acceso.miembro));
                         result = crear_valor_error(error, &exp->acceso.miembro.loc);
                     }
                     break;
                 }
                 default: {
-                    Error error = crear_error("No se puede acceder al miembro \"%s\".", string_a_puntero(&exp->acceso.miembro.nombre));
+                    Error error = crear_error("No se puede acceder al miembro \"%s\".", identificador_a_str(&exp->acceso.miembro));
                     result = crear_valor_error(error, &exp->acceso.miembro.loc);
                     break;
                 }
             }
 
             borrar_valor(&v);
-            borrar_string(&exp->acceso.miembro.nombre);
+            borrar_identificador(&exp->acceso.miembro);
             if (exp->es_sentencia && result.tipoValor != TIPO_ERROR) {
                 borrar_valor(&result);
                 return crear_indefinido();
@@ -209,7 +209,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion);
             free(exp->asignacion.expresion);
             if (v.tipoValor == TIPO_ERROR) {
-                borrar_string(&exp->asignacion.identificador.nombre);
+                borrar_identificador(&exp->asignacion.identificador);
                 return v;
             }
 
@@ -222,8 +222,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             } else {
                 Error error = crear_error(
                         "Intentando reasignar variable inmutable \"%s\"",
-                        string_a_puntero(&exp->asignacion.identificador.nombre));
-                borrar_string(&exp->asignacion.identificador.nombre);
+                        identificador_a_str(&exp->asignacion.identificador));
+                borrar_identificador(&exp->asignacion.identificador);
                 return crear_valor_error(error, &exp->asignacion.identificador.loc);
             }
         }
@@ -287,7 +287,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (!bib) {
                     Error error = crear_error("No se pudo abrir la biblioteca dinámica.");
                     borrar_string(&exp->importe.archivo);
-                    borrar_string(&exp->importe.as.nombre);
+                    borrar_identificador(&exp->importe.as);
                     return crear_valor_error(error, &exp->importe.loc);
                 }
 
@@ -295,7 +295,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (!asignar_valor_tabla(tabla, exp->importe.as, v, ASIGNACION_INMUTABLE)) {
                     Error error = crear_error("Ya hay un objeto definido con este nombre");
                     borrar_string(&exp->importe.archivo);
-                    borrar_string(&exp->importe.as.nombre);
+                    borrar_identificador(&exp->importe.as);
                     return crear_valor_error(error, &exp->importe.as.loc);
                 }
             } else {
@@ -306,7 +306,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                 if (!crear_lexer_archivo(&lexer, string_a_puntero(&exp->importe.archivo))) {
                     Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_puntero(&exp->importe.archivo));
                     borrar_string(&exp->importe.archivo);
-                    borrar_string(&exp->importe.as.nombre);
+                    borrar_identificador(&exp->importe.as);
                     return crear_valor_error(error, &exp->importe.loc);
                 }
 
@@ -325,7 +325,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
             }
 
             borrar_string(&exp->importe.archivo);
-            borrar_string(&exp->importe.as.nombre);
+            borrar_identificador(&exp->importe.as);
             return crear_indefinido();
         }
         default: {

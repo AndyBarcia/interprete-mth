@@ -1,5 +1,5 @@
 #include "std.h"
-#include "ast.h"
+#include "ast/ast.h"
 #include "evaluador.h"
 
 void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {

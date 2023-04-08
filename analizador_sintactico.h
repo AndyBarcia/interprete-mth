@@ -47,7 +47,7 @@ extern int yydebug;
 /* "%code requires" blocks.  */
 #line 19 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
-    #include "ast.h"
+    #include "ast/ast.h"
 
 #line 53 "../analizador_sintactico.h"
 
