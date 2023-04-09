@@ -80,6 +80,11 @@ as { return AS; }
         return ERROR;
     }
 
+{DECIMAL} {
+        yylval->valorDecimal = atof(yytext);
+        return DECIMAL;
+    }
+
 {STRING} {
         yytext[yyleng-1] = '\0';
         // TODO: escapar caracteres

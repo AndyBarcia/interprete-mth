@@ -12,6 +12,8 @@
 typedef int Entero;
 /// Tipo interno de un bool en el lenguaje
 typedef int Bool;
+/// Tipo entero de un número decimal.
+typedef double Decimal;
 
 /// Todos los tipos de valores que hay en el lenguaje
 typedef enum {
@@ -26,6 +28,8 @@ typedef enum {
     TIPO_ERROR,
     /// Valor entero. Ejemplo: `5`
     TIPO_ENTERO,
+    /// Valor decimal. Ejemplo: `5.5`
+    TIPO_DECIMAL,
     /// Valor booleano. Ejemplo: `verdadero`
     TIPO_BOOL,
     /// Valor string. Ejemplo `"string"`
@@ -83,6 +87,7 @@ typedef struct {
     Localizacion *loc;
     union {
         Entero entero;
+        Decimal decimal;
         Bool bool;
         String string;
         FuncionIntrinseca funcion_intrinseca;
@@ -111,6 +116,7 @@ typedef struct {
 Valor crear_indefinido();
 Valor crear_nulo();
 Valor crear_entero(Entero entero, Localizacion *loc);
+Valor crear_decimal(Decimal decimal, Localizacion *loc);
 Valor crear_bool(Bool bool, Localizacion *loc);
 Valor crear_valor_string(String string, Localizacion *loc);
 Valor crear_funcion_intrinseca(FuncionIntrinseca funcion, Localizacion *loc);

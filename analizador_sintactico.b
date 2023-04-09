@@ -23,6 +23,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %union {
     int tipoOperador;
     int valorEntero;
+    double valorDecimal;
     Error error_lexico;
     Identificador identificador;
     String string;
@@ -33,6 +34,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 }
 
 %token <valorEntero> ENTERO "número entero"
+%token <valorDecimal> DECIMAL "número decimal"
 %token <identificador> IDENTIFICADOR "identificador"
 %token <string> STRING "string"
 %token <error_lexico> ERROR
@@ -141,22 +143,23 @@ nombre_asignable: IDENTIFICADOR | OPERADOR ;
 
 expresion:
       ENTERO { $$ = crear_exp_valor(crear_entero($1, &@1)); }
+    | DECIMAL { $$ = crear_exp_valor(crear_decimal($1, &@1)); }
     | STRING { $$ = crear_exp_valor(crear_valor_string($1, &@1)); }
     | IDENTIFICADOR { $$ = crear_exp_nombre($1); }
-    | "!" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NOT, &@$)); }
-    | "*" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MULT, &@$)); }
-    | "/" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_DIV, &@$)); }
-    | "%" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MOD, &@$)); }
-    | "+" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_SUMA, &@$)); }
-    | "-" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_RESTA, &@$)); }
-    | "==" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_EQ, &@$)); }
-    | "!=" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NEQ, &@$)); }
-    | ">" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GE, &@$)); }
-    | ">=" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GEQ, &@$)); }
-    | "<" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LE, &@$)); }
-    | "<=" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LEQ, &@$)); }
-    | "&&" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_AND, &@$)); }
-    | "||" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_OR, &@$)); }
+    | "(" "!" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NOT, &@$)); }
+    | "(" "*" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MULT, &@$)); }
+    | "(" "/" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_DIV, &@$)); }
+    | "(" "%" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MOD, &@$)); }
+    | "(" "+" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_SUMA, &@$)); }
+    | "(" "-" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_RESTA, &@$)); }
+    | "(" "==" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_EQ, &@$)); }
+    | "(" "!=" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NEQ, &@$)); }
+    | "(" ">" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GE, &@$)); }
+    | "(" ">=" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GEQ, &@$)); }
+    | "(" "<" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LE, &@$)); }
+    | "(" "<=" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LEQ, &@$)); }
+    | "(" "&&" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_AND, &@$)); }
+    | "(" "||" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_OR, &@$)); }
     | "!" expresion { $$ = crear_exp_op_unaria(INTRINSECA_NOT, &@2, $2, &@$); }
     | "-" expresion { $$ = crear_exp_op_unaria(INTRINSECA_NEGAR, &@2, $2, &@$); }
     | expresion "*" expresion { $$ = crear_exp_op_binaria(INTRINSECA_MULT, &@2, $1, $3, &@$); }

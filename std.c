@@ -1,10 +1,12 @@
 #include "std.h"
 #include "ast/ast.h"
-#include "evaluador.h"
+#include "math.h"
 
 void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("falso"), crear_bool(0, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("pi"), crear_decimal(M_PI, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("e"), crear_decimal(M_E, NULL), ASIGNACION_INMUTABLE);
 }
 
 #define comprobacion_n_args(n_args, op) \
@@ -25,13 +27,51 @@ Valor sumar(Valor a, Valor b) {
     Valor result;
     switch (a.tipo_valor) {
         case TIPO_ENTERO: {
-            result = crear_entero(a.entero + b.entero, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    result = crear_entero(a.entero + b.entero, NULL);
+                    break;
+                case TIPO_DECIMAL:
+                    result = crear_decimal(((Decimal) a.entero) + b.decimal, NULL);
+                    break;
+                default: {
+                    Error error = crear_error_tipos_incompatibles("sumar", a.tipo_valor, b.tipo_valor);
+                    result = crear_valor_error(error, NULL);
+                    break;
+                }
+            }
+            break;
+        }
+        case TIPO_DECIMAL: {
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    result = crear_decimal(a.decimal + ((Decimal) b.entero), NULL);
+                    break;
+                case TIPO_DECIMAL:
+                    result = crear_decimal(a.decimal + b.decimal, NULL);
+                    break;
+                default: {
+                    Error error = crear_error_tipos_incompatibles("sumar", a.tipo_valor, b.tipo_valor);
+                    result = crear_valor_error(error, NULL);
+                    break;
+                }
+            }
             break;
         }
         case TIPO_STRING: {
-            String x = crear_string(string_a_puntero(&a.string));
-            extender_string(&x, string_a_puntero(&b.string));
-            result = crear_valor_string(x, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_STRING: {
+                    String x = crear_string(string_a_puntero(&a.string));
+                    extender_string(&x, string_a_puntero(&b.string));
+                    result = crear_valor_string(x, NULL);
+                    break;
+                }
+                default: {
+                    Error error = crear_error_tipos_incompatibles("sumar", a.tipo_valor, b.tipo_valor);
+                    result = crear_valor_error(error, NULL);
+                    break;
+                }
+            }
             break;
         }
         default: {
@@ -49,7 +89,35 @@ Valor restar(Valor a, Valor b) {
     Valor result;
     switch (a.tipo_valor) {
         case TIPO_ENTERO: {
-            result = crear_entero(a.entero - b.entero, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    result = crear_entero(a.entero - b.entero, NULL);
+                    break;
+                case TIPO_DECIMAL:
+                    result = crear_decimal(((Decimal) a.entero) - b.decimal, NULL);
+                    break;
+                default: {
+                    Error error = crear_error_tipos_incompatibles("restar", a.tipo_valor, b.tipo_valor);
+                    result = crear_valor_error(error, NULL);
+                    break;
+                }
+            }
+            break;
+        }
+        case TIPO_DECIMAL: {
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    result = crear_decimal(a.decimal - ((Decimal) b.entero), NULL);
+                    break;
+                case TIPO_DECIMAL:
+                    result = crear_decimal(a.decimal - b.decimal, NULL);
+                    break;
+                default: {
+                    Error error = crear_error_tipos_incompatibles("restar", a.tipo_valor, b.tipo_valor);
+                    result = crear_valor_error(error, NULL);
+                    break;
+                }
+            }
             break;
         }
         default: {
@@ -72,11 +140,32 @@ Valor mult(Valor a, Valor b) {
                     result = crear_entero(a.entero * b.entero, NULL);
                     break;
                 }
+                case TIPO_DECIMAL: {
+                    result = crear_decimal(((Decimal) a.entero) * b.decimal, NULL);
+                    break;
+                }
                 case TIPO_STRING: {
                     String x = crear_string(string_a_puntero(&b.string));
                     for (int i = 1; i < a.entero; ++i)
                         extender_string(&x, string_a_puntero(&b.string));
                     result = crear_valor_string(x, NULL);
+                    break;
+                }
+                default: {
+                    result = crear_valor_error(crear_error_tipos_incompatibles("multiplicar", a.tipo_valor, b.tipo_valor), NULL);
+                    break;
+                };
+            }
+            break;
+        }
+        case TIPO_DECIMAL: {
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO: {
+                    result = crear_decimal(a.decimal * ((Decimal) b.entero), NULL);
+                    break;
+                }
+                case TIPO_DECIMAL: {
+                    result = crear_decimal(a.decimal * b.decimal, NULL);
                     break;
                 }
                 default: {
@@ -104,10 +193,47 @@ Valor dividir(Valor a, Valor b) {
     Valor result;
     switch (a.tipo_valor) {
         case TIPO_ENTERO: {
-            if (b.entero == 0)
-                result = crear_valor_error(crear_error_dividir_entre_cero(), NULL);
-            else
-                result = crear_entero( a.entero / b.entero, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    if (b.entero == 0)
+                        result = crear_valor_error(crear_error_dividir_entre_cero(), NULL);
+                    else
+                        result = crear_decimal((Decimal) a.entero / (Decimal) b.entero, NULL);
+                    break;
+                case TIPO_DECIMAL:
+                    if (b.decimal == 0.0)
+                        result = crear_valor_error(crear_error_dividir_entre_cero(), NULL);
+                    else
+                        result = crear_decimal((Decimal) a.entero / b.decimal, NULL);
+                    break;
+                default: {
+                    Error error = crear_error_tipos_incompatibles("dividir", a.tipo_valor, b.tipo_valor);
+                    result = crear_valor_error(error, NULL);
+                    break;
+                }
+            }
+            break;
+        }
+        case TIPO_DECIMAL: {
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    if (b.entero == 0)
+                        result = crear_valor_error(crear_error_dividir_entre_cero(), NULL);
+                    else
+                        result = crear_decimal(a.decimal / (Decimal) b.entero, NULL);
+                    break;
+                case TIPO_DECIMAL: {
+                    if (b.decimal == 0.0)
+                        result = crear_valor_error(crear_error_dividir_entre_cero(), NULL);
+                    else
+                        result = crear_decimal(a.decimal / b.decimal, NULL);
+                    break;
+                }
+                default: {
+                    result = crear_valor_error(crear_error_tipos_incompatibles("dividir", a.tipo_valor, b.tipo_valor), NULL);
+                    break;
+                };
+            }
             break;
         }
         default: {
@@ -198,6 +324,9 @@ Valor negar(Valor a) {
         case TIPO_ENTERO: {
             result = crear_entero(-a.entero, NULL);
             break;
+        }
+        case TIPO_DECIMAL: {
+            result = crear_decimal(-a.decimal, NULL);
             break;
         }
         default: {
@@ -217,13 +346,11 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
     switch (f) {
         case INTRINSECA_SUMA:
             comprobacion_n_args(2, "sumar");
-            comprobacion_tipos(vargs[0], vargs[1], "sumar");
 
             result = sumar(vargs[0], vargs[1]);
             break;
         case INTRINSECA_RESTA:
             comprobacion_n_args(2, "restar");
-            comprobacion_tipos(vargs[0], vargs[1], "restar");
 
             result = restar(vargs[0], vargs[1]);
             break;
@@ -234,7 +361,6 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             break;
         case INTRINSECA_DIV:
             comprobacion_n_args(2, "dividir");
-            comprobacion_tipos(vargs[0], vargs[1], "dividir");
 
             result = dividir(vargs[0], vargs[1]);
             break;

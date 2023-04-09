@@ -20,6 +20,15 @@ Valor crear_entero(Entero entero, Localizacion *loc) {
     return (Valor) {TIPO_ENTERO, NULL, loc, .entero = entero};
 }
 
+Valor crear_decimal(Decimal decimal, Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = *loc;
+        loc = loc_copy;
+    }
+    return (Valor) {TIPO_DECIMAL, NULL, loc, .decimal = decimal};
+}
+
 Valor crear_bool(Bool bool, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
@@ -181,6 +190,9 @@ int comparar_valor(Valor a, Valor b, int *resultado) {
         case TIPO_ENTERO:
             *resultado =  a.entero - b.entero;
             return 1;
+        case TIPO_DECIMAL:
+            *resultado =  (int) (a.decimal - b.decimal);
+            return 1;
         case TIPO_BOOL:
             *resultado =  a.bool - b.bool;
             return 1;
@@ -247,6 +259,9 @@ void _imprimir_valor(Valor valor) {
         case TIPO_ENTERO:
             printf("%d", valor.entero);
             break;
+        case TIPO_DECIMAL:
+            printf("%f", valor.decimal);
+            break;
         case TIPO_BOOL:
             printf("%s", valor.bool ? "Verdadero" : "Falso");
             break;
@@ -270,6 +285,7 @@ char* tipo_valor_a_str(TipoValor tipo) {
         case TIPO_INDEFINIDO: return "indefinido";
         case TIPO_ERROR: return "error";
         case TIPO_ENTERO: return "entero";
+        case TIPO_DECIMAL: return "decimal";
         case TIPO_BOOL: return "booleano";
         case TIPO_STRING: return "string";
         case TIPO_FUNCION_INTRINSECA: return "función intrínseca";

@@ -61,42 +61,43 @@ extern int yydebug;
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
     ENTERO = 258,                  /* "número entero"  */
-    IDENTIFICADOR = 259,           /* "identificador"  */
-    STRING = 260,                  /* "string"  */
-    ERROR = 261,                   /* ERROR  */
-    OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
-    OPERADOR = 263,                /* "operador"  */
-    SUMA = 264,                    /* "+"  */
-    RESTA = 265,                   /* "-"  */
-    MULT = 266,                    /* "*"  */
-    DIV = 267,                     /* "/"  */
-    MOD = 268,                     /* "%"  */
-    EQ = 269,                      /* "=="  */
-    NEQ = 270,                     /* "!="  */
-    GE = 271,                      /* ">"  */
-    GEQ = 272,                     /* ">="  */
-    LE = 273,                      /* "<"  */
-    LEQ = 274,                     /* "<="  */
-    AND = 275,                     /* "&&"  */
-    OR = 276,                      /* "||"  */
-    NOT = 277,                     /* "!"  */
-    CONST = 278,                   /* "const"  */
-    EXPORT = 279,                  /* "export"  */
-    IMPORT = 280,                  /* "import"  */
-    FOREIGN = 281,                 /* "foreign"  */
-    AS = 282,                      /* "as"  */
-    PARENTESIS_IZQ = 283,          /* "("  */
-    PARENTESIS_DER = 284,          /* ")"  */
-    CORCHETE_IZQ = 285,            /* "["  */
-    CORCHETE_DER = 286,            /* "]"  */
-    LLAVE_IZQ = 287,               /* "{"  */
-    LLAVE_DER = 288,               /* "}"  */
-    PUNTO = 289,                   /* "."  */
-    FLECHA = 290,                  /* "=>"  */
-    SLASH_INVERTIDA = 291,         /* "\\"  */
-    NUEVA_LINEA = 292,             /* "\n"  */
-    PUNTO_Y_COMA = 293,            /* ";"  */
-    COMA = 294                     /* ","  */
+    DECIMAL = 259,                 /* "número decimal"  */
+    IDENTIFICADOR = 260,           /* "identificador"  */
+    STRING = 261,                  /* "string"  */
+    ERROR = 262,                   /* ERROR  */
+    OPERADOR_ASIGNACION = 263,     /* "operador de asignación"  */
+    OPERADOR = 264,                /* "operador"  */
+    SUMA = 265,                    /* "+"  */
+    RESTA = 266,                   /* "-"  */
+    MULT = 267,                    /* "*"  */
+    DIV = 268,                     /* "/"  */
+    MOD = 269,                     /* "%"  */
+    EQ = 270,                      /* "=="  */
+    NEQ = 271,                     /* "!="  */
+    GE = 272,                      /* ">"  */
+    GEQ = 273,                     /* ">="  */
+    LE = 274,                      /* "<"  */
+    LEQ = 275,                     /* "<="  */
+    AND = 276,                     /* "&&"  */
+    OR = 277,                      /* "||"  */
+    NOT = 278,                     /* "!"  */
+    CONST = 279,                   /* "const"  */
+    EXPORT = 280,                  /* "export"  */
+    IMPORT = 281,                  /* "import"  */
+    FOREIGN = 282,                 /* "foreign"  */
+    AS = 283,                      /* "as"  */
+    PARENTESIS_IZQ = 284,          /* "("  */
+    PARENTESIS_DER = 285,          /* ")"  */
+    CORCHETE_IZQ = 286,            /* "["  */
+    CORCHETE_DER = 287,            /* "]"  */
+    LLAVE_IZQ = 288,               /* "{"  */
+    LLAVE_DER = 289,               /* "}"  */
+    PUNTO = 290,                   /* "."  */
+    FLECHA = 291,                  /* "=>"  */
+    SLASH_INVERTIDA = 292,         /* "\\"  */
+    NUEVA_LINEA = 293,             /* "\n"  */
+    PUNTO_Y_COMA = 294,            /* ";"  */
+    COMA = 295                     /* ","  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -109,6 +110,7 @@ union YYSTYPE
 
     int tipoOperador;
     int valorEntero;
+    double valorDecimal;
     Error error_lexico;
     Identificador identificador;
     String string;
@@ -117,7 +119,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 121 "../analizador_sintactico.h"
+#line 123 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
