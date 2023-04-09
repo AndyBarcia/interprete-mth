@@ -56,6 +56,10 @@ Error crear_error_dividir_entre_cero() {
     return crear_error("No se puede dividir entre cero.");
 }
 
+Error crear_error_archivo_no_encontrado(char* fichero) {
+    return crear_error("No se ha podido cargar el fichero \"%s\".", fichero);
+}
+
 void borrar_error(Error *error) {
     borrar_string(&error->mensaje);
 }
@@ -66,7 +70,7 @@ void imprimir_error(Error error, char* nombre, char* linea, Localizacion *loc) {
         printf("  -> %s\n", nombre);
     if (loc) {
         printf("   |\n");
-        printf("%*d | %s", 2, loc->first_line, linea);
+        printf("%*d | %s\n", 2, loc->first_line, linea);
         printf("   | ");
 
         for (int i = 0; i < loc->first_column-1; ++i)

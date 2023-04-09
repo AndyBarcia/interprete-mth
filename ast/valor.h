@@ -63,6 +63,12 @@ typedef enum {
     INTRINSECA_OR,
     INTRINSECA_NOT,
     INTRINSECA_NEGAR,
+    INTRINSECA_PRINT,
+    INTRINSECA_PRINTWS,
+    INTRINSECA_RESETWS,
+    INTRINSECA_AYUDA,
+    INTRINSECA_CARGAR,
+    INTRINSECA_EVAL,
 } FuncionIntrinseca;
 
 /// Una función definida por el usuario, con:

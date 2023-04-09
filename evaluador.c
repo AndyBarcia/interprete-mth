@@ -324,6 +324,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                     if (x.tipo_valor == TIPO_ERROR) {
                         char* linea = obtener_linea(lexer, x.loc->first_line);
                         imprimir_error(x.error, string_a_puntero(&exp->importe.archivo), linea, x.loc);
+                        free(linea);
                     }
                     borrar_valor(&x);
                 }

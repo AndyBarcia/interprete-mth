@@ -202,6 +202,7 @@ int crear_lexer_archivo(Lexer *lexer, char *archivo) {
 
     lexer->nombre_fichero = archivo;
     lexer->str_buffer = NULL;
+    lexer->str = NULL;
     lexer->loc = (Localizacion) {
              .first_line = 1,
              .last_line = 1,
@@ -220,6 +221,7 @@ Lexer crear_lexer_str(char *str) {
      yylex_init(&lexer.scanner);
 
      lexer.str_buffer = yy_scan_string(str, lexer.scanner);
+     lexer.str = str;
      lexer.loc = (Localizacion) {
               .first_line = 1,
               .last_line = 1,
@@ -241,8 +243,24 @@ void borrar_analizador_lexico(Lexer lexer) {
 
 char* obtener_linea(Lexer lexer, int linea) {
     if (lexer.str_buffer) {
-        // TODO hacer esto
-        return NULL;
+        char* actual = lexer.str;
+        int current_line = 1;
+
+        while (*actual && current_line < linea) {
+            if (*actual == '\n') ++current_line;
+            ++actual;
+        }
+
+        if (current_line < linea) {
+            return NULL;
+        }
+
+        char* final_linea = actual+1;
+        while (*final_linea && *final_linea != '\n')
+            ++final_linea;
+
+        int longitud = final_linea - actual;
+        return strndup(actual, longitud);
     } else {
         FILE* archivo = yyget_in(lexer.scanner);
 
@@ -262,6 +280,10 @@ char* obtener_linea(Lexer lexer, int linea) {
             free(buffer);
             return NULL;
         }
+
+        int len = strlen(buffer);
+        if (buffer[len-1] == '\n')
+            buffer[len-1] == '\0';
 
         // Volver a la posición original y terminar.
         fseek(archivo, pos, SEEK_SET);

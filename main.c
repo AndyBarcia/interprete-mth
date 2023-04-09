@@ -12,6 +12,8 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 
     printf("> ");
     while ((read = getline(&linea, &len, stdin)) != -1) {
+        linea[read-1] = '\0';
+
         Lexer lexer = crear_lexer_str(linea);
         Evaluador evaluador = crear_evaluador(lexer);
 
@@ -45,6 +47,7 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
         if (x.tipo_valor == TIPO_ERROR) {
             char* linea = obtener_linea(lexer, x.loc->first_line);
             imprimir_error(x.error, fichero, linea, x.loc);
+            free(linea);
         }
         borrar_valor(&x);
     }

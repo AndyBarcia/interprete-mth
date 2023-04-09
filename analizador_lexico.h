@@ -23,6 +23,10 @@ typedef struct {
     // estamos procesando un char*
     // en vez de un archivo.
     void* str_buffer;
+    // String que se está procesando,
+    // si es que se está procesando
+    // una cadena y no un fichero.
+    char* str;
     // Nombre del fichero que se
     // está analizando, o NULL en
     // caso de estar procesando
