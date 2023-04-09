@@ -66,7 +66,7 @@ void imprimir_error(Error error, char* nombre, char* linea, Localizacion *loc) {
         printf("  -> %s\n", nombre);
     if (loc) {
         printf("   |\n");
-        printf("%*d | %s\n", 2, loc->first_line+1, linea);
+        printf("%*d | %s", 2, loc->first_line, linea);
         printf("   | ");
 
         for (int i = 0; i < loc->first_column-1; ++i)

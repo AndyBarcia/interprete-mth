@@ -136,6 +136,7 @@ as { return AS; }
 
 \n  {
         yylloc->last_column = 1;
+        ++yylloc->last_line;
         return NUEVA_LINEA;
     }
 ;  { return PUNTO_Y_COMA; }
@@ -149,7 +150,10 @@ as { return AS; }
 \/\* { BEGIN(comentario_bloque); }
 <comentario_bloque>{
 \*\/ { BEGIN(INITIAL); }
-\n  { yylloc->last_column = 1; }
+\n  {
+        ++yylloc->last_line;
+        yylloc->last_column = 1;
+    }
 .   { /* ignorar comentarios multilinea */ }
 <<EOF>> {
         BEGIN(INITIAL);
@@ -168,7 +172,10 @@ as { return AS; }
         --nivel_comentario_anidado;
         if (nivel_comentario_anidado == 0) BEGIN(INITIAL);
     }
-\n  { yylloc->last_column = 1; }
+\n  {
+        ++yylloc->last_line;
+        yylloc->last_column = 1;
+    }
 .   { /* ignorar comentarios anidados */ }
 <<EOF>> {
         BEGIN(INITIAL);

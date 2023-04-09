@@ -12,8 +12,6 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 
     printf("> ");
     while ((read = getline(&linea, &len, stdin)) != -1) {
-        linea[read - 1] = '\0';
-
         Lexer lexer = crear_lexer_str(linea);
         Evaluador evaluador = crear_evaluador(lexer);
 

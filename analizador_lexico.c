@@ -1085,58 +1085,62 @@ YY_RULE_SETUP
 #line 137 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylloc->last_column = 1;
+        ++yylloc->last_line;
         return NUEVA_LINEA;
     }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 141 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 142 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return PUNTO_Y_COMA; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 142 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 143 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return PUNTO; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 144 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 145 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return FLECHA;}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 145 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 146 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return SLASH_INVERTIDA; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 147 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 148 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar comentarios de una línea */ }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 149 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 150 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { BEGIN(comentario_bloque); }
 	YY_BREAK
 
 case 43:
 YY_RULE_SETUP
-#line 151 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 152 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 44:
 /* rule 44 can match eol */
 YY_RULE_SETUP
-#line 152 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
-{ yylloc->last_column = 1; }
+#line 153 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+{
+        ++yylloc->last_line;
+        yylloc->last_column = 1;
+    }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 153 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 157 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar comentarios multilinea */ }
 	YY_BREAK
 case YY_STATE_EOF(comentario_bloque):
-#line 154 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 158 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         BEGIN(INITIAL);
         yylval->error_lexico = crear_error("Comentario de bloque no terminado.");
@@ -1146,7 +1150,7 @@ case YY_STATE_EOF(comentario_bloque):
 
 case 46:
 YY_RULE_SETUP
-#line 161 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 165 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         nivel_comentario_anidado=1;
         BEGIN(comentario_anidado);
@@ -1155,12 +1159,12 @@ YY_RULE_SETUP
 
 case 47:
 YY_RULE_SETUP
-#line 166 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 170 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { ++nivel_comentario_anidado; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 167 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 171 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         --nivel_comentario_anidado;
         if (nivel_comentario_anidado == 0) BEGIN(INITIAL);
@@ -1169,16 +1173,19 @@ YY_RULE_SETUP
 case 49:
 /* rule 49 can match eol */
 YY_RULE_SETUP
-#line 171 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
-{ yylloc->last_column = 1; }
+#line 175 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+{
+        ++yylloc->last_line;
+        yylloc->last_column = 1;
+    }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 172 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 179 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar comentarios anidados */ }
 	YY_BREAK
 case YY_STATE_EOF(comentario_anidado):
-#line 173 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 180 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         BEGIN(INITIAL);
         yylval->error_lexico = crear_error("Comentario anidado no terminado.");
@@ -1189,16 +1196,16 @@ case YY_STATE_EOF(comentario_anidado):
 case 51:
 /* rule 51 can match eol */
 YY_RULE_SETUP
-#line 180 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 187 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { /* ignorar espacios */ }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 182 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 189 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 { return YYEOF; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 184 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 191 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->error_lexico = crear_error("Caracter no reconocido.");
         return ERROR;
@@ -1206,10 +1213,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 188 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 195 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 ECHO;
 	YY_BREAK
-#line 1213 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 1220 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2400,7 +2407,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 188 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 195 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
 int crear_lexer_archivo(Lexer *lexer, char *archivo) {
