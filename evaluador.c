@@ -118,9 +118,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp) {
                         if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
                     free(args.valores);
                     free(exp->llamada_funcion.loc);
+                    free(exp->llamada_funcion.args.loc);
                     return v;
                 }
             }
+            free(exp->llamada_funcion.args.loc);
 
             switch (f.tipo_valor) {
                 case TIPO_FUNCION_INTRINSECA: {

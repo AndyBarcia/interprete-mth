@@ -372,7 +372,8 @@ void borrar_expresion(Expresion *exp) {
             if(exp->def_funcion.loc) free(exp->def_funcion.loc);
             break;
         case EXP_BLOQUE:
-            borrar_lista_expresiones(&exp->bloque);
+            borrar_lista_expresiones(&exp->bloque.lista);
+            if (exp->bloque.loc) free(exp->bloque.loc);
             break;
         case EXP_IMPORT:
             borrar_string(&exp->importe.archivo);
@@ -467,6 +468,10 @@ ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista) {
 void borrar_lista_expresiones(ListaExpresiones *lista) {
     for (int i = 0; i < lista->longitud; ++i)
         borrar_expresion(&((Expresion *) lista->valores)[i]);
+    if (lista->loc) {
+        free(lista->loc);
+        lista->loc = NULL;
+    }
     free(lista->valores);
     lista->capacidad = 0;
     lista->longitud = 0;
