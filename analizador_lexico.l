@@ -91,34 +91,22 @@ as { return AS; }
         return ERROR;
     }
 
-[\-/<>&|] {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return OPERADOR;
-    }
-\+  {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return SUMA;
-    }
-\*  {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return MULT;
-    }
-\=\=   {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return OPERADOR;
-    }
->=  {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return OPERADOR;
-    }
-\<=  {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return OPERADOR;
-    }
-!   {
-        yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
-        return OPERADOR;
-    }
+\+  { return SUMA; }
+-  { return RESTA; }
+\*  { return MULT; }
+\/  { return DIV; }
+%  { return MOD; }
+
+\=\=   { return EQ; }
+!\=   { return NEQ; }
+>   { return GE; }
+>=   { return GEQ; }
+\<   { return LE; }
+\<=   { return LEQ; }
+&&   { return AND; }
+\|\|   { return OR; }
+!   { return NOT; }
+
 = {
         yylval->tipoOperador = '=';
         return OPERADOR_ASIGNACION;

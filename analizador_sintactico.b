@@ -37,9 +37,24 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token <string> STRING "string"
 %token <error_lexico> ERROR
 %token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
+
 %token <identificador> OPERADOR "operador"
-%token <identificador> SUMA "+"
-%token <identificador> MULT "*"
+
+%token SUMA "+"
+%token RESTA "-"
+%token MULT "*"
+%token DIV "/"
+%token MOD "%"
+
+%token EQ "=="
+%token NEQ "!="
+%token GE ">"
+%token GEQ ">="
+%token LE "<"
+%token LEQ "<="
+%token AND "&&"
+%token OR "||"
+%token NOT "!"
 
 %token CONST "const"
 %token EXPORT "export"
@@ -73,8 +88,11 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %precedence OPERADOR_ASIGNACION
 %precedence "=>"
 %left OPERADOR
-%left "+"
-%left "*"
+%left "+" "-"
+%left "*" "/" "%"
+%nonassoc "==" "!=" ">" ">=" "<" "<="
+%left "&&"
+%left "||"
 %precedence "("
 
 %destructor { borrar_identificador(&$$); } IDENTIFICADOR
@@ -97,7 +115,7 @@ statement_list:
       %empty
     | nuevas_lineas
     | statement_list expresion nuevas_lineas { *exp = $2; }
-    | statement_list error nuevas_lineas { yyerrok; }
+    | statement_list error nuevas_lineas { }
     ;
 
 argument_list_many:
@@ -105,7 +123,7 @@ argument_list_many:
     | argument_list_many "," expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
     ;
 argument_list: argument_list_many
-    | %empty { $$ = crear_lista_expresiones(); }
+    | %empty { $$ = crear_lista_expresiones(&@$); }
 
 identifier_list_many:
     IDENTIFICADOR { $$ = crear_lista_identificadores1($1); }
@@ -115,7 +133,7 @@ identifier_list:  identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
 
 expression_block:
-     nuevas_lineas { $$ = crear_lista_expresiones(); }
+     nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
     | expression_block expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
 
@@ -124,20 +142,46 @@ nombre_asignable: IDENTIFICADOR | OPERADOR ;
 expresion:
       ENTERO { $$ = crear_exp_valor(crear_entero($1, &@1)); }
     | STRING { $$ = crear_exp_valor(crear_valor_string($1, &@1)); }
-    | nombre_asignable { $$ = crear_exp_nombre($1); }
-    | OPERADOR expresion { $$ = crear_exp_op_unaria($1, $2, @$); }
-    | expresion "*" expresion { $$ = crear_exp_op_binaria($2, $1, $3, @$); }
-    | expresion "+" expresion { $$ = crear_exp_op_binaria($2, $1, $3, @$); }
-    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, @$); }
+    | IDENTIFICADOR { $$ = crear_exp_nombre($1); }
+    | "!" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NOT, &@$)); }
+    | "*" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MULT, &@$)); }
+    | "/" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_DIV, &@$)); }
+    | "%" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MOD, &@$)); }
+    | "+" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_SUMA, &@$)); }
+    | "-" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_RESTA, &@$)); }
+    | "==" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_EQ, &@$)); }
+    | "!=" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NEQ, &@$)); }
+    | ">" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GE, &@$)); }
+    | ">=" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GEQ, &@$)); }
+    | "<" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LE, &@$)); }
+    | "<=" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LEQ, &@$)); }
+    | "&&" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_AND, &@$)); }
+    | "||" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_OR, &@$)); }
+    | "!" expresion { $$ = crear_exp_op_unaria(INTRINSECA_NOT, &@2, $2, &@$); }
+    | "-" expresion { $$ = crear_exp_op_unaria(INTRINSECA_NEGAR, &@2, $2, &@$); }
+    | expresion "*" expresion { $$ = crear_exp_op_binaria(INTRINSECA_MULT, &@2, $1, $3, &@$); }
+    | expresion "/" expresion { $$ = crear_exp_op_binaria(INTRINSECA_DIV, &@2, $1, $3, &@$); }
+    | expresion "%" expresion { $$ = crear_exp_op_binaria(INTRINSECA_MOD, &@2, $1, $3, &@$); }
+    | expresion "+" expresion { $$ = crear_exp_op_binaria(INTRINSECA_SUMA, &@2, $1, $3, &@$); }
+    | expresion "-" expresion { $$ = crear_exp_op_binaria(INTRINSECA_RESTA, &@2, $1, $3, &@$); }
+    | expresion "==" expresion { $$ = crear_exp_op_binaria(INTRINSECA_EQ, &@2, $1, $3, &@$); }
+    | expresion "!=" expresion { $$ = crear_exp_op_binaria(INTRINSECA_NEQ, &@2, $1, $3, &@$); }
+    | expresion ">" expresion { $$ = crear_exp_op_binaria(INTRINSECA_GE, &@2, $1, $3, &@$); }
+    | expresion ">=" expresion { $$ = crear_exp_op_binaria(INTRINSECA_GEQ, &@2, $1, $3, &@$); }
+    | expresion "<" expresion { $$ = crear_exp_op_binaria(INTRINSECA_LE, &@2, $1, $3, &@$); }
+    | expresion "<=" expresion { $$ = crear_exp_op_binaria(INTRINSECA_LEQ, &@2, $1, $3, &@$); }
+    | expresion "&&" expresion { $$ = crear_exp_op_binaria(INTRINSECA_AND, &@2, $1, $3, &@$); }
+    | expresion "||" expresion { $$ = crear_exp_op_binaria(INTRINSECA_OR, &@2, $1, $3, &@$); }
+    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, &@$); }
     | "(" expresion ")" { $$ = $2; }
-    | expresion "." IDENTIFICADOR { $$ = crear_exp_acceso($1, $3, @$); }
-    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, @$); }
-    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, @$); }
-    | "export" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, @$); }
-    | "{" expression_block "}" { $$ = crear_exp_bloque($2, @$); }
-    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, @$); }
-    | "import" STRING {$$ = crear_exp_importe($2, 0, @2); }
-    | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, @3); }
+    | expresion "." IDENTIFICADOR { $$ = crear_exp_acceso($1, $3, &@$); }
+    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
+    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
+    | "export" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
+    | "{" expression_block "}" { $$ = crear_exp_bloque($2, &@$); }
+    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
+    | "import" STRING {$$ = crear_exp_importe($2, 0, &@2); }
+    | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, &@3); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_valor_error($1, &@1)); }
     ;

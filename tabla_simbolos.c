@@ -47,7 +47,7 @@ Valor recuperar_valor_tabla(TablaSimbolos t, Identificador  identificador) {
     return crear_valor_error(error, &identificador.loc);
 }
 
-int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor valor, TipoAsignacion tipo) {
+int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsignacion tipo) {
     // Buscar sólo en el último nivel si esta variable ya estaba definida como inmutable.
     EntradaTablaHash entrada;
 
@@ -57,15 +57,15 @@ int asignar_valor_tabla(TablaSimbolos *t, Identificador identificador, Valor val
     int nivel = t->nivel;
     if (nivel > 0 && tipo == ASIGNACION_EXPORT) --nivel;
 
-    if (buscar_hash(t->tablas[nivel], string_a_puntero(&identificador.nombre), &entrada) && entrada.inmutable) {
+    if (buscar_hash(t->tablas[nivel], string_a_puntero(&nombre), &entrada) && entrada.inmutable) {
         // Se estaba intentando reasignar una variable inmutable
-        borrar_string(&identificador.nombre);
+        borrar_string(&nombre);
         borrar_valor(&valor);
         return 0;
     }
 
     int inmutable = tipo != ASIGNACION_NORMAL;
-    insertar_hash(&t->tablas[nivel], identificador.nombre, valor, inmutable);
+    insertar_hash(&t->tablas[nivel], nombre, valor, inmutable);
     return 1;
 }
 
@@ -75,9 +75,8 @@ int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {
         if (otro.buffer[i].distancia_posicion_ideal != -1) {
             EntradaTablaHash entrada = otro.buffer[i];
             String clave = clonar_string(entrada.clave);
-            Identificador id = (Identificador) { .nombre = clave };
             Valor v = clonar_valor(entrada.valor);
-            if (!asignar_valor_tabla(t, id, v, entrada.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL))
+            if (!asignar_valor_tabla(t, clave, v, entrada.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL))
                 return 0;
         }
     }

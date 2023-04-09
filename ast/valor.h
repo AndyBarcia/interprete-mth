@@ -40,10 +40,26 @@ typedef enum {
     TIPO_BIBLIOTECA_FORANEA
 } TipoValor;
 
-typedef void (*FuncionIntrinseca)();
-
 /// Un valor asignable en una expresión de asignación.
 typedef Identificador NombreAsignable;
+
+typedef enum {
+    INTRINSECA_SUMA,
+    INTRINSECA_RESTA,
+    INTRINSECA_MULT,
+    INTRINSECA_DIV,
+    INTRINSECA_MOD,
+    INTRINSECA_EQ,
+    INTRINSECA_NEQ,
+    INTRINSECA_GE,
+    INTRINSECA_GEQ,
+    INTRINSECA_LE,
+    INTRINSECA_LEQ,
+    INTRINSECA_AND,
+    INTRINSECA_OR,
+    INTRINSECA_NOT,
+    INTRINSECA_NEGAR,
+} FuncionIntrinseca;
 
 /// Una función definida por el usuario, con:
 ///     * Una serie de nombres como nombres_args de entrada.
@@ -79,8 +95,13 @@ typedef struct {
 
 /// Una lista de valores del lenguaje de programación.
 typedef struct {
+    int capacidad;
+    /// La cantidad de valores de la lista.
     int longitud;
-    struct Valor* valores;
+    /// La lista de valores.
+    Valor* valores;
+    /// La localización en el código fuente, si existe.
+    Localizacion *loc;
 } ListaValores;
 
 /*
@@ -92,7 +113,7 @@ Valor crear_nulo();
 Valor crear_entero(Entero entero, Localizacion *loc);
 Valor crear_bool(Bool bool, Localizacion *loc);
 Valor crear_valor_string(String string, Localizacion *loc);
-Valor crear_funcion_nativa(FuncionIntrinseca funcion, Localizacion *loc);
+Valor crear_funcion_intrinseca(FuncionIntrinseca funcion, Localizacion *loc);
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc);
 Valor crear_funcion_foranea(FuncionForanea foranea);
 Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc);
@@ -106,8 +127,10 @@ Valor clonar_valor(Valor v);
 void borrar_valor(Valor *valor);
 
 /// Devuelve 1 si dos valores son iguales, y 0 en caso contrario.
-int comparar_valor(Valor a, Valor b);
+int comparar_valor(Valor a, Valor b, int *resultado);
 
+ListaValores crear_lista_valores();
+void push_lista_valores(ListaValores *lista, Valor v);
 void borrar_lista_valores(ListaValores *lista);
 
 /*
@@ -116,5 +139,7 @@ void borrar_lista_valores(ListaValores *lista);
 
 void _imprimir_valor(Valor valor);
 void imprimir_valor(Valor valor);
+
+char* tipo_valor_a_str(TipoValor tipo);
 
 #endif //PRACTICA3_VALOR_H

@@ -13,7 +13,7 @@ typedef struct {
     int capacidad;
     int longitud;
     struct Expresion* valores;
-    Localizacion loc;
+    Localizacion* loc;
 } ListaExpresiones;
 
 /// Llamada a una expresión como si fuese
@@ -22,7 +22,7 @@ typedef struct {
 typedef struct {
     struct Expresion *funcion;
     ListaExpresiones args;
-    Localizacion loc;
+    Localizacion* loc;
 } LlamadaFuncion;
 
 /// Asignación del valor de una expresión
@@ -40,7 +40,7 @@ typedef struct {
     TipoAsignacion tipo;
     /// La localización de la expresión
     /// en el código fuente.
-    Localizacion loc;
+    Localizacion* loc;
 } Asignacion;
 
 /// La definición de una función creada por
@@ -48,7 +48,7 @@ typedef struct {
 typedef struct {
     ListaIdentificadores nombres_args;
     struct Expresion *cuerpo;
-    Localizacion loc;
+    Localizacion* loc;
 } DefinicionFuncion;
 
 /// La importación de un archivo, ya sea
@@ -58,7 +58,7 @@ typedef struct {
     String archivo;
     int foraneo;
     Identificador *as;
-    Localizacion loc;
+    Localizacion* loc;
 } Import;
 
 /// Una expresión de acceso al miembro
@@ -67,8 +67,13 @@ typedef struct {
 typedef struct {
     struct Expresion *valor;
     Identificador miembro;
-    Localizacion loc;
+    Localizacion* loc;
 } AccesoMiembro;
+
+typedef struct {
+    ListaExpresiones lista;
+    Localizacion *loc;
+} BloqueExpresiones;
 
 /// El tipo de una expresión.
 typedef enum {
@@ -123,7 +128,7 @@ typedef struct {
         LlamadaFuncion llamada_funcion;
         Asignacion asignacion;
         DefinicionFuncion def_funcion;
-        ListaExpresiones bloque;
+        BloqueExpresiones bloque;
         Import importe;
     };
 } Expresion;
@@ -135,26 +140,29 @@ typedef struct {
 Expresion crear_exp_nula();
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_nombre(NombreAsignable nombre);
-Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion loc);
-Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion loc);
-Expresion crear_exp_op_unaria(Identificador operador, Expresion x, Localizacion loc);
-Expresion crear_exp_op_binaria(Identificador operador, Expresion a, Expresion b, Localizacion loc);
-Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion loc);
-Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion loc);
-Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion loc);
-Expresion crear_exp_importe(String archivo, int foraneo, Localizacion loc);
-Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion loc);
+Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion *loc);
+Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion *loc);
+Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc);
+Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc);
+Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc);
+Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc);
+Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc);
+
+Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc);
+Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion a, Expresion b, Localizacion *loc);
 
 /// Crea un clon profundo de una expresión.
 Expresion clonar_expresion(Expresion exp);
 /// Libera la memoria de una expresión, ignorando su valor.
 void borrar_expresion(Expresion *exp);
 
+Localizacion* obtener_loc_exp(Expresion *exp);
+
 /*
  * Funciones ayuda de creación de expresiones
  */
 
-ListaExpresiones crear_lista_expresiones();
+ListaExpresiones crear_lista_expresiones(Localizacion *loc);
 ListaExpresiones crear_lista_expresiones1(Expresion expresion);
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
 ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista);

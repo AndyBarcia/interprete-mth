@@ -2,250 +2,341 @@
 #include "ast/ast.h"
 #include "evaluador.h"
 
-void sumar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud == 0) return;
+void inicializar_libreria_estandar(TablaSimbolos *t) {
+    asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("falso"), crear_bool(0, NULL), ASIGNACION_INMUTABLE);
+}
 
-    Valor result = clonar_valor(((Valor*) args.valores)[0]);
-    for (int i = 1; i < args.longitud; ++i) {
-        Valor v = ((Valor *) args.valores)[i];
-        if (result.tipo_valor == v.tipo_valor) {
-            switch (result.tipo_valor) {
-                case TIPO_ENTERO:
-                    result.entero += v.entero;
-                    break;
-                case TIPO_STRING: {
-                    String a = result.string;
-                    String b = v.string;
+#define comprobacion_n_args(n_args, op) \
+    if (args.longitud != n_args) {      \
+        Valor v = crear_valor_error(crear_error_numero_argumentos(n_args, args.longitud), args.loc); \
+        borrar_lista_valores(&args);                                \
+        return v; \
+    }
 
-                    result.string = crear_string(string_a_puntero(&a));
-                    extender_string(&result.string, string_a_puntero(&b));
-                    borrar_string(&a);
-                    borrar_string(&b);
+#define comprobacion_tipos(a,b, op) \
+    if (a.tipo_valor != b.tipo_valor) { \
+        Valor v = crear_valor_error(crear_error_tipos_incompatibles(op, a.tipo_valor, b.tipo_valor), args.loc); \
+        borrar_lista_valores(&args); \
+        return v; \
+    }
+
+Valor sumar(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_ENTERO: {
+            result = crear_entero(a.entero + b.entero, NULL);
+            break;
+        }
+        case TIPO_STRING: {
+            String x = crear_string(string_a_puntero(&a.string));
+            extender_string(&x, string_a_puntero(&b.string));
+            result = crear_valor_string(x, NULL);
+            break;
+        }
+        default: {
+            Error error = crear_error_op_incompatible("sumar", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
+        }
+    }
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
+}
+
+Valor restar(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_ENTERO: {
+            result = crear_entero(a.entero - b.entero, NULL);
+            break;
+        }
+        default: {
+            Error error = crear_error_op_incompatible("restar", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
+        }
+    }
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
+}
+
+Valor mult(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_ENTERO: {
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO: {
+                    result = crear_entero(a.entero * b.entero, NULL);
                     break;
                 }
-                default:
-                    borrar_valor(&result);
-                    *retorno = crear_valor_error(crear_error("No se pueden sumar valores de este tipo."), result.loc);
-                    return;
+                case TIPO_STRING: {
+                    String x = crear_string(string_a_puntero(&b.string));
+                    for (int i = 1; i < a.entero; ++i)
+                        extender_string(&x, string_a_puntero(&b.string));
+                    result = crear_valor_string(x, NULL);
+                    break;
+                }
+                default: {
+                    result = crear_valor_error(crear_error_tipos_incompatibles("multiplicar", a.tipo_valor, b.tipo_valor), NULL);
+                    break;
+                };
             }
-        } else {
-            borrar_valor(&result);
-            *retorno = crear_valor_error(crear_error("Sumando valores de tipos distintos."), v.loc);
-            return;
+            break;
+        }
+        case TIPO_STRING: {
+            return mult(b, a);
+        }
+        default: {
+            Error error = crear_error_op_incompatible("sumar", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
         }
     }
-    *retorno = result;
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
 }
 
-void restar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud == 1) {
-        Valor v = ((Valor *) args.valores)[0];
-        if (v.tipo_valor != TIPO_ENTERO) {
-            *retorno = crear_valor_error(crear_error("No es de tipo entero."), v.loc);
-            return;
+Valor dividir(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_ENTERO: {
+            if (b.entero == 0)
+                result = crear_valor_error(crear_error_dividir_entre_cero(), NULL);
+            else
+                result = crear_entero( a.entero / b.entero, NULL);
+            break;
         }
-        *retorno = crear_entero(-((Valor *) args.valores)[0].entero, v.loc);
-    } else if (args.longitud == 2) {
-        if (((Valor *) args.valores)[0].tipo_valor != TIPO_ENTERO ||
-            ((Valor *) args.valores)[1].tipo_valor != TIPO_ENTERO) {
-            *retorno = crear_valor_error(crear_error("No es de tipo entero."), NULL);
-            return;
-        }
-        *retorno = crear_entero(((Valor *) args.valores)[0].entero - ((Valor *) args.valores)[1].entero, NULL);
-    } else {
-        *retorno = crear_valor_error(crear_error("Se pasaron nombres_args de más."), NULL);
-    }
-}
-
-void multiplicar(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud < 2) {
-        *retorno = crear_valor_error(crear_error("Faltan nombres_args."), NULL);
-        return;
-    }
-
-    int a = 1;
-    for (int i = 0; i < args.longitud; ++i) {
-        if (((Valor *) args.valores)[i].tipo_valor != TIPO_ENTERO) {
-            *retorno = crear_valor_error(crear_error("No es de tipo entero."), NULL);
-            return;
-        }
-        a *= ((Valor *) args.valores)[i].entero;
-    }
-    *retorno = crear_entero(a, NULL);
-}
-
-void igualdad(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud < 2) {
-        *retorno = crear_valor_error(crear_error("Faltan nombres_args."), NULL);
-        return;
-    }
-
-    Valor v = ((Valor *) args.valores)[0];
-    for (int i = 1; i < args.longitud; ++i) {
-        if (!comparar_valor(v, ((Valor *) args.valores)[i])) {
-            *retorno = crear_bool(0, NULL);
-            return;
+        default: {
+            Error error = crear_error_op_incompatible("dividir", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
         }
     }
-    *retorno = crear_bool(1, NULL);
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
 }
 
-void print(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    for (int i = 0; i < args.longitud; ++i) {
-        imprimir_valor(((Valor *) args.valores)[i]);
-    }
-}
-
-void _imprimir_todo(EntradaTablaHash entrada) {
-    printf("\"%s\" := ", string_a_puntero(&entrada.clave));
-    imprimir_valor(entrada.valor);
-}
-
-void _imprimir_solo_usuario(EntradaTablaHash entrada);
-
-void print_ws(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud > 1) {
-        *retorno = crear_valor_error(crear_error("Demasiados nombres_args."), NULL);
-        return;
-    }
-    if (args.longitud == 1) {
-        Valor arg = ((Valor *) args.valores)[0];
-        if (arg.tipo_valor != TIPO_BOOL) {
-            *retorno = crear_valor_error(crear_error("Se esperaba un booleano."), NULL);
-            return;
+Valor modulo(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_ENTERO: {
+            result = crear_entero(a.entero % b.entero, NULL);
+            break;
         }
-        if (arg.bool) {
-            for (int i = 0; i <= tabla->nivel; ++i)
-                iterar_tabla_hash(tabla->tablas[i], _imprimir_todo);
-            return;
+        default: {
+            Error error = crear_error_op_incompatible("módulo", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
         }
     }
-    for (int i = 0; i <= tabla->nivel; ++i) {
-        iterar_tabla_hash(tabla->tablas[i], _imprimir_solo_usuario);
-    }
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
 }
 
-void eval(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud > 1) {
-        *retorno = crear_valor_error(crear_error("Demasiados nombres_args."), NULL);
-        return;
-    } else if (args.longitud == 0) {
-        *retorno = crear_valor_error(crear_error("Se esperaba un string a evaluar."), NULL);
-        return;
-    }
-    Valor arg = ((Valor *) args.valores)[0];
-    if (arg.tipo_valor != TIPO_STRING) {
-        *retorno = crear_valor_error(crear_error("Se esperaba un string a evaluar."), NULL);
-        return;
-    }
-
-    printf("Temporalmente no implementado"); // TODO import
-    exit(0);
-    //*retorno = evaluar_str(tabla, string_a_puntero(&arg.string));
-}
-
-typedef struct {
-    char *nombres[2];
-    Valor valor;
-    char *texto_ayuda;
-} ValorLibreriaEstandar;
-
-void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno);
-
-ValorLibreriaEstandar elementos[] = {
-        {
-                {"sumar",       "+"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = sumar},
-                "Suma un conjunto de enteros."
-        },
-        {
-                {"restar",      "-"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = restar},
-                "Resta un número a otro, o convierte un número positivo a negativo."
-        },
-        {
-                {"multiplicar", "*"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = multiplicar},
-                "Multiplica un conjunto de enteros."
-        },
-        {
-                {"igualdad",    "=="},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = igualdad},
-                "Comprueba si un conjunto de valores son iguales."
-        },
-        {
-                {"print",       "imprimir"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = print},
-                "Imprime un conjunto de valores."
-        },
-        {
-                {"print_ws",    "imprimir_ws"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = print_ws},
-                "Imprime todas las variables del conjunto de trabajo (workspace).\nSi recibe \"verdadero\" como primer "
-                "argumento, imprime todas las variables, incluidas las de la librería estándar."
-        },
-        {
-                {"eval",    NULL},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = eval},
-                "Evalúa el string que se le pasa como argumento, como si fuera parte del código fuente.\n\nNótese que "
-                "esto significa que evaluar strings como \"x=5\" crearán nuevas variables."
-        },
-        {
-                {"help",        "ayuda"},
-                {TIPO_FUNCION_INTRINSECA, .funcion_intrinseca = ayuda},
-                "Imprime la documentación de una función de la librería estándar."
-        },
-        {
-                {"verdadero",   "true"},
-                {TIPO_BOOL, .bool = 1},
-                "Booleano verdadero."
-        },
-        {
-                {"falso",       "false"},
-                {TIPO_BOOL, .bool = 0},
-                "Booleano falso."
+Valor and(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_BOOL: {
+            result = crear_bool(a.bool && b.bool, NULL);
+            break;
         }
-};
-
-void _imprimir_solo_usuario(EntradaTablaHash entrada) {
-    char *nombre = string_a_puntero(&entrada.clave);
-    for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
-        if (strcmp(nombre, elementos[i].nombres[0]) == 0)
-            return;
-        if (elementos[i].nombres[1] && strcmp(nombre, elementos[i].nombres[1]) == 0)
-            return;
-    }
-    printf("\"%s\" := ", string_a_puntero(&entrada.clave));
-    imprimir_valor(entrada.valor);
-}
-
-void ayuda(TablaSimbolos *tabla, ListaValores args, Valor *retorno) {
-    if (args.longitud > 1) {
-        *retorno = crear_valor_error(crear_error("Sólo se acepta un argumento de entrada."), NULL);
-        return;
-    }
-    if (args.longitud == 0) {
-        printf("Imprime ayuda sobre la función que se pasa como argumento. Ejemplo: `ayuda(sumar)`.\n");
-        return;
-    }
-    Valor arg = ((Valor *) args.valores)[0];
-    for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
-        if (comparar_valor(arg, elementos[i].valor)) {
-            printf("%s\n", elementos[i].texto_ayuda);
-            return;
+        default: {
+            Error error = crear_error_op_incompatible("\"&&\"", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
         }
     }
-    printf("No hay ayuda para este elemento.\n");
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
 }
 
-void inicializar_libreria_estandar(TablaSimbolos *t) {
-    for (int i = 0; i < sizeof(elementos) / sizeof(ValorLibreriaEstandar); ++i) {
-        ValorLibreriaEstandar v = elementos[i];
-        Identificador id = (Identificador) { .nombre = crear_string(v.nombres[0]) };
-        asignar_valor_tabla(t, id, v.valor, ASIGNACION_INMUTABLE);
-        if (v.nombres[1]) {
-            Identificador id_alternativo = (Identificador) { .nombre = crear_string(v.nombres[1]) };
-            asignar_valor_tabla(t, id_alternativo, v.valor, ASIGNACION_INMUTABLE);
+Valor or(Valor a, Valor b) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_BOOL: {
+            result = crear_bool(a.bool || b.bool, NULL);
+            break;
+        }
+        default: {
+            Error error = crear_error_op_incompatible("\"||\"", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
         }
     }
+    borrar_valor(&a);
+    borrar_valor(&b);
+    return result;
+}
+
+Valor negacion(Valor a) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_BOOL: {
+            result = crear_bool(!a.bool, NULL);
+            break;
+        }
+        default: {
+            Error error = crear_error_op_incompatible("negar", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
+        }
+    }
+    borrar_valor(&a);
+    return result;
+}
+
+Valor negar(Valor a) {
+    Valor result;
+    switch (a.tipo_valor) {
+        case TIPO_ENTERO: {
+            result = crear_entero(-a.entero, NULL);
+            break;
+            break;
+        }
+        default: {
+            Error error = crear_error_op_incompatible("negar", a.tipo_valor);
+            result = crear_valor_error(error, NULL);
+            break;
+        }
+    }
+    borrar_valor(&a);
+    return result;
+}
+
+Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t) {
+    Valor *vargs = (Valor*) args.valores;
+    Valor result = crear_indefinido();
+
+    switch (f) {
+        case INTRINSECA_SUMA:
+            comprobacion_n_args(2, "sumar");
+            comprobacion_tipos(vargs[0], vargs[1], "sumar");
+
+            result = sumar(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_RESTA:
+            comprobacion_n_args(2, "restar");
+            comprobacion_tipos(vargs[0], vargs[1], "restar");
+
+            result = restar(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_MULT:
+            comprobacion_n_args(2, "multiplicar");
+
+            result = mult(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_DIV:
+            comprobacion_n_args(2, "dividir");
+            comprobacion_tipos(vargs[0], vargs[1], "dividir");
+
+            result = dividir(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_MOD:
+            comprobacion_n_args(2, "módulo");
+            comprobacion_tipos(vargs[0], vargs[1], "módulo");
+
+            result = modulo(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_EQ: {
+            comprobacion_n_args(2, "igualdad");
+            if (vargs[0].tipo_valor != vargs[1].tipo_valor) {
+                result = crear_bool(0, NULL);
+                break;
+            }
+
+            int resultado;
+            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
+                result = crear_bool(resultado == 0, NULL);
+            } else {
+                result = crear_valor_error(crear_error_tipos_incompatibles("igualdad", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+            }
+            break;
+        }
+        case INTRINSECA_NEQ: {
+            comprobacion_n_args(2, "desigualdad");
+            if (vargs[0].tipo_valor != vargs[1].tipo_valor) {
+                result = crear_bool(1, NULL);
+                break;
+            }
+
+            int resultado;
+            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
+                result = crear_bool(resultado != 0, NULL);
+            } else {
+                result = crear_valor_error(crear_error_tipos_incompatibles("desigualdad", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+            }
+            break;
+        }
+        case INTRINSECA_GE: {
+            comprobacion_n_args(2, "mayor");
+            int resultado;
+            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
+                result = crear_bool(resultado > 0, NULL);
+            } else {
+                result = crear_valor_error(crear_error_tipos_incompatibles("mayor", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+            }
+            break;
+        }
+        case INTRINSECA_GEQ: {
+            comprobacion_n_args(2, "mayor o igual");
+            int resultado;
+            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
+                result = crear_bool(resultado >= 0, NULL);
+            } else {
+                result = crear_valor_error(crear_error_tipos_incompatibles("mayor o igual", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+            }
+            break;
+        }
+        case INTRINSECA_LE: {
+            comprobacion_n_args(2, "menor");
+            int resultado;
+            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
+                result = crear_bool(resultado < 0, NULL);
+            } else {
+                result = crear_valor_error(crear_error_tipos_incompatibles("menor", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+            }
+            break;
+        }
+        case INTRINSECA_LEQ: {
+            comprobacion_n_args(2, "menor o igual");
+            int resultado;
+            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
+                result = crear_bool(resultado <= 0, NULL);
+            } else {
+                result = crear_valor_error(crear_error_tipos_incompatibles("menor o igual", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+            }
+            break;
+        }
+        case INTRINSECA_AND:
+            comprobacion_n_args(2, "\"&&\"");
+            comprobacion_tipos(vargs[0], vargs[1], "\"&&\"");
+
+            result = and(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_OR:
+            comprobacion_n_args(2, "\"||\"");
+            comprobacion_tipos(vargs[0], vargs[1], "\"||\"");
+
+            result = or(vargs[0], vargs[1]);
+            break;
+        case INTRINSECA_NOT:
+            comprobacion_n_args(1, "negar");
+            result = negacion(vargs[0]);
+            break;
+        case INTRINSECA_NEGAR:
+            comprobacion_n_args(1, "negar");
+            result = negar(vargs[0]);
+            break;
+    }
+
+    free(args.valores);
+    result.loc = args.loc;
+    return result;
 }

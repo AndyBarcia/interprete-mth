@@ -67,24 +67,36 @@ extern int yydebug;
     OPERADOR_ASIGNACION = 262,     /* "operador de asignación"  */
     OPERADOR = 263,                /* "operador"  */
     SUMA = 264,                    /* "+"  */
-    MULT = 265,                    /* "*"  */
-    CONST = 266,                   /* "const"  */
-    EXPORT = 267,                  /* "export"  */
-    IMPORT = 268,                  /* "import"  */
-    FOREIGN = 269,                 /* "foreign"  */
-    AS = 270,                      /* "as"  */
-    PARENTESIS_IZQ = 271,          /* "("  */
-    PARENTESIS_DER = 272,          /* ")"  */
-    CORCHETE_IZQ = 273,            /* "["  */
-    CORCHETE_DER = 274,            /* "]"  */
-    LLAVE_IZQ = 275,               /* "{"  */
-    LLAVE_DER = 276,               /* "}"  */
-    PUNTO = 277,                   /* "."  */
-    FLECHA = 278,                  /* "=>"  */
-    SLASH_INVERTIDA = 279,         /* "\\"  */
-    NUEVA_LINEA = 280,             /* "\n"  */
-    PUNTO_Y_COMA = 281,            /* ";"  */
-    COMA = 282                     /* ","  */
+    RESTA = 265,                   /* "-"  */
+    MULT = 266,                    /* "*"  */
+    DIV = 267,                     /* "/"  */
+    MOD = 268,                     /* "%"  */
+    EQ = 269,                      /* "=="  */
+    NEQ = 270,                     /* "!="  */
+    GE = 271,                      /* ">"  */
+    GEQ = 272,                     /* ">="  */
+    LE = 273,                      /* "<"  */
+    LEQ = 274,                     /* "<="  */
+    AND = 275,                     /* "&&"  */
+    OR = 276,                      /* "||"  */
+    NOT = 277,                     /* "!"  */
+    CONST = 278,                   /* "const"  */
+    EXPORT = 279,                  /* "export"  */
+    IMPORT = 280,                  /* "import"  */
+    FOREIGN = 281,                 /* "foreign"  */
+    AS = 282,                      /* "as"  */
+    PARENTESIS_IZQ = 283,          /* "("  */
+    PARENTESIS_DER = 284,          /* ")"  */
+    CORCHETE_IZQ = 285,            /* "["  */
+    CORCHETE_DER = 286,            /* "]"  */
+    LLAVE_IZQ = 287,               /* "{"  */
+    LLAVE_DER = 288,               /* "}"  */
+    PUNTO = 289,                   /* "."  */
+    FLECHA = 290,                  /* "=>"  */
+    SLASH_INVERTIDA = 291,         /* "\\"  */
+    NUEVA_LINEA = 292,             /* "\n"  */
+    PUNTO_Y_COMA = 293,            /* ";"  */
+    COMA = 294                     /* ","  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -105,7 +117,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 109 "../analizador_sintactico.h"
+#line 121 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -40,7 +40,7 @@ Valor crear_valor_string(String string, Localizacion *loc) {
     return (Valor) {TIPO_STRING, referencias, loc, .string = string};
 }
 
-Valor crear_funcion_nativa(FuncionIntrinseca funcion, Localizacion *loc) {
+Valor crear_funcion_intrinseca(FuncionIntrinseca funcion, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
         *loc_copy = *loc;
@@ -169,27 +169,50 @@ void borrar_valor(Valor *valor) {
     valor->tipo_valor = TIPO_INDEFINIDO;
 }
 
-int comparar_valor(Valor a, Valor b) {
+int comparar_valor(Valor a, Valor b, int *resultado) {
     if (a.tipo_valor != b.tipo_valor) return 0;
     switch (a.tipo_valor) {
-        case TIPO_INDEFINIDO:
-            return 0;
         case TIPO_NULO:
-            return 1;
-        case TIPO_ERROR:
+            *resultado = 0;
             return 1;
         case TIPO_FUNCION_INTRINSECA:
-            return a.funcion_intrinseca == b.funcion_intrinseca;
-        case TIPO_FUNCION:
-            return 0;
+            *resultado = a.funcion_intrinseca != b.funcion_intrinseca;
+            return 1;
         case TIPO_ENTERO:
-            return a.entero == b.entero;
+            *resultado =  a.entero - b.entero;
+            return 1;
         case TIPO_BOOL:
-            return a.bool == b.bool;
+            *resultado =  a.bool - b.bool;
+            return 1;
         case TIPO_STRING:
-            return strcmp(string_a_puntero(&a.string), string_a_puntero(&b.string)) == 0;
+            *resultado = strcmp(string_a_puntero(&a.string), string_a_puntero(&b.string));
+            return 1;
         default:
             return 0;
+    }
+}
+
+ListaValores crear_lista_valores() {
+    return (ListaValores) {
+        .capacidad = 0,
+        .longitud = 0,
+        .valores = NULL,
+        .loc = NULL
+    };
+}
+
+void push_lista_valores(ListaValores *lista, Valor v) {
+    if (lista->longitud >= lista->capacidad) {
+        lista->valores = realloc(lista->valores, (lista->capacidad + 1) * sizeof(Valor));
+        ++lista->capacidad;
+    }
+    lista->valores[lista->longitud++] = v;
+    if (lista->loc == NULL && v.loc) {
+        lista->loc = malloc(sizeof(Localizacion));
+        *lista->loc = *v.loc;
+    } else if (v.loc) {
+        lista->loc->last_line = v.loc->last_line;
+        lista->loc->last_column = v.loc->last_column;
     }
 }
 
@@ -197,6 +220,10 @@ void borrar_lista_valores(ListaValores *lista) {
     for (int i = 0; i < lista->longitud; ++i)
         borrar_valor(&((Valor *) lista->valores)[i]);
     free(lista->valores);
+    if (lista->loc) {
+        free(lista->loc);
+        lista->loc = NULL;
+    }
 }
 
 void _imprimir_valor(Valor valor) {
@@ -209,7 +236,7 @@ void _imprimir_valor(Valor valor) {
             printf("%s", string_a_puntero(&valor.error.mensaje));
             break;
         case TIPO_FUNCION_INTRINSECA:
-            printf("[función nativa]");
+            printf("[función intrínseca]");
             break;
         case TIPO_FUNCION:
             printf("[función]");
@@ -235,4 +262,19 @@ void _imprimir_valor(Valor valor) {
 void imprimir_valor(Valor valor) {
     _imprimir_valor(valor);
     if (valor.tipo_valor != TIPO_INDEFINIDO) printf("\n");
+}
+
+char* tipo_valor_a_str(TipoValor tipo) {
+    switch (tipo) {
+        case TIPO_NULO: return "nulo";
+        case TIPO_INDEFINIDO: return "indefinido";
+        case TIPO_ERROR: return "error";
+        case TIPO_ENTERO: return "entero";
+        case TIPO_BOOL: return "booleano";
+        case TIPO_STRING: return "string";
+        case TIPO_FUNCION_INTRINSECA: return "función intrínseca";
+        case TIPO_FUNCION_FORANEA: return "función foránea";
+        case TIPO_FUNCION: return "función";
+        case TIPO_BIBLIOTECA_FORANEA: return "biblioteca";
+    }
 }

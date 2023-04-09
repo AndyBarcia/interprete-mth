@@ -1,4 +1,5 @@
 #include "error.h"
+#include "ast/valor.h"
 #include <stdarg.h>
 
 Error crear_error(const char *formato, ...) {
@@ -17,6 +18,42 @@ Error crear_error(const char *formato, ...) {
     va_end(args2);
 
     return (Error) { mensaje };
+}
+
+Error crear_error_numero_argumentos(int esperado, int actual) {
+    if (esperado == 0) {
+        if (actual == 1) {
+            return crear_error("No se esperaban argumentos, pero se recibió uno.");
+        } else {
+            return crear_error("No se esperaban argumentos, pero se recibieron %d.", actual);
+        }
+    } else if (esperado == 1) {
+        if (actual == 0) {
+            return crear_error("Se esperaba un argumento, pero no se recibió ninguno.");
+        } else {
+            return crear_error("Se esperaba un argumento, pero se recibieron %d.", actual);
+        }
+    } else {
+        if (actual == 0) {
+            return crear_error("Se esperaban %d argumentos, pero no se recibió ninguno.", esperado);
+        } else if (actual == 1) {
+            return crear_error("Se esperaba %d argumentos, pero se recibió sólo uno.", esperado);
+        } else {
+            return crear_error("Se esperaban %d argumentos, pero se recibieron %d.", esperado, actual);
+        }
+    }
+}
+
+Error crear_error_tipos_incompatibles(char* op, int tipoA, int tipoB) {
+    return crear_error("No se pueden %s valores de tipo %s y %s.", op, tipo_valor_a_str(tipoA), tipo_valor_a_str(tipoB));
+}
+
+Error crear_error_op_incompatible(char* op, int tipo) {
+    return crear_error("No se pueden %s valores de tipo %s.", op, tipo_valor_a_str(tipo));
+}
+
+Error crear_error_dividir_entre_cero() {
+    return crear_error("No se puede dividir entre cero.");
 }
 
 void borrar_error(Error *error) {
