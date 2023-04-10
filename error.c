@@ -37,7 +37,7 @@ Error crear_error_numero_argumentos(int esperado, int actual) {
         if (actual == 0) {
             return crear_error("Se esperaban %d argumentos, pero no se recibió ninguno.", esperado);
         } else if (actual == 1) {
-            return crear_error("Se esperaba %d argumentos, pero se recibió sólo uno.", esperado);
+            return crear_error("Se esperaban %d argumentos, pero se recibió sólo uno.", esperado);
         } else {
             return crear_error("Se esperaban %d argumentos, pero se recibieron %d.", esperado, actual);
         }

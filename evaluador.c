@@ -64,10 +64,15 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             return v;
         }
         case EXP_ACCESO_MIEMBRO: {
+            // Si es una expresión de acceso, estilo "objeto.miembro", tenemos que evaluar
+            // primero el objeto, y después tratar de acceder a su miembro.
+
             Valor v = evaluar_expresion(tabla, (Expresion *) exp->acceso.valor, contexto);
             free(exp->acceso.valor);
             if (v.tipo_valor == TIPO_ERROR) return v;
 
+            // Por ahora los únicos objetos de este tipo que se pueden acceder son
+            // bibliotecas dinámicas de C.
             Valor result = crear_indefinido();
             switch (v.tipo_valor) {
                 case TIPO_BIBLIOTECA_FORANEA: {
@@ -99,8 +104,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
         }
         case EXP_OP_LLAMADA: {
             // Si es una llamada, evaluar la expresión que queremos llamar como función,
-            // y comprobar que efectivamente es una función, y distinguir entre si es
-            // una función nativa o si es una función definida por el usuario.
+            // y comprobar que efectivamente es una función.
             Valor f = evaluar_expresion(tabla, (Expresion*)exp->llamada_funcion.funcion, contexto);
             free(exp->llamada_funcion.funcion);
             if (f.tipo_valor == TIPO_ERROR) {
@@ -125,8 +129,13 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             }
             free(exp->llamada_funcion.args.loc);
 
+            // Tenemos que actuar de forma distinta en base a si es una función
+            // intrínseca, una función foranea, o una función definida por el usuario.
             switch (f.tipo_valor) {
                 case TIPO_FUNCION_INTRINSECA: {
+                    // Una función intrínseca se ejecuta simplemente pasando
+                    // el tipo de funciones junto a los argumentos y la tabla de símbolos.
+
                     FuncionIntrinseca fn = f.funcion_intrinseca;
                     Valor result = ejecutar_funcion_intrinseca(fn, args, tabla);
                     borrar_valor(&f);
@@ -139,6 +148,9 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     return result;
                 }
                 case TIPO_FUNCION_FORANEA: {
+                    // Para una función foránea tenemos que extraer los valores
+                    // de los argumentos para tener variables de C normales.
+
                     FuncionForanea fn = f.funcion_foranea;
 
                     int a = ((Valor*) args.valores)[0].entero;
@@ -155,6 +167,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     return crear_entero(r, NULL);
                 }
                 case TIPO_FUNCION: {
+                    // Para una función definida por el usuario ya es más complicado.
+                    // Tenemos que comprobar que el número de argumentos es correcto;
+                    // introducirlos en la tabla de símbolos, junto con las variables
+                    // capturadas, y evaluar el cuerpo de la función.
+
                     Funcion fn = f.funcion;
 
                     if (fn.nombres_args.longitud != args.longitud) {
@@ -165,7 +182,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                         return v;
                     }
 
-                    // Introducir los nombres_args en la tabla de símbolos.
+                    // Introducir los argumentos en la tabla de símbolos.
                     aumentar_nivel_tabla_simbolos(tabla);
                     for (int i = 0; i < args.longitud; ++i) {
                         String nombre = clonar_string(fn.nombres_args.valores[i].nombre);
@@ -174,12 +191,13 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     // Introducir las variables capturadas por la función
                     asignar_clones_valores_tabla(tabla, *(TablaHash *) fn.variables_capturadas);
 
+                    // Evaluar la propia función, recordando clonar el cuerpo.
                     Expresion cuerpo = clonar_expresion(*(Expresion*)fn.cuerpo);
                     Valor v = evaluar_expresion(tabla, &cuerpo, CNTXT_FUNCION);
 
                     // Si se devolvió un valor de control de flujo, tenemos que
                     // sacar el valor del elemento de control (o propagarlo en el
-                    // caso de ser un control de flujo exit().
+                    // caso de ser un control de flujo tipo exit).
                     if (v.tipo_valor == TIPO_CONTROL_FLUJO) {
                         switch (v.control_flujo.tipo) {
                             case CTR_FLUJO_EXIT: break;
@@ -189,6 +207,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                         }
                     }
 
+                    // Una vez terminado reducir nuevamente el nivel de la tabla
+                    // y libera la memoria.
                     reducir_nivel_tabla_simbolos(tabla);
                     free(args.valores);
                     free(exp->llamada_funcion.loc);
@@ -206,6 +226,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             }
         }
         case EXP_OP_ASIGNACION: {
+            // Expresión de asignación de una expresión a una variable.
+            // Tenemos que evaluar la expresión y después comprobar que
+            // la podemos insertar en la tabla de símbolos.
+
             Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion, CNTXT_ASIGNACION);
             free(exp->asignacion.expresion);
 
@@ -239,7 +263,15 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             }
         }
         case EXP_OP_DEF_FUNCION: {
+            // Una expresión de definición de función, del estilo de \x,y => x+y.
+            // Tenemos que capturar las variables del entorno, copiándolas en una
+            // tabla hash, y de paso reportas errores en caso de utilizar variables
+            // no definidas en el cuerpo de la función.
+
             Expresion *cuerpo = (Expresion*) exp->def_funcion.cuerpo;
+
+            // Lista de identificadores usados en la función que no son ni argumentos
+            // ni variables locales (y que por ende, deben provenir del exterior).
             ListaIdentificadores ids = variables_capturadas(exp->def_funcion);
 
             TablaHash *capturadas = malloc(sizeof(TablaHash));
@@ -270,6 +302,9 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             }
         }
         case EXP_BLOQUE: {
+            // Expresión de una lista de expresiones, en un nivel
+            // superior de la tabla de símbolos.
+
             aumentar_nivel_tabla_simbolos(tabla);
             ListaExpresiones lista = exp->bloque.lista;
             free(exp->bloque.loc);
@@ -299,6 +334,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             return ultimo_valor;
         }
         case EXP_IMPORT: {
+            // Expresión de import, ya sea de un archivo de código del lenguaje,
+            // que tendremos que evaluar con un Lexer y un Evaluador; o de un
+            // archivo biblioteca dinámica de C.
+
             if (exp->importe.foraneo) {
                 // Importar una biblioteca dinámica de C
 
@@ -328,8 +367,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     return crear_valor_error(error, &exp->importe.as->loc);
                 }
             } else {
-                // Importar un archivo normal.
-                // Crear un nuevo evaluador y evaluar el archivo.
+                // Importar un archivo normal con un lexer.
 
                 Lexer lexer;
                 if (!crear_lexer_archivo(&lexer, string_a_puntero(&exp->importe.archivo))) {
@@ -370,6 +408,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             return crear_indefinido();
         }
         case EXP_CONDICIONAL: {
+            // Expresión condicional del estilo `if cond then a else b`.
+
             Valor cond = evaluar_expresion(tabla, (Expresion*)exp->condicional.condicion, contexto);
             free(exp->condicional.condicion);
             if (cond.tipo_valor == TIPO_ERROR) {
@@ -412,6 +452,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             // En una expresión de control de flujo siempre se crea un valor de control de flujo,
             // aunque la expresión sea una sentencia.
 
+            // Tenemos que comprobar que no estamos utilizando controles de flujo en los contextos
+            // incorrectos (por ejemplo, un break fuera de un bucle, o un return fuera de una función).
             if (exp->control_flujo.tipo == CTR_FLUJO_RETURN && contexto != CNTXT_FUNCION) {
                 Error error = crear_error_contexto_incorrecto("return", "fuera de una función");
                 Valor v = crear_valor_error(error, exp->control_flujo.loc);
@@ -425,6 +467,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                 return v;
             }
 
+            // Si hay un valor de retorno asociado al control de flujo (ej, `return value;`), entonces
+            // devolverlo en el valor.
             if (exp->control_flujo.retorno) {
                 Valor v = evaluar_expresion(tabla, (Expresion*) exp->control_flujo.retorno, contexto);
                 free(exp->control_flujo.retorno);

@@ -467,16 +467,20 @@ Valor eval(Valor arg, TablaSimbolos *t) {
         Lexer lexer = crear_lexer_str(string_a_puntero(&arg.string));
         Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO);
 
-        Valor result;
-        while(evaluar_siguiente(&evaluador, t, &result)) {
-            if (result.tipo_valor == TIPO_ERROR) {
-                char* linea = obtener_linea(lexer, result.loc->first_line);
-                imprimir_error(result.error, NULL, linea, result.loc);
+        Valor result = crear_indefinido();
+        Valor v;
+        while(evaluar_siguiente(&evaluador, t, &v)) {
+            if (v.tipo_valor == TIPO_ERROR) {
+                char* linea = obtener_linea(lexer, v.loc->first_line);
+                imprimir_error(v.error, NULL, linea, v.loc);
                 free(linea);
             }
+
             borrar_valor(&result);
+            result = v;
         }
 
+        borrar_evaluador(&evaluador);
         borrar_valor(&arg);
         return result;
     }
@@ -662,6 +666,10 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
     }
 
     free(args.valores);
-    result.loc = args.loc;
+    if (!result.loc) {
+        result.loc = args.loc;
+    } else {
+        free(args.loc);
+    }
     return result;
 }
