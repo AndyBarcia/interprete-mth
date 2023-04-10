@@ -1240,11 +1240,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 #line 194 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
-{ return YYEOF; }
+{
+        yylloc->first_column++;
+        yylloc->last_column++;
+        return YYEOF;
+    }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 196 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 200 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
         yylval->error_lexico = crear_error("Caracter no reconocido.");
         return ERROR;
@@ -1252,10 +1256,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 200 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 204 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 ECHO;
 	YY_BREAK
-#line 1259 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
+#line 1263 "/home/andy/Documentos/USC/3º/CI/Practica3/cmake-build-debug/../analizador_lexico.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2446,7 +2450,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 200 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
+#line 204 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 
 
 int crear_lexer_archivo(Lexer *lexer, char *archivo) {

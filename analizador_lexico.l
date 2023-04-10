@@ -191,7 +191,11 @@ else { return ELSE; }
 
 {ESPACIO_EN_BLANCO} { /* ignorar espacios */ }
 
-<<EOF>> { return YYEOF; }
+<<EOF>> {
+        yylloc->first_column++;
+        yylloc->last_column++;
+        return YYEOF;
+    }
 
 .   {
         yylval->error_lexico = crear_error("Caracter no reconocido.");
