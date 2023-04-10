@@ -24,6 +24,12 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
                     imprimir_error(x.error, NULL, linea, x.loc);
                     break;
                 }
+                case TIPO_CONTROL_FLUJO: {
+                    borrar_valor(&x);
+                    borrar_evaluador(&evaluador);
+                    free(linea);
+                    return;
+                }
                 default: imprimir_valor(x);
             }
             borrar_valor(&x);
@@ -51,6 +57,11 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
                 char* linea = obtener_linea(lexer, x.loc->first_line);
                 imprimir_error(x.error, NULL, linea, x.loc);
                 break;
+            }
+            case TIPO_CONTROL_FLUJO: {
+                borrar_valor(&x);
+                borrar_evaluador(&evaluador);
+                return;
             }
             default: break;
         }

@@ -24,7 +24,7 @@ void aumentar_nivel_tabla_simbolos(TablaSimbolos *t) {
 
 void reducir_nivel_tabla_simbolos(TablaSimbolos *t) {
     borrar_tabla_hash(&t->tablas[t->nivel]);
-    t->nivel--;
+    --t->nivel;
 }
 
 void borrar_tabla_simbolos(TablaSimbolos *t) {

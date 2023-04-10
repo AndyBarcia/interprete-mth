@@ -65,6 +65,9 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token AS "as"
 %token BREAK "break"
 %token RETURN "return"
+%token IF "if"
+%token THEN "then"
+%token ELSE "else"
 
 %token PARENTESIS_IZQ "("
 %token PARENTESIS_DER ")"
@@ -82,7 +85,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %type <identificador> nombre_asignable
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
-%type <listaExpresiones> expression_block
+%type <listaExpresiones> expression_list
 %type <listaIdentificadores> identifier_list
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
@@ -106,7 +109,7 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %destructor { borrar_identificador(&$$); } nombre_asignable
 %destructor { borrar_lista_expresiones(&$$); } argument_list
 %destructor { borrar_lista_expresiones(&$$); } argument_list_many
-%destructor { borrar_lista_expresiones(&$$); } expression_block
+%destructor { borrar_lista_expresiones(&$$); } expression_list
 %destructor { borrar_lista_identificadores(&$$); } identifier_list
 %destructor { borrar_lista_identificadores(&$$); } identifier_list_many
 %destructor { borrar_expresion(&$$); } expresion
@@ -138,9 +141,9 @@ identifier_list_many:
 identifier_list:  identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
 
-expression_block:
+expression_list:
      nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
-    | expression_block expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
+    | expression_list expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
 
 nombre_asignable: IDENTIFICADOR | OPERADOR ;
@@ -185,7 +188,9 @@ expresion:
     | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
     | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
     | "export" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
-    | "{" expression_block "}" { $$ = crear_exp_bloque($2, &@$); }
+    | "{" expression_list "}" { $$ = crear_exp_bloque($2, &@$); }
+    | "if" expresion "then" expresion { $$ = crear_exp_condicional($2, $4, NULL, &@$); }
+    | "if" expresion "then" expresion "else" expresion { $$ = crear_exp_condicional($2, $4, &$6, &@$); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
     | "import" STRING {$$ = crear_exp_importe($2, 0, &@2); }
     | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, &@3); }

@@ -482,6 +482,21 @@ Valor eval(Valor arg, TablaSimbolos *t) {
     }
 }
 
+void _imprimir_entrada_tabla(EntradaTablaHash entrada) {
+    // No imprimir las funciones intrínsecas para evitar saturar la consola.
+    if (entrada.valor.tipo_valor != TIPO_FUNCION_INTRINSECA) {
+        printf("%s:= ", string_a_puntero(&entrada.clave));
+        imprimir_valor(entrada.valor);
+    }
+}
+
+void printws(TablaSimbolos *t) {
+    for (int i = 0; i <= t->nivel; ++i) {
+        printf("Nivel %d\n", i);
+        iterar_tabla_hash(t->tablas[i], _imprimir_entrada_tabla);
+    }
+}
+
 Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t) {
     Valor *vargs = (Valor*) args.valores;
     Valor result = crear_indefinido();
@@ -610,7 +625,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             break;
         case INTRINSECA_PRINTWS:
             comprobacion_n_args(0, "imprimir espacio de trabajo");
-            imprimir_simbolos(*t);
+            printws(t);
             break;
         case INTRINSECA_RESETWS:
             comprobacion_n_args(0, "resetear espacio de trabajo");

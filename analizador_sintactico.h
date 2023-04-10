@@ -88,18 +88,21 @@ extern int yydebug;
     AS = 283,                      /* "as"  */
     BREAK = 284,                   /* "break"  */
     RETURN = 285,                  /* "return"  */
-    PARENTESIS_IZQ = 286,          /* "("  */
-    PARENTESIS_DER = 287,          /* ")"  */
-    CORCHETE_IZQ = 288,            /* "["  */
-    CORCHETE_DER = 289,            /* "]"  */
-    LLAVE_IZQ = 290,               /* "{"  */
-    LLAVE_DER = 291,               /* "}"  */
-    PUNTO = 292,                   /* "."  */
-    FLECHA = 293,                  /* "=>"  */
-    SLASH_INVERTIDA = 294,         /* "\\"  */
-    NUEVA_LINEA = 295,             /* "\n"  */
-    PUNTO_Y_COMA = 296,            /* ";"  */
-    COMA = 297                     /* ","  */
+    IF = 286,                      /* "if"  */
+    THEN = 287,                    /* "then"  */
+    ELSE = 288,                    /* "else"  */
+    PARENTESIS_IZQ = 289,          /* "("  */
+    PARENTESIS_DER = 290,          /* ")"  */
+    CORCHETE_IZQ = 291,            /* "["  */
+    CORCHETE_DER = 292,            /* "]"  */
+    LLAVE_IZQ = 293,               /* "{"  */
+    LLAVE_DER = 294,               /* "}"  */
+    PUNTO = 295,                   /* "."  */
+    FLECHA = 296,                  /* "=>"  */
+    SLASH_INVERTIDA = 297,         /* "\\"  */
+    NUEVA_LINEA = 298,             /* "\n"  */
+    PUNTO_Y_COMA = 299,            /* ";"  */
+    COMA = 300                     /* ","  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -121,7 +124,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 125 "../analizador_sintactico.h"
+#line 128 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

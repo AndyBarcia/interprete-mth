@@ -76,6 +76,13 @@ typedef struct {
     Localizacion *loc;
 } BloqueExpresiones;
 
+typedef struct {
+    struct Expresion* condicion;
+    struct Expresion* verdadero;
+    struct Expresion* falso;
+    Localizacion *loc;
+} Condicional;
+
 /// Una expresión de control de flujo, como
 /// un `return` o un `break`.
 /// Tiene un posible valor de retorno asociado
@@ -122,6 +129,9 @@ typedef enum {
     /// Una importación de métodos de un archivo.
     /// Ejemplo: `import "math.mth"`, `import foreign "math.so"`
     EXP_IMPORT,
+    /// Una expresión condicional.
+    /// Ejemplo: `if cond { a } else { b }`
+    EXP_CONDICIONAL,
     /// Un `return` o un `break`.
     EXP_CONTROL_FLUJO,
 } TipoExpresion;
@@ -143,6 +153,7 @@ typedef struct {
         DefinicionFuncion def_funcion;
         BloqueExpresiones bloque;
         Import importe;
+        Condicional condicional;
         ControlFlujo control_flujo;
     };
 } Expresion;
@@ -161,6 +172,7 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc);
 Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc);
 Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc);
+Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expresion *falso, Localizacion *loc);
 Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc);
 
 Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc);

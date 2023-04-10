@@ -274,6 +274,37 @@ Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Lo
     };
 }
 
+Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expresion *falso, Localizacion *loc) {
+    Expresion *cp = malloc(sizeof(Expresion));
+    *cp = condicion;
+
+    Expresion *vp = malloc(sizeof(Expresion));
+    *vp = verdadero;
+
+    if (falso) {
+        Expresion *fp = malloc(sizeof(Expresion));
+        *fp = *falso;
+        falso = fp;
+    }
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = *loc;
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+        .tipo = EXP_CONDICIONAL,
+        .condicional = (Condicional) {
+            .condicion = (struct Expresion*) cp,
+            .verdadero = (struct Expresion*) vp,
+            .falso = (struct Expresion*) falso,
+            .loc = loc
+        },
+        .es_sentencia = 0
+    };
+}
+
 Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc) {
     if (retorno) {
         Expresion* retorno_copy = malloc(sizeof(Expresion));
@@ -363,6 +394,20 @@ Expresion clonar_expresion(Expresion exp) {
                 *e.acceso.loc = *exp.acceso.loc;
             }
             break;
+        case EXP_CONDICIONAL:
+            e.condicional.condicion = malloc(sizeof(Expresion));
+            *(Expresion*) e.condicional.condicion = clonar_expresion(*(Expresion*) exp.condicional.condicion);
+            e.condicional.verdadero = malloc(sizeof(Expresion));
+            *(Expresion*) e.condicional.verdadero = clonar_expresion(*(Expresion*) exp.condicional.verdadero);
+            if (e.condicional.falso) {
+                e.condicional.falso = malloc(sizeof(Expresion));
+                *(Expresion*) e.condicional.falso = clonar_expresion(*(Expresion*) exp.condicional.falso);
+            }
+            if (e.condicional.loc) {
+                e.condicional.loc = malloc(sizeof(Localizacion));
+                *e.condicional.loc = *exp.condicional.loc;
+            }
+            break;
         case EXP_CONTROL_FLUJO:
             if (e.control_flujo.retorno) {
                 e.control_flujo.retorno = malloc(sizeof(Expresion));
@@ -423,6 +468,17 @@ void borrar_expresion(Expresion *exp) {
             free(exp->acceso.valor);
             if(exp->acceso.loc) free(exp->acceso.loc);
             break;
+        case EXP_CONDICIONAL:
+            borrar_expresion((Expresion*) exp->condicional.condicion);
+            free(exp->condicional.condicion);
+            borrar_expresion((Expresion*) exp->condicional.verdadero);
+            free(exp->condicional.verdadero);
+            if (exp->condicional.falso) {
+                borrar_expresion((Expresion*) exp->condicional.falso);
+                free(exp->condicional.falso);
+            }
+            if(exp->acceso.loc) free(exp->acceso.loc);
+            break;
         case EXP_CONTROL_FLUJO:
             if (exp->control_flujo.retorno) {
                 borrar_expresion((Expresion *) exp->control_flujo.retorno);
@@ -456,6 +512,8 @@ Localizacion* obtener_loc_exp(Expresion *exp) {
             return exp->importe.loc;
         case EXP_CONTROL_FLUJO:
             return exp->control_flujo.loc;
+        case EXP_CONDICIONAL:
+            return exp->condicional.loc;
     }
 }
 

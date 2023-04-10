@@ -284,6 +284,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     for (int j = i+1; j < lista.longitud; ++j)
                         borrar_expresion(&((Expresion*) lista.valores)[j]);
                     free(lista.valores);
+                    reducir_nivel_tabla_simbolos(tabla);
                     return ultimo_valor;
                 }
             }
@@ -366,6 +367,45 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             }
             free(exp->importe.loc);
             return crear_indefinido();
+        }
+        case EXP_CONDICIONAL: {
+            Valor cond = evaluar_expresion(tabla, (Expresion*)exp->condicional.condicion, contexto);
+            free(exp->condicional.condicion);
+            if (cond.tipo_valor == TIPO_ERROR) {
+                borrar_expresion((Expresion*) exp->condicional.verdadero);
+                if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
+                free(exp->condicional.loc);
+                return cond;
+            }
+            if (cond.tipo_valor != TIPO_BOOL) {
+                Error error = crear_error("Sólo se pueden utilizar booleanos como condicionales.");
+                Valor v = crear_valor_error(error, cond.loc);
+                borrar_valor(&cond);
+                borrar_expresion((Expresion*) exp->condicional.verdadero);
+                if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
+                free(exp->condicional.loc);
+                return v;
+            }
+
+            if (cond.bool) {
+                Valor verdadero = evaluar_expresion(tabla, (Expresion*)exp->condicional.verdadero, contexto);
+                if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
+                borrar_valor(&cond);
+                free(exp->condicional.loc);
+
+                return verdadero;
+            } else if (exp->condicional.falso) {
+                Valor falso = evaluar_expresion(tabla, (Expresion*)exp->condicional.falso, contexto);
+                borrar_expresion((Expresion*) exp->condicional.verdadero);
+                borrar_valor(&cond);
+                free(exp->condicional.loc);
+
+                return falso;
+            } else {
+                borrar_valor(&cond);
+                free(exp->condicional.loc);
+                return crear_indefinido();
+            }
         }
         case EXP_CONTROL_FLUJO: {
             // En una expresión de control de flujo siempre se crea un valor de control de flujo,
