@@ -158,10 +158,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     Funcion fn = f.funcion;
 
                     if (fn.nombres_args.longitud != args.longitud) {
+                        Error error = crear_error_numero_argumentos(fn.nombres_args.longitud, args.longitud);
+                        Valor v = crear_valor_error(error, exp->llamada_funcion.loc);
                         borrar_lista_valores(&args);
                         free(exp->llamada_funcion.loc);
-                        Error error = crear_error("Se pasaron %d argumentos, pero se esperaban %d.", args.longitud, fn.nombres_args.longitud);
-                        return crear_valor_error(error, exp->llamada_funcion.loc);
+                        return v;
                     }
 
                     // Introducir los nombres_args en la tabla de símbolos.

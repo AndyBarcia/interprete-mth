@@ -485,14 +485,13 @@ Valor eval(Valor arg, TablaSimbolos *t) {
 void _imprimir_entrada_tabla(EntradaTablaHash entrada) {
     // No imprimir las funciones intrínsecas para evitar saturar la consola.
     if (entrada.valor.tipo_valor != TIPO_FUNCION_INTRINSECA) {
-        printf("%s:= ", string_a_puntero(&entrada.clave));
+        printf("%s := ", string_a_puntero(&entrada.clave));
         imprimir_valor(entrada.valor);
     }
 }
 
 void printws(TablaSimbolos *t) {
     for (int i = 0; i <= t->nivel; ++i) {
-        printf("Nivel %d\n", i);
         iterar_tabla_hash(t->tablas[i], _imprimir_entrada_tabla);
     }
 }
