@@ -104,15 +104,43 @@ Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc) {
     };
 }
 
+Valor crear_valor_control_flujo(TipoControlFlujo tipo, Valor *v, Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = *loc;
+        loc = loc_copy;
+    }
+    int *referencias = malloc(sizeof(int));
+    *referencias = 1;
+
+    if (v) {
+        Valor *vp = malloc(sizeof(Valor));
+        *vp = *v;
+        v = vp;
+    }
+
+    return (Valor) {
+            .tipo_valor = TIPO_CONTROL_FLUJO,
+            .referencias = referencias,
+            .loc = loc,
+            .control_flujo = (ValorControlFlujo) {
+                .tipo = tipo,
+                .valor = (struct Valor*) v
+            }
+    };
+}
+
 Valor crear_valor_error(Error error, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
         *loc_copy = *loc;
         loc = loc_copy;
     }
-
+    int *referencias = malloc(sizeof(int));
+    *referencias = 1;
     return (Valor) {
             .tipo_valor = TIPO_ERROR,
+            .referencias = referencias,
             .loc = loc,
             .error = error
     };
@@ -160,6 +188,8 @@ void borrar_valor(Valor *valor) {
                     break;
                 case TIPO_BIBLIOTECA_FORANEA:
                     cerrar_biblioteca_dinamica(&valor->biblioteca);
+                case TIPO_CONTROL_FLUJO:
+                    if (valor->control_flujo.valor) free(valor->control_flujo.valor);
                 default:
                     break;
             }
@@ -271,6 +301,15 @@ void _imprimir_valor(Valor valor) {
         case TIPO_BIBLIOTECA_FORANEA:
             printf("[biblioteca]");
             break;
+        case TIPO_CONTROL_FLUJO:
+            printf("[%s", tipo_control_flujo_a_str(valor.control_flujo.tipo));
+            if (valor.control_flujo.valor) {
+                printf(" ");
+                _imprimir_valor(*(Valor*) valor.control_flujo.valor);
+                printf(" ");
+            }
+            printf("]");
+            break;
     }
 }
 
@@ -292,5 +331,6 @@ char* tipo_valor_a_str(TipoValor tipo) {
         case TIPO_FUNCION_FORANEA: return "función foránea";
         case TIPO_FUNCION: return "función";
         case TIPO_BIBLIOTECA_FORANEA: return "biblioteca";
+        case TIPO_CONTROL_FLUJO: return "control de flujo";
     }
 }

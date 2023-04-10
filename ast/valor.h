@@ -41,7 +41,10 @@ typedef enum {
     /// Valor de función definida por el usuario.
     TIPO_FUNCION,
     /// Una biblioteca de C
-    TIPO_BIBLIOTECA_FORANEA
+    TIPO_BIBLIOTECA_FORANEA,
+    /// Un elemento de control de flujo, como
+    /// un `return` o un `break`.
+    TIPO_CONTROL_FLUJO
 } TipoValor;
 
 /// Un valor asignable en una expresión de asignación.
@@ -69,6 +72,7 @@ typedef enum {
     INTRINSECA_AYUDA,
     INTRINSECA_CARGAR,
     INTRINSECA_EVAL,
+    INTRINSECA_EXIT
 } FuncionIntrinseca;
 
 /// Una función definida por el usuario, con:
@@ -80,6 +84,11 @@ typedef struct {
     struct TablaHash *variables_capturadas;
     struct Expresion *cuerpo;
 } Funcion;
+
+typedef struct {
+    TipoControlFlujo tipo;
+    struct Valor *valor;
+} ValorControlFlujo;
 
 /// Un valor del lenguaje de programación.
 /// Los valores dinámicos (strings, errores, y funciones) llevan
@@ -100,6 +109,7 @@ typedef struct {
         Funcion funcion;
         FuncionForanea funcion_foranea;
         BibilotecaDinamica biblioteca;
+        ValorControlFlujo control_flujo;
         Error error;
     };
 } Valor;
@@ -129,6 +139,7 @@ Valor crear_funcion_intrinseca(FuncionIntrinseca funcion, Localizacion *loc);
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc);
 Valor crear_funcion_foranea(FuncionForanea foranea);
 Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc);
+Valor crear_valor_control_flujo(TipoControlFlujo tipo, Valor *v, Localizacion *loc);
 Valor crear_valor_error(Error error, Localizacion *loc);
 
 /// Crea un clon "ligero" de un valor; esto es, incrementando

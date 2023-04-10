@@ -15,14 +15,16 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
         linea[read-1] = '\0';
 
         Lexer lexer = crear_lexer_str(linea);
-        Evaluador evaluador = crear_evaluador(lexer);
+        Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO);
 
         Valor x;
-        if(evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
-            if (x.tipo_valor == TIPO_ERROR) {
-                imprimir_error(x.error, NULL, linea, x.loc);
-            } else {
-                imprimir_valor(x);
+        while (evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
+            switch (x.tipo_valor) {
+                case TIPO_ERROR: {
+                    imprimir_error(x.error, NULL, linea, x.loc);
+                    break;
+                }
+                default: imprimir_valor(x);
             }
             borrar_valor(&x);
         }
@@ -40,14 +42,17 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
         return;
     }
 
-    Evaluador evaluador = crear_evaluador(lexer);
+    Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO);
 
     Valor x;
     while(evaluar_siguiente(&evaluador, simbolos, &x)) {
-        if (x.tipo_valor == TIPO_ERROR) {
-            char* linea = obtener_linea(lexer, x.loc->first_line);
-            imprimir_error(x.error, fichero, linea, x.loc);
-            free(linea);
+        switch (x.tipo_valor) {
+            case TIPO_ERROR: {
+                char* linea = obtener_linea(lexer, x.loc->first_line);
+                imprimir_error(x.error, NULL, linea, x.loc);
+                break;
+            }
+            default: break;
         }
         borrar_valor(&x);
     }
@@ -64,7 +69,7 @@ int main(int argc, char *argv[]) {
     if (argc <= 1) {
         modo_interactivo(&simbolos);
     }else {
-        if (argc > 2) printf("Demasiados nombres_args; ignorando.\n");
+        if (argc > 2) printf("Demasiados argumentos; ignorando.\n");
         modo_fichero(&simbolos, argv[1]);
     }
 

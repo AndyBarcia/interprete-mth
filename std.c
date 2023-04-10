@@ -15,6 +15,7 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("help"), crear_funcion_intrinseca(INTRINSECA_AYUDA, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("load"), crear_funcion_intrinseca(INTRINSECA_CARGAR, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("eval"), crear_funcion_intrinseca(INTRINSECA_EVAL, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("exit"), crear_funcion_intrinseca(INTRINSECA_EXIT, NULL), ASIGNACION_INMUTABLE);
 }
 
 #define comprobacion_n_args(n_args, op) \
@@ -464,7 +465,7 @@ Valor eval(Valor arg, TablaSimbolos *t) {
         return crear_valor_error(error, NULL);
     } else {
         Lexer lexer = crear_lexer_str(string_a_puntero(&arg.string));
-        Evaluador evaluador = crear_evaluador(lexer);
+        Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO);
 
         Valor result;
         while(evaluar_siguiente(&evaluador, t, &result)) {
@@ -624,6 +625,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
                        "Para obtener ayuda sobre operadores, escríbelos entre paréntesis.\n"
                        "Ejemplo: `help((+))`\n");
             } else {
+                comprobacion_n_args(1, "ayuda");
                 ayuda(vargs[0]);
             }
             break;
@@ -633,8 +635,15 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             break;
         case INTRINSECA_EVAL:
             comprobacion_n_args(1, "evaluar");
-
             result = eval(vargs[0], t);
+            break;
+        case INTRINSECA_EXIT:
+            if (args.longitud == 1) {
+                result = crear_valor_control_flujo(CTR_FLUJO_EXIT, &vargs[0], NULL);
+            } else {
+                comprobacion_n_args(0, "salir");
+                result = crear_valor_control_flujo(CTR_FLUJO_EXIT, NULL, NULL);
+            }
             break;
     }
 

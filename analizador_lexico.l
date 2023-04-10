@@ -65,6 +65,8 @@ export { return EXPORT; }
 import { return IMPORT; }
 foreign { return FOREIGN; }
 as { return AS; }
+break { return BREAK; }
+return { return RETURN; }
 
 {ALFA_US}{ALFANUM_US}* {
          yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);

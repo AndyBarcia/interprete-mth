@@ -3,6 +3,7 @@
 
 #include "string.h"
 #include "analizador_lexico.h"
+#include "ast/control_flujo.h"
 
 /// Tipo interno de un error.
 typedef struct {
@@ -15,6 +16,7 @@ Error crear_error_tipos_incompatibles(char* op, int tipoA, int tipoB);
 Error crear_error_op_incompatible(char* op, int tipo);
 Error crear_error_dividir_entre_cero();
 Error crear_error_archivo_no_encontrado(char* fichero);
+Error crear_error_contexto_incorrecto(char* tipo, char* contexto);
 
 void borrar_error(Error *error);
 

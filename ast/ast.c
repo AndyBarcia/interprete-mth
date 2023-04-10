@@ -274,6 +274,30 @@ Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Lo
     };
 }
 
+Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc) {
+    if (retorno) {
+        Expresion* retorno_copy = malloc(sizeof(Expresion));
+        *retorno_copy = *(Expresion*) retorno;
+        retorno = retorno_copy;
+    }
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = *loc;
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+        .tipo = EXP_CONTROL_FLUJO,
+        .control_flujo = (ControlFlujo) {
+            .tipo = tipo,
+            .retorno = (struct Expresion*) retorno,
+            .loc = loc
+        },
+        .es_sentencia = 0
+    };
+}
+
 Expresion clonar_expresion(Expresion exp) {
     Expresion e = exp;
     switch (e.tipo) {
@@ -339,6 +363,16 @@ Expresion clonar_expresion(Expresion exp) {
                 *e.acceso.loc = *exp.acceso.loc;
             }
             break;
+        case EXP_CONTROL_FLUJO:
+            if (e.control_flujo.retorno) {
+                e.control_flujo.retorno = malloc(sizeof(Expresion));
+                *(Expresion*) e.control_flujo.retorno = clonar_expresion(*(Expresion*) exp.control_flujo.retorno);
+            }
+            if (e.control_flujo.loc) {
+                e.control_flujo.loc = malloc(sizeof(Localizacion));
+                *e.control_flujo.loc = *exp.control_flujo.loc;
+            }
+            break;
     }
     return e;
 }
@@ -389,6 +423,13 @@ void borrar_expresion(Expresion *exp) {
             free(exp->acceso.valor);
             if(exp->acceso.loc) free(exp->acceso.loc);
             break;
+        case EXP_CONTROL_FLUJO:
+            if (exp->control_flujo.retorno) {
+                borrar_expresion((Expresion *) exp->control_flujo.retorno);
+                free(exp->control_flujo.retorno);
+            }
+            if(exp->control_flujo.loc) free(exp->control_flujo.loc);
+            break;
     }
     exp->tipo = EXP_NULA;
 }
@@ -413,6 +454,8 @@ Localizacion* obtener_loc_exp(Expresion *exp) {
             return exp->bloque.loc;
         case EXP_IMPORT:
             return exp->importe.loc;
+        case EXP_CONTROL_FLUJO:
+            return exp->control_flujo.loc;
     }
 }
 

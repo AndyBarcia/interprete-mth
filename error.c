@@ -60,6 +60,10 @@ Error crear_error_archivo_no_encontrado(char* fichero) {
     return crear_error("No se ha podido cargar el fichero \"%s\".", fichero);
 }
 
+Error crear_error_contexto_incorrecto(char* tipo, char* contexto) {
+    return crear_error("No se puede user %s desde %s.", tipo, contexto);
+}
+
 void borrar_error(Error *error) {
     borrar_string(&error->mensaje);
 }

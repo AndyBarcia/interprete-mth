@@ -63,6 +63,8 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %token IMPORT "import"
 %token FOREIGN "foreign"
 %token AS "as"
+%token BREAK "break"
+%token RETURN "return"
 
 %token PARENTESIS_IZQ "("
 %token PARENTESIS_DER ")"
@@ -86,6 +88,8 @@ void yyerror(Localizacion *loc, Expresion *exp, const char* s);
 %type <expresion> expresion
 
 %precedence ";"
+%precedence RETURN
+%precedence BREAK
 %precedence CONST
 %precedence OPERADOR_ASIGNACION
 %precedence "=>"
@@ -185,6 +189,10 @@ expresion:
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
     | "import" STRING {$$ = crear_exp_importe($2, 0, &@2); }
     | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, &@3); }
+    | "break" { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_BREAK, NULL, &@1); }
+    | "break" expresion { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_BREAK, &$2, &@1); }
+    | "return" { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_RETURN, NULL, &@1); }
+    | "return" expresion { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_RETURN, &$2, &@$); }
     | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_valor_error($1, &@1)); }
     ;

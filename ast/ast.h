@@ -5,6 +5,7 @@
 #include "valor.h"
 #include "../analizador_lexico.h"
 #include "../tabla_simbolos.h"
+#include "control_flujo.h"
 
 /// Una lista de expresiones, ya sea en un
 /// bloque de expresiones o los nombres_args
@@ -75,6 +76,16 @@ typedef struct {
     Localizacion *loc;
 } BloqueExpresiones;
 
+/// Una expresión de control de flujo, como
+/// un `return` o un `break`.
+/// Tiene un posible valor de retorno asociado
+/// como con `return 5`.
+typedef struct {
+    TipoControlFlujo tipo;
+    struct Expresion* retorno;
+    Localizacion* loc;
+} ControlFlujo;
+
 /// El tipo de una expresión.
 typedef enum {
     /// Una expresión desconocida.
@@ -111,6 +122,8 @@ typedef enum {
     /// Una importación de métodos de un archivo.
     /// Ejemplo: `import "math.mth"`, `import foreign "math.so"`
     EXP_IMPORT,
+    /// Un `return` o un `break`.
+    EXP_CONTROL_FLUJO,
 } TipoExpresion;
 
 /// Una expresión de un determinado tipo.
@@ -130,6 +143,7 @@ typedef struct {
         DefinicionFuncion def_funcion;
         BloqueExpresiones bloque;
         Import importe;
+        ControlFlujo control_flujo;
     };
 } Expresion;
 
@@ -147,6 +161,7 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc);
 Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc);
 Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc);
+Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc);
 
 Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc);
 Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion a, Expresion b, Localizacion *loc);
