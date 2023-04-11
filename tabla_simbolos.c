@@ -77,7 +77,7 @@ int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {
             String clave = clonar_string(entrada.clave);
             Valor v = clonar_valor(entrada.valor);
             if (!asignar_valor_tabla(t, clave, v, entrada.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL))
-                return 0;
+                continue;
         }
     }
     return 1;

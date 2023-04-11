@@ -278,6 +278,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             for(int i = 0; i < ids.longitud; ++i) {
                 Valor v = recuperar_valor_tabla(*tabla, ids.valores[i]);
+                // Si la variable no puedo ser capturada, propagar el error.
                 if (v.tipo_valor == TIPO_ERROR) {
                     borrar_expresion(cuerpo);
                     free(cuerpo);
@@ -286,7 +287,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     free(capturadas);
                     return v;
                 }
-                insertar_hash(capturadas, ids.valores[i].nombre, v, 1);
+                // Si es una función intrínseca, no molestarse en pasarla.
+                if (v.tipo_valor == TIPO_FUNCION_INTRINSECA)  {
+                    borrar_valor(&v);
+                    continue;
+                }
+                insertar_hash(capturadas, clonar_string(ids.valores[i].nombre), v, 1);
             }
             borrar_lista_identificadores(&ids);
 

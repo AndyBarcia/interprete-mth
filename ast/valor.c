@@ -204,8 +204,16 @@ void borrar_valor(Valor *valor) {
             free(valor->loc);
             valor->loc = NULL;
         }
+        switch (valor->tipo_valor) {
+            case TIPO_ENTERO: valor->entero = 0; break;
+            case TIPO_DECIMAL: valor->decimal = 0; break;
+            case TIPO_BOOL: valor->bool = 0; break;
+            case TIPO_FUNCION_INTRINSECA: valor->funcion_intrinseca = -1; break;
+            case TIPO_FUNCION_FORANEA: valor->funcion_foranea = NULL; break;
+            default: break;
+        }
     }
-    valor->tipo_valor = TIPO_INDEFINIDO;
+    valor->tipo_valor = TIPO_NULO;
 }
 
 int comparar_valor(Valor a, Valor b, int *resultado) {
