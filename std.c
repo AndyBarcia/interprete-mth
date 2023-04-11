@@ -466,14 +466,14 @@ Valor cargar(Valor arg) {
     }
 }
 
-Valor eval(Valor arg, TablaSimbolos *t) {
+Valor eval(Valor arg, TablaSimbolos *t, String wd) {
     if (arg.tipo_valor != TIPO_STRING) {
         Error error = crear_error_op_incompatible("evaluar", arg.tipo_valor);
         borrar_valor(&arg);
         return crear_valor_error(error, NULL);
     } else {
         Lexer lexer = crear_lexer_str(string_a_puntero(&arg.string));
-        Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO);
+        Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, wd);
 
         Valor result = crear_indefinido();
         Valor v;
@@ -564,7 +564,7 @@ Valor callforeign(FuncionForanea f, Valor retorno, Valor* vargs, int nargs) {
     return crear_valor_error(error, retorno.loc);
 }
 
-Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t) {
+Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t, String wd) {
     Valor *vargs = (Valor*) args.valores;
     Valor result = crear_indefinido();
 
@@ -717,7 +717,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             break;
         case INTRINSECA_EVAL:
             comprobacion_n_args(1, "evaluar");
-            result = eval(vargs[0], t);
+            result = eval(vargs[0], t, wd);
             break;
         case INTRINSECA_EXIT:
             if (args.longitud == 1) {

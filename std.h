@@ -10,6 +10,6 @@
  */
 void inicializar_libreria_estandar(TablaSimbolos *t);
 
-Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t);
+Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t, String wd);
 
 #endif //PRACTICA3_STD_H

@@ -37,6 +37,10 @@ typedef struct {
     void *ps;
     /// El contexto actual.
     Contexto contexto;
+    /// El working directory en el que se encuentra
+    /// el evaluador a efectos de cargar archivos.
+    /// Por defecto se puede establecer a ".".
+    String wd;
 } Evaluador;
 
 /**
@@ -45,9 +49,11 @@ typedef struct {
  * de un archivo, cadena de caracteres, o entrada
  * estándar.
  * @param lexer
+ * @param contexto el contexto de evaluación.
+ * @param wd el working directory.
  * @return
  */
-Evaluador crear_evaluador(Lexer lexer, Contexto contexto);
+Evaluador crear_evaluador(Lexer lexer, Contexto contexto, String wd);
 
 /**
  * Libera la memoria de un evaluador.
@@ -65,23 +71,5 @@ void borrar_evaluador(Evaluador *evaluador);
  * ya no quedasen expresiones por evaluar.
  */
 int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor *valor);
-
-/**
- * Evalúa el valor de una expresión, liberando la memoria de la expresión
- * y devolviendo su resultado en un valor.
- * @param tabla tabla de símbolos a utilizar para la resolución de variables.
- * @param exp expresión a evaluar y que será liberada.
- * @return valor de la expresión.
- */
-Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto);
-
-/**
- * Evalúa una lista de expresiones, liberando su memoria, y devolviendo
- * sus resultados en una lista de valores.
- * @param tabla tabla de símbolos a utilizar para la resolución de variables.
- * @param listaExpresiones expresiones a evaluar y que será liberada.
- * @return lista de valores de las expresiones.
- */
-ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaExpresiones, Contexto contexto);
 
 #endif //PRACTICA3_EVALUADOR_H
