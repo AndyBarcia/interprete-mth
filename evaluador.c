@@ -72,7 +72,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
             if (v.tipo_valor == TIPO_ERROR) return v;
 
             // Por ahora los únicos objetos de este tipo que se pueden acceder son
-            // bibliotecas dinámicas de C.
+            // tests dinámicas de C.
             Valor result = crear_indefinido();
             switch (v.tipo_valor) {
                 case TIPO_BIBLIOTECA_FORANEA: {
@@ -147,25 +147,6 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                     }
                     return result;
                 }
-                case TIPO_FUNCION_FORANEA: {
-                    // Para una función foránea tenemos que extraer los valores
-                    // de los argumentos para tener variables de C normales.
-
-                    FuncionForanea fn = f.funcion_foranea;
-
-                    int a = ((Valor*) args.valores)[0].entero;
-                    int b = ((Valor*) args.valores)[1].entero;
-                    int r = fn(a,b);
-
-                    borrar_lista_valores(&args);
-                    borrar_valor(&f);
-
-                    free(exp->llamada_funcion.loc);
-                    if (exp->es_sentencia) {
-                        return crear_indefinido();
-                    }
-                    return crear_entero(r, NULL);
-                }
                 case TIPO_FUNCION: {
                     // Para una función definida por el usuario ya es más complicado.
                     // Tenemos que comprobar que el número de argumentos es correcto;
@@ -219,6 +200,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto)
                         return crear_indefinido();
                     }
                     return v;
+                }
+                case TIPO_FUNCION_FORANEA: {
+                    Error error = crear_error("No se puede llamar a una función foránea directamente "
+                                              "porque su tipo de retorno no es conocido.\nSi quieres "
+                                              "llamar a una función foránea, utiliza `callforeign`.");
+                    return crear_valor_error(error, f.loc);
                 }
                 default: {
                     return crear_valor_error(crear_error("Este valor no es una función!"), f.loc);

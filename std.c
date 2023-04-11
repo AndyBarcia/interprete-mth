@@ -16,6 +16,7 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("load"), crear_funcion_intrinseca(INTRINSECA_CARGAR, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("eval"), crear_funcion_intrinseca(INTRINSECA_EVAL, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("exit"), crear_funcion_intrinseca(INTRINSECA_EXIT, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("callforeign"), crear_funcion_intrinseca(INTRINSECA_CALLFOREIGN, NULL), ASIGNACION_INMUTABLE);
 }
 
 #define comprobacion_n_args(n_args, op) \
@@ -396,17 +397,13 @@ void ayuda(Valor v) {
             break;
         case TIPO_FUNCION_INTRINSECA:
             switch (v.funcion_intrinseca) {
-                case INTRINSECA_SUMA:
-                    printf("Permite sumar dos números, o concatenar dos cadenas de caracteres.\n"); break;
-                case INTRINSECA_RESTA:
-                    printf("Permite restar dos números.\n"); break;
-                case INTRINSECA_MULT:
-                    printf("Permite multiplicar dos números, o concatenar repetidamente un string a sí mismo.\n"); break;
-                case INTRINSECA_DIV:
-                    printf("Permite dividir de forma exacta dos números, siempre devolviendo un decimal.\n"
-                           "Para una versión para enters, utiliza el operador (//)."); break;
-                case INTRINSECA_MOD:
-                    printf("Permite utilizar aritmética modular.\n"); break;
+                case INTRINSECA_SUMA: printf("Permite sumar dos números, o concatenar dos cadenas de caracteres.\n"); break;
+                case INTRINSECA_RESTA: printf("Permite restar dos números.\n"); break;
+                case INTRINSECA_MULT: printf("Permite multiplicar dos números, o concatenar repetidamente "
+                                             "un string a sí mismo.\n"); break;
+                case INTRINSECA_DIV: printf("Permite dividir de forma exacta dos números, siempre devolviendo un "
+                                            "decimal.\nPara una versión para enters, utiliza el operador (//)."); break;
+                case INTRINSECA_MOD: printf("Permite utilizar aritmética modular.\n"); break;
                 case INTRINSECA_EQ: printf("Comprueba la igualdad de dos valores.\n"); break;
                 case INTRINSECA_NEQ: printf("Comprueba la diferencia de dos valores.\n"); break;
                 case INTRINSECA_GE: printf("Comprueba si un valor a es mayor que un valor b.\n"); break;
@@ -427,6 +424,17 @@ void ayuda(Valor v) {
                 case INTRINSECA_EVAL: printf("Permite evaluar una cadena con código, como si se hubiese"
                                              "ejecutado directamente en la consola.\n"
                                              "Ejemplo: `eval(\"x=2+3\"); print(x)`\n"); break;
+                case INTRINSECA_EXIT: printf("Termina la ejecución del programa.\n"); break;
+                case INTRINSECA_CALLFOREIGN: printf("Permite llamar a una función foránea de una biblioteca dinámica"
+                                                    "de C. Los tipos de los argumentos de la función se deciden"
+                                                    "de forma dinámica en base a los argumentos pasados, mientras que"
+                                                    "el tipo de retorno se indica explícitamente.\nPor ejemplo, para"
+                                                    "llamar a una función\n\n\t\t double sumar(double a, double b);\n\n"
+                                                    "Se haría lo siguiente:\n\n\t\t"
+                                                    "import foreign \"biblioteca.so\" as bib\n\t\t"
+                                                    "callforeign(bib.sumar, \"double\", 2.0, 3.0)\n\n"
+                                                    "Es importante que los argumentos pasados sean del tipo correcto,"
+                                                    "pues si no se pueden producir errores no predecibles.\n"); break;
             }
             break;
     }
@@ -498,6 +506,62 @@ void printws(TablaSimbolos *t) {
     for (int i = 0; i <= t->nivel; ++i) {
         iterar_tabla_hash(t->tablas[i], _imprimir_entrada_tabla);
     }
+}
+
+Valor callforeign(FuncionForanea f, Valor retorno, Valor* vargs, int nargs) {
+    ffi_type **arg_types = malloc(sizeof (ffi_type) * nargs);
+    void **args = malloc(sizeof(void*) * nargs);
+    for (int i = 0; i < nargs; ++i) {
+        switch (vargs[i].tipo_valor) {
+            case TIPO_ENTERO:
+                arg_types[i] = &ffi_type_sint;
+                args[i] = &vargs[i].entero;
+                break;
+            case TIPO_DECIMAL:
+                arg_types[i] = &ffi_type_double;
+                args[i] = &vargs[i].decimal;
+                break;
+            case TIPO_BOOL:
+                arg_types[i] = &ffi_type_ushort;
+                args[i] = &vargs[i].bool;
+                break;
+            case TIPO_STRING:
+                arg_types[i] = &ffi_type_pointer;
+                char* ptr = string_a_puntero(&vargs[i].string);
+                args[i] = &ptr;
+                break;
+            case TIPO_FUNCION_FORANEA:
+                arg_types[i] = &ffi_type_pointer;
+                args[i] = &vargs[i].funcion_foranea;
+                break;
+            default: {
+                Error error = crear_error("No se puede pasar un valor de tipo %s como argumento a una función foránea.",
+                                          tipo_valor_a_str(vargs[i].tipo_valor));
+                return crear_valor_error(error, vargs[i].loc);
+            }
+        }
+    }
+
+    char* str_retorno = string_a_puntero(&retorno.string);
+    if (strcmp(str_retorno, "int") == 0) {
+        int rvalue;
+        llamar_funcion_foranea(f, &ffi_type_sint, arg_types, nargs, args, &rvalue);
+        return crear_entero(rvalue, NULL);
+    } else if (strcmp(str_retorno, "float") == 0) {
+        float rvalue;
+        llamar_funcion_foranea(f, &ffi_type_float, arg_types, nargs, args, &rvalue);
+        return crear_decimal((Decimal) rvalue, NULL);
+    } else if (strcmp(str_retorno, "double") == 0) {
+        double rvalue;
+        llamar_funcion_foranea(f, &ffi_type_double, arg_types, nargs, args, &rvalue);
+        return crear_decimal((Decimal) rvalue, NULL);
+    } else if (strcmp(str_retorno, "void") == 0) {
+        llamar_funcion_foranea(f, &ffi_type_void, arg_types, nargs, args, NULL);
+        return crear_indefinido();
+    }
+
+    Error error = crear_error("No se reconoce \"%s\" como un tipo de retorno correcto para una función foránea.", str_retorno);
+    return crear_valor_error(error, retorno.loc);
 }
 
 Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t) {
@@ -661,6 +725,25 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             } else {
                 comprobacion_n_args(0, "salir");
                 result = crear_valor_control_flujo(CTR_FLUJO_EXIT, NULL, NULL);
+            }
+            break;
+        case INTRINSECA_CALLFOREIGN:
+            if (args.longitud < 3) {
+                Valor v = crear_valor_error(crear_error_numero_argumentos(3, args.longitud), args.loc);
+                borrar_lista_valores(&args);
+                return v;
+            } else {
+                if (vargs[0].tipo_valor != TIPO_FUNCION_FORANEA) {
+                    Error error = crear_error_op_incompatible("utilizar como función foránea", vargs[0].tipo_valor);
+                    result = crear_valor_error(error, vargs[0].loc);
+                    break;
+                }
+                if (vargs[1].tipo_valor != TIPO_STRING) {
+                    Error error = crear_error_op_incompatible("utilizar como tipo de retorno", vargs[1].tipo_valor);
+                    result = crear_valor_error(error, vargs[1].loc);
+                    break;
+                }
+                result = callforeign(vargs[0].funcion_foranea, vargs[1], vargs+2, args.longitud-2);
             }
             break;
     }

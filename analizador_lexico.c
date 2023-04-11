@@ -1241,7 +1241,7 @@ YY_RULE_SETUP
 case YY_STATE_EOF(INITIAL):
 #line 194 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_lexico.l"
 {
-        yylloc->first_column++;
+        yylloc->first_column = yylloc->last_column;
         yylloc->last_column++;
         return YYEOF;
     }

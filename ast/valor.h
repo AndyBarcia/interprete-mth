@@ -3,7 +3,7 @@
 
 #include "../string.h"
 #include "../error.h"
-#include "../biblioteca_dinamica.h"
+#include "../bibliotecas/biblioteca_dinamica.h"
 #include "../analizador_lexico.h"
 
 #include "identificador.h"
@@ -50,7 +50,9 @@ typedef enum {
 /// Un valor asignable en una expresión de asignación.
 typedef Identificador NombreAsignable;
 
+/// Las distintas funciones intrínsecas del lenguaje.
 typedef enum {
+    /// Operaciones aritméticas básicas
     INTRINSECA_SUMA,
     INTRINSECA_RESTA,
     INTRINSECA_MULT,
@@ -66,13 +68,23 @@ typedef enum {
     INTRINSECA_OR,
     INTRINSECA_NOT,
     INTRINSECA_NEGAR,
+    /// Imprimir uno o varios valores.
     INTRINSECA_PRINT,
+    /// Imprimir o resetear el espacio de trabajo.
     INTRINSECA_PRINTWS,
     INTRINSECA_RESETWS,
+    /// Ayuda sobre un determinado valor.
     INTRINSECA_AYUDA,
+    /// Cargar un fichero como un string.
     INTRINSECA_CARGAR,
+    /// Evalua un string como si se hubiese
+    /// ejecutado en la terminal.
     INTRINSECA_EVAL,
-    INTRINSECA_EXIT
+    /// Termina la ejecución del programa.
+    INTRINSECA_EXIT,
+    /// Llama a una función de una biblioteca
+    /// externa de C.
+    INTRINSECA_CALLFOREIGN
 } FuncionIntrinseca;
 
 /// Una función definida por el usuario, con:

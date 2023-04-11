@@ -192,7 +192,7 @@ else { return ELSE; }
 {ESPACIO_EN_BLANCO} { /* ignorar espacios */ }
 
 <<EOF>> {
-        yylloc->first_column++;
+        yylloc->first_column = yylloc->last_column;
         yylloc->last_column++;
         return YYEOF;
     }
