@@ -92,6 +92,21 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
                 _variables_capturadas(subexpresion, locales, lista);
             }
             break;
+        case EXP_ACCESO_MIEMBRO:
+            _variables_capturadas(*(Expresion *) expresion.acceso.valor, locales, lista);
+            break;
+        case EXP_IMPORT:
+            break;
+        case EXP_CONDICIONAL:
+            _variables_capturadas(*(Expresion *) expresion.condicional.condicion, locales, lista);
+            _variables_capturadas(*(Expresion *) expresion.condicional.verdadero, locales, lista);
+            if (expresion.condicional.falso)
+                _variables_capturadas(*(Expresion *) expresion.condicional.falso, locales, lista);
+            break;
+        case EXP_CONTROL_FLUJO:
+            if (expresion.control_flujo.retorno)
+                _variables_capturadas(*(Expresion*) expresion.control_flujo.retorno, locales, lista);
+            break;
     }
 }
 
