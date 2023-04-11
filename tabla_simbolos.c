@@ -70,17 +70,19 @@ int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsigna
 }
 
 int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {
+    int movidos = 0;
+
     int capacidad_real = otro.capacidad + otro.limite_busqueda;
     for (int i = 0; i < capacidad_real; ++i) {
         if (otro.buffer[i].distancia_posicion_ideal != -1) {
             EntradaTablaHash entrada = otro.buffer[i];
             String clave = clonar_string(entrada.clave);
             Valor v = clonar_valor(entrada.valor);
-            if (!asignar_valor_tabla(t, clave, v, entrada.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL))
-                continue;
+            if (asignar_valor_tabla(t, clave, v, entrada.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL))
+                ++movidos;
         }
     }
-    return 1;
+    return movidos;
 }
 
 void imprimir(EntradaTablaHash entrada) {

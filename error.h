@@ -10,6 +10,10 @@ typedef struct {
     String mensaje;
 } Error;
 
+/*
+ * Funciones de ayuda de creación de errores.
+ */
+
 Error crear_error(const char *formato, ...);
 Error crear_error_numero_argumentos(int esperado, int actual);
 Error crear_error_tipos_incompatibles(char* op, int tipoA, int tipoB);

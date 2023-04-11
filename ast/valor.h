@@ -8,13 +8,6 @@
 
 #include "identificador.h"
 
-/// Tipo interno de un entero en el lenguaje
-typedef int Entero;
-/// Tipo interno de un bool en el lenguaje
-typedef int Bool;
-/// Tipo entero de un número decimal.
-typedef double Decimal;
-
 /// Todos los tipos de valores que hay en el lenguaje
 typedef enum {
     /// Valor de tipo nulo.
@@ -46,6 +39,13 @@ typedef enum {
     /// un `return` o un `break`.
     TIPO_CONTROL_FLUJO
 } TipoValor;
+
+/// Tipo interno de un entero en el lenguaje
+typedef int Entero;
+/// Tipo interno de un bool en el lenguaje
+typedef int Bool;
+/// Tipo entero de un número decimal.
+typedef double Decimal;
 
 /// Un valor asignable en una expresión de asignación.
 typedef Identificador NombreAsignable;
@@ -102,6 +102,8 @@ typedef struct {
     struct Expresion *cuerpo;
 } Funcion;
 
+/// Un valor resultante de una expresión de control
+/// de flujo del estilo de `return` o `break`.
 typedef struct {
     TipoControlFlujo tipo;
     struct Valor *valor;
@@ -180,6 +182,8 @@ void borrar_lista_valores(ListaValores *lista);
 void _imprimir_valor(Valor valor);
 void imprimir_valor(Valor valor);
 
+/// Convierte un tipo de valor a una
+/// representación en forma de string.
 char* tipo_valor_a_str(TipoValor tipo);
 
 #endif //PRACTICA3_VALOR_H

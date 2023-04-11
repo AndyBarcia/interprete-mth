@@ -7,9 +7,9 @@
 #include "../tabla_simbolos.h"
 #include "control_flujo.h"
 
-/// Una lista de expresiones, ya sea en un
-/// bloque de expresiones o los nombres_args
-/// de una llamada a una función.
+/// Una lista de expresiones, con una
+/// determinada localización en el
+/// código fuente.
 typedef struct {
     int capacidad;
     int longitud;
@@ -17,17 +17,16 @@ typedef struct {
     Localizacion* loc;
 } ListaExpresiones;
 
-/// Llamada a una expresión como si fuese
-/// una función, utilizando uns determinados
-/// nombres_args.
+/// Expresión de llamada a una función,
+/// del estilo de `exp(args)`.
 typedef struct {
     struct Expresion *funcion;
     ListaExpresiones args;
     Localizacion* loc;
-} LlamadaFuncion;
+} ExpLlamada;
 
-/// Asignación del valor de una expresión
-/// a un identificador.
+/// Una expresión de asignación, del
+/// estilo de `x = exp`.
 typedef struct {
     /// El nombre al que se va a asignar
     /// el valor de la expresión.
@@ -42,56 +41,75 @@ typedef struct {
     /// La localización de la expresión
     /// en el código fuente.
     Localizacion* loc;
-} Asignacion;
+} ExpAsignacion;
 
-/// La definición de una función creada por
-/// el usuario.
+/// Una expresión de definición de una función,
+/// del estilo de `\x => exp`.
 typedef struct {
+    /// Los nombres de los argumentos.
     ListaIdentificadores nombres_args;
+    /// El cuerpo de la propia función.
     struct Expresion *cuerpo;
+    /// La localización de la expresión en
+    /// código fuente.
     Localizacion* loc;
-} DefinicionFuncion;
+} ExpDefFuncion;
 
-/// La importación de un archivo, ya sea
-/// del propio lenguaje, o una biblioteca
-/// foránea con funciones de C.
+/// Una expresión de importación, ya sea
+/// del estilo de `import "fichero.mth"
+/// o `import foreign "fichero.so" as nombre.
 typedef struct {
+    /// El archivo o biblioteca a cargar.
     String archivo;
+    /// Si es una biblioteca foránea.
     int foraneo;
+    /// El identificador con el que se
+    /// va a cargar la biblioteca.
     Identificador *as;
+    /// La localización en el código fuente.
     Localizacion* loc;
-} Import;
+} ExpImporte;
 
 /// Una expresión de acceso al miembro
 /// de un valor estructurado.
 /// Ejemplo: `diccionario.test`
 typedef struct {
+    /// La expresión a la que se va a acceder.
     struct Expresion *valor;
+    /// El miembro que se va a acceder.
     Identificador miembro;
+    /// La localización en el código fuente.
     Localizacion* loc;
-} AccesoMiembro;
+} ExpAcceso;
 
+/// Una lista de expresiones en un
+/// bloque de tipo `{ [exp] }`.
 typedef struct {
     ListaExpresiones lista;
     Localizacion *loc;
-} BloqueExpresiones;
+} ExpBloque;
 
+/// Una expresión condicional del
+/// tipo `if a then b else c`.
 typedef struct {
     struct Expresion* condicion;
     struct Expresion* verdadero;
     struct Expresion* falso;
     Localizacion *loc;
-} Condicional;
+} ExpCondicional;
 
 /// Una expresión de control de flujo, como
 /// un `return` o un `break`.
-/// Tiene un posible valor de retorno asociado
+/// Tiene un posible valor de retorno asociado,
 /// como con `return 5`.
 typedef struct {
+    /// El tipo de control de flujo.
     TipoControlFlujo tipo;
+    /// El opcional valor de retorno.
     struct Expresion* retorno;
+    /// La localización en el código.
     Localizacion* loc;
-} ControlFlujo;
+} ExpControlFlujo;
 
 /// El tipo de una expresión.
 typedef enum {
@@ -147,14 +165,14 @@ typedef struct {
     union {
         Valor valor;
         NombreAsignable nombre;
-        AccesoMiembro acceso;
-        LlamadaFuncion llamada_funcion;
-        Asignacion asignacion;
-        DefinicionFuncion def_funcion;
-        BloqueExpresiones bloque;
-        Import importe;
-        Condicional condicional;
-        ControlFlujo control_flujo;
+        ExpAcceso acceso;
+        ExpLlamada llamada_funcion;
+        ExpAsignacion asignacion;
+        ExpDefFuncion def_funcion;
+        ExpBloque bloque;
+        ExpImporte importe;
+        ExpCondicional condicional;
+        ExpControlFlujo control_flujo;
     };
 } Expresion;
 
@@ -183,6 +201,8 @@ Expresion clonar_expresion(Expresion exp);
 /// Libera la memoria de una expresión, ignorando su valor.
 void borrar_expresion(Expresion *exp);
 
+/// Devuelve la posible localización de una expresión.
+/// Se devuelve NULL si no se conoce su localización.
 Localizacion* obtener_loc_exp(Expresion *exp);
 
 /*
@@ -220,6 +240,6 @@ void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
  * @param funcion función a la que se le calcularán las variables capturadas.
  * @return lista de variables capturadas.
  */
-ListaIdentificadores variables_capturadas(DefinicionFuncion funcion);
+ListaIdentificadores variables_capturadas(ExpDefFuncion funcion);
 
 #endif //PRACTICA3_AST_H

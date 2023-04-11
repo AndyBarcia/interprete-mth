@@ -110,7 +110,7 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
     }
 }
 
-ListaIdentificadores variables_capturadas(DefinicionFuncion funcion) {
+ListaIdentificadores variables_capturadas(ExpDefFuncion funcion) {
     ListaIdentificadores capturadas = crear_lista_identificadores();
     TablaHash locales = crear_tabla_hash(funcion.nombres_args.longitud);
     for (int i = 0; i < funcion.nombres_args.longitud; ++i)
@@ -146,7 +146,7 @@ Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion 
 
     return (Expresion) {
         .tipo = EXP_ACCESO_MIEMBRO,
-        .acceso = (AccesoMiembro) {
+        .acceso = (ExpAcceso) {
             .valor = (struct Expresion*) e,
             .miembro = miembro,
             .loc = loc
@@ -166,7 +166,7 @@ Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Loca
 
     return (Expresion) {
             .tipo = EXP_OP_LLAMADA,
-            .llamada_funcion = (LlamadaFuncion) {
+            .llamada_funcion = (ExpLlamada) {
                     .funcion = (struct Expresion *) e,
                     .args = argumentos,
                     .loc = loc
@@ -200,7 +200,7 @@ Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion,
 
     return (Expresion) {
             .tipo = EXP_OP_ASIGNACION,
-            .asignacion = (Asignacion) {
+            .asignacion = (ExpAsignacion) {
                     .identificador = identificador,
                     .expresion = (struct Expresion *) e,
                     .tipo = asignacion,
@@ -222,7 +222,7 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
 
     return (Expresion) {
             .tipo = EXP_OP_DEF_FUNCION,
-            .def_funcion = (DefinicionFuncion) {
+            .def_funcion = (ExpDefFuncion) {
                     .nombres_args = argumentos,
                     .cuerpo = (struct Expresion *) e,
                     .loc = loc
@@ -240,7 +240,7 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc) {
 
     return (Expresion) {
             .tipo = EXP_BLOQUE,
-            .bloque = (BloqueExpresiones) {
+            .bloque = (ExpBloque) {
                 .lista = expresiones,
                 .loc = loc
             },
@@ -257,7 +257,7 @@ Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc) {
 
     return (Expresion) {
             .tipo = EXP_IMPORT,
-            .importe = (Import) {
+            .importe = (ExpImporte) {
                     .archivo = archivo,
                     .foraneo = foraneo,
                     .as = NULL,
@@ -279,7 +279,7 @@ Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Lo
 
     return (Expresion) {
         .tipo = EXP_IMPORT,
-        .importe = (Import) {
+        .importe = (ExpImporte) {
             .archivo = archivo,
             .foraneo = foraneo,
             .as = as_p,
@@ -310,7 +310,7 @@ Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expres
 
     return (Expresion) {
         .tipo = EXP_CONDICIONAL,
-        .condicional = (Condicional) {
+        .condicional = (ExpCondicional) {
             .condicion = (struct Expresion*) cp,
             .verdadero = (struct Expresion*) vp,
             .falso = (struct Expresion*) falso,
@@ -335,7 +335,7 @@ Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Locali
 
     return (Expresion) {
         .tipo = EXP_CONTROL_FLUJO,
-        .control_flujo = (ControlFlujo) {
+        .control_flujo = (ExpControlFlujo) {
             .tipo = tipo,
             .retorno = (struct Expresion*) retorno,
             .loc = loc
