@@ -642,7 +642,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             if (comparar_valor(vargs[0], vargs[1], &resultado)) {
                 result = crear_bool(resultado == 0, NULL);
             } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("igualdad", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
             }
             break;
         }
@@ -657,7 +657,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             if (comparar_valor(vargs[0], vargs[1], &resultado)) {
                 result = crear_bool(resultado != 0, NULL);
             } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("desigualdad", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
             }
             break;
         }
@@ -667,7 +667,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             if (comparar_valor(vargs[0], vargs[1], &resultado)) {
                 result = crear_bool(resultado > 0, NULL);
             } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("mayor", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
             }
             break;
         }
@@ -677,7 +677,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             if (comparar_valor(vargs[0], vargs[1], &resultado)) {
                 result = crear_bool(resultado >= 0, NULL);
             } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("mayor o igual", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
             }
             break;
         }
@@ -687,7 +687,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             if (comparar_valor(vargs[0], vargs[1], &resultado)) {
                 result = crear_bool(resultado < 0, NULL);
             } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("menor", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
             }
             break;
         }
@@ -697,7 +697,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             if (comparar_valor(vargs[0], vargs[1], &resultado)) {
                 result = crear_bool(resultado <= 0, NULL);
             } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("menor o igual", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
+                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
             }
             break;
         }

@@ -217,24 +217,53 @@ void borrar_valor(Valor *valor) {
 }
 
 int comparar_valor(Valor a, Valor b, int *resultado) {
-    if (a.tipo_valor != b.tipo_valor) return 0;
     switch (a.tipo_valor) {
+        case TIPO_ENTERO:
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    *resultado =  a.entero - b.entero;
+                    return 1;
+                case TIPO_DECIMAL: {
+                    double dif = ((double) a.entero) - b.decimal;
+                    if (dif > 0.0) *resultado = 1;
+                    else if (dif < 0.0) *resultado = -1;
+                    else *resultado = 0;
+                    return 1;
+                }
+                default: return 0;
+            }
+        case TIPO_DECIMAL:
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO: {
+                    double dif = a.decimal - ((double) b.decimal);
+                    if (dif > 0.0) *resultado = 1;
+                    else if (dif < 0.0) *resultado = -1;
+                    else *resultado = 0;
+                    return 1;
+                }
+                case TIPO_DECIMAL: {
+                    double dif = a.decimal - b.decimal;
+                    if (dif > 0.0) *resultado = 1;
+                    else if (dif < 0.0) *resultado = -1;
+                    else *resultado = 0;
+                    return 1;
+                }
+                default: return 0;
+            }
         case TIPO_NULO:
+            if (a.tipo_valor != b.tipo_valor) return 0;
             *resultado = 0;
             return 1;
         case TIPO_FUNCION_INTRINSECA:
+            if (a.tipo_valor != b.tipo_valor) return 0;
             *resultado = a.funcion_intrinseca != b.funcion_intrinseca;
             return 1;
-        case TIPO_ENTERO:
-            *resultado =  a.entero - b.entero;
-            return 1;
-        case TIPO_DECIMAL:
-            *resultado =  (int) (a.decimal - b.decimal);
-            return 1;
         case TIPO_BOOL:
+            if (a.tipo_valor != b.tipo_valor) return 0;
             *resultado =  a.bool - b.bool;
             return 1;
         case TIPO_STRING:
+            if (a.tipo_valor != b.tipo_valor) return 0;
             *resultado = strcmp(string_a_puntero(&a.string), string_a_puntero(&b.string));
             return 1;
         default:
