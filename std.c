@@ -17,6 +17,8 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("eval"), crear_funcion_intrinseca(INTRINSECA_EVAL, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("exit"), crear_funcion_intrinseca(INTRINSECA_EXIT, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("callforeign"), crear_funcion_intrinseca(INTRINSECA_CALLFOREIGN, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("int"), crear_funcion_intrinseca(INTRINSECA_CAST_ENTERO, NULL), ASIGNACION_INMUTABLE);
+    asignar_valor_tabla(t, crear_string("decimal"), crear_funcion_intrinseca(INTRINSECA_CAST_DECIMAL, NULL), ASIGNACION_INMUTABLE);
 }
 
 #define comprobacion_n_args(n_args, op) \
@@ -564,6 +566,40 @@ Valor callforeign(FuncionForanea f, Valor retorno, Valor* vargs, int nargs) {
     return crear_valor_error(error, retorno.loc);
 }
 
+Valor casting(Valor v, TipoValor objetivo) {
+    if (v.tipo_valor == objetivo)
+        return v;
+
+    switch (objetivo) {
+        case TIPO_ENTERO:
+            switch (v.tipo_valor) {
+                case TIPO_DECIMAL: {
+                    Valor c = crear_entero((int) v.decimal, NULL);
+                    borrar_valor(&v);
+                    return c;
+                }
+                default: break;
+            }
+            break;
+        case TIPO_DECIMAL:
+            switch (v.tipo_valor) {
+                case TIPO_ENTERO: {
+                    Valor c = crear_decimal((Decimal) v.entero, NULL);
+                    borrar_valor(&v);
+                    return c;
+                }
+                default: break;
+            }
+            break;
+        default: break;
+    }
+
+    Error error = crear_error_casting(v.tipo_valor, objetivo);
+    Valor retorno = crear_valor_error(error, v.loc);
+    borrar_valor(&v);
+    return retorno;
+}
+
 Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t, String wd) {
     Valor *vargs = (Valor*) args.valores;
     Valor result = crear_indefinido();
@@ -745,6 +781,14 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
                 }
                 result = callforeign(vargs[0].funcion_foranea, vargs[1], vargs+2, args.longitud-2);
             }
+            break;
+        case INTRINSECA_CAST_ENTERO:
+            comprobacion_n_args(1, "casting");
+            result = casting(vargs[0], TIPO_ENTERO);
+            break;
+        case INTRINSECA_CAST_DECIMAL:
+            comprobacion_n_args(1, "casting");
+            result = casting(vargs[0], TIPO_DECIMAL);
             break;
     }
 

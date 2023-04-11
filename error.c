@@ -64,6 +64,10 @@ Error crear_error_contexto_incorrecto(char* tipo, char* contexto) {
     return crear_error("No se puede user %s desde %s.", tipo, contexto);
 }
 
+Error crear_error_casting(int tipoActual, int tipoObjetivo) {
+    return crear_error("No se puede hacer un cast de %s a %s.", tipo_valor_a_str(tipoActual), tipo_valor_a_str(tipoObjetivo));
+}
+
 void borrar_error(Error *error) {
     borrar_string(&error->mensaje);
 }

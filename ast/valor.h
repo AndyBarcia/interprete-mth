@@ -84,7 +84,12 @@ typedef enum {
     INTRINSECA_EXIT,
     /// Llama a una función de una biblioteca
     /// externa de C.
-    INTRINSECA_CALLFOREIGN
+    INTRINSECA_CALLFOREIGN,
+    /// Funciones de casting de distintos tipos.
+    /// Se devuelve un error en caso de que no
+    /// se pueda hacer el casting.
+    INTRINSECA_CAST_ENTERO,
+    INTRINSECA_CAST_DECIMAL,
 } FuncionIntrinseca;
 
 /// Una función definida por el usuario, con:
