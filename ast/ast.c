@@ -492,7 +492,7 @@ void borrar_expresion(Expresion *exp) {
                 borrar_expresion((Expresion*) exp->condicional.falso);
                 free(exp->condicional.falso);
             }
-            if(exp->acceso.loc) free(exp->acceso.loc);
+            if(exp->condicional.loc) free(exp->condicional.loc);
             break;
         case EXP_CONTROL_FLUJO:
             if (exp->control_flujo.retorno) {

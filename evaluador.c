@@ -134,12 +134,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     for (int j = 0; j < args.longitud; ++j)
                         if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
                     free(args.valores);
+                    if (args.loc) free(args.loc);
                     free(exp->llamada_funcion.loc);
                     free(exp->llamada_funcion.args.loc);
                     return v;
                 }
             }
-            free(exp->llamada_funcion.args.loc);
 
             // Tenemos que actuar de forma distinta en base a si es una función
             // intrínseca, una función foranea, o una función definida por el usuario.
@@ -204,6 +204,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     // y libera la memoria.
                     reducir_nivel_tabla_simbolos(tabla);
                     free(args.valores);
+                    if (args.loc) free(args.loc);
                     free(exp->llamada_funcion.loc);
                     borrar_valor(&f);
 
@@ -425,6 +426,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     borrar_valor(&x);
                 }
                 reducir_nivel_tabla_simbolos(tabla);
+                borrar_evaluador(&evaluador);
             }
 
             borrar_string(&exp->importe.archivo);
@@ -534,6 +536,7 @@ ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaEx
         *valores.loc = *listaExpresiones->loc;
 
     free(listaExpresiones->valores);
+    if (listaExpresiones->loc) free(listaExpresiones->loc);
     listaExpresiones->longitud = 0;
     listaExpresiones->capacidad = 0;
     return valores;

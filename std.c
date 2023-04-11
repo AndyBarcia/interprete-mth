@@ -510,7 +510,26 @@ void printws(TablaSimbolos *t) {
     }
 }
 
-Valor callforeign(FuncionForanea f, Valor retorno, Valor* vargs, int nargs) {
+Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
+    if (f.tipo_valor != TIPO_FUNCION_FORANEA) {
+        Error error = crear_error_op_incompatible("utilizar como función foránea", f.tipo_valor);
+        Valor result = crear_valor_error(error, f.loc);
+        borrar_valor(&f);
+        borrar_valor(&tipo_retorno);
+        for (int i = 0; i < nargs; ++i)
+            borrar_valor(vargs+i);
+        return result;
+    }
+    if (tipo_retorno.tipo_valor != TIPO_STRING) {
+        Error error = crear_error_op_incompatible("utilizar como tipo de retorno", tipo_retorno.tipo_valor);
+        Valor result = crear_valor_error(error, tipo_retorno.loc);
+        borrar_valor(&f);
+        borrar_valor(&tipo_retorno);
+        for (int i = 0; i < nargs; ++i)
+            borrar_valor(vargs+i);
+        return result;
+    }
+
     ffi_type **arg_types = malloc(sizeof (ffi_type) * nargs);
     void **args = malloc(sizeof(void*) * nargs);
     for (int i = 0; i < nargs; ++i) {
@@ -544,26 +563,35 @@ Valor callforeign(FuncionForanea f, Valor retorno, Valor* vargs, int nargs) {
         }
     }
 
-    char* str_retorno = string_a_puntero(&retorno.string);
+    char* str_retorno = string_a_puntero(&tipo_retorno.string);
+    Valor resultado;
     if (strcmp(str_retorno, "int") == 0) {
         int rvalue;
-        llamar_funcion_foranea(f, &ffi_type_sint, arg_types, nargs, args, &rvalue);
-        return crear_entero(rvalue, NULL);
+        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_sint, arg_types, nargs, args, &rvalue);
+        resultado = crear_entero(rvalue, NULL);
     } else if (strcmp(str_retorno, "float") == 0) {
         float rvalue;
-        llamar_funcion_foranea(f, &ffi_type_float, arg_types, nargs, args, &rvalue);
-        return crear_decimal((Decimal) rvalue, NULL);
+        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_float, arg_types, nargs, args, &rvalue);
+        resultado = crear_decimal((Decimal) rvalue, NULL);
     } else if (strcmp(str_retorno, "double") == 0) {
         double rvalue;
-        llamar_funcion_foranea(f, &ffi_type_double, arg_types, nargs, args, &rvalue);
-        return crear_decimal((Decimal) rvalue, NULL);
+        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_double, arg_types, nargs, args, &rvalue);
+        resultado = crear_decimal((Decimal) rvalue, NULL);
     } else if (strcmp(str_retorno, "void") == 0) {
-        llamar_funcion_foranea(f, &ffi_type_void, arg_types, nargs, args, NULL);
-        return crear_indefinido();
+        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_void, arg_types, nargs, args, NULL);
+        resultado = crear_indefinido();
+    } else {
+        Error error = crear_error("No se reconoce \"%s\" como un tipo de tipo_retorno correcto para una función foránea.", str_retorno);
+        resultado = crear_valor_error(error, tipo_retorno.loc);
     }
 
-    Error error = crear_error("No se reconoce \"%s\" como un tipo de retorno correcto para una función foránea.", str_retorno);
-    return crear_valor_error(error, retorno.loc);
+    borrar_valor(&f);
+    borrar_valor(&tipo_retorno);
+    for (int i = 0; i < nargs; ++i)
+        borrar_valor(vargs+i);
+    free(arg_types);
+    free(args);
+    return resultado;
 }
 
 Valor casting(Valor v, TipoValor objetivo) {
@@ -769,17 +797,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
                 borrar_lista_valores(&args);
                 return v;
             } else {
-                if (vargs[0].tipo_valor != TIPO_FUNCION_FORANEA) {
-                    Error error = crear_error_op_incompatible("utilizar como función foránea", vargs[0].tipo_valor);
-                    result = crear_valor_error(error, vargs[0].loc);
-                    break;
-                }
-                if (vargs[1].tipo_valor != TIPO_STRING) {
-                    Error error = crear_error_op_incompatible("utilizar como tipo de retorno", vargs[1].tipo_valor);
-                    result = crear_valor_error(error, vargs[1].loc);
-                    break;
-                }
-                result = callforeign(vargs[0].funcion_foranea, vargs[1], vargs+2, args.longitud-2);
+                result = callforeign(vargs[0], vargs[1], vargs+2, args.longitud-2);
             }
             break;
         case INTRINSECA_CAST_ENTERO:
