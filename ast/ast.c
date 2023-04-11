@@ -70,7 +70,7 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
             break;
         case EXP_IDENTIFICADOR:
             if (!es_miembro_hash(*locales, string_a_puntero(&expresion.nombre.nombre)))
-                push_lista_identificadores(lista, expresion.nombre);
+                push_lista_identificadores(lista, clonar_identificador(expresion.nombre));
             break;
         case EXP_OP_LLAMADA:
             _variables_capturadas(*(Expresion *) expresion.llamada_funcion.funcion, locales, lista);
