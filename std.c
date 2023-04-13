@@ -581,7 +581,7 @@ Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
         llamar_funcion_foranea(f.funcion_foranea, &ffi_type_void, arg_types, nargs, args, NULL);
         resultado = crear_indefinido();
     } else {
-        Error error = crear_error("No se reconoce \"%s\" como un tipo de tipo_retorno correcto para una función foránea.", str_retorno);
+        Error error = crear_error("No se reconoce \"%s\" como un tipo de retorno correcto para una función foránea.", str_retorno);
         resultado = crear_valor_error(error, tipo_retorno.loc);
     }
 

@@ -2542,7 +2542,7 @@ char* obtener_linea(Lexer lexer, int linea) {
 
         int len = strlen(buffer);
         if (buffer[len-1] == '\n')
-            buffer[len-1] == '\0';
+            buffer[len-1] = '\0';
 
         // Volver a la posición original y terminar.
         fseek(archivo, pos, SEEK_SET);

@@ -160,7 +160,8 @@ typedef struct {
     TipoExpresion tipo;
     /// Si es una sentencia o no (Ej, `5` vs `5;`).
     /// Una sentencia produce como valor siempre
-    /// "indefinido".
+    /// "indefinido", excepto en las expresiones
+    /// de control de flujo.
     int es_sentencia;
     union {
         Valor valor;

@@ -163,10 +163,11 @@ Valor clonar_valor(Valor v) {
 
 void borrar_valor(Valor *valor) {
     // Si es un valor dinámico (string, error, función, etc),
-    // reducir el número de referencias dinámicas; y si estas
-    // legan a 0, liberar la memoria.
+    // reducir el número de referencias dinámicas.
     if (valor->referencias) {
         *valor->referencias -= 1;
+        
+        // Si las referencias llegan a 0, liberar la memoria.
         if (*valor->referencias <= 0) {
             if (valor->loc) {
                 free(valor->loc);
@@ -189,7 +190,10 @@ void borrar_valor(Valor *valor) {
                 case TIPO_BIBLIOTECA_FORANEA:
                     cerrar_biblioteca_dinamica(&valor->biblioteca);
                 case TIPO_CONTROL_FLUJO:
-                    if (valor->control_flujo.valor) free(valor->control_flujo.valor);
+                    if (valor->control_flujo.valor) {
+                        borrar_valor((Valor *) valor->control_flujo.valor);
+                        free(valor->control_flujo.valor);
+                    }
                 default:
                     break;
             }

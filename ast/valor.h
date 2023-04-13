@@ -27,7 +27,7 @@ typedef enum {
     TIPO_BOOL,
     /// Valor string. Ejemplo `"string"`
     TIPO_STRING,
-    /// Valor de puntero a función nativa. Ejemplo `+`
+    /// Valor de función intrínseca. Ejemplo `(+)`
     TIPO_FUNCION_INTRINSECA,
     /// Valor de puntero a función de C.
     TIPO_FUNCION_FORANEA,
@@ -35,8 +35,8 @@ typedef enum {
     TIPO_FUNCION,
     /// Una biblioteca de C
     TIPO_BIBLIOTECA_FORANEA,
-    /// Un elemento de control de flujo, como
-    /// un `return` o un `break`.
+    /// Un valor resultando de una expresión de control 
+    /// de flujo, como un `return` o un `break`.
     TIPO_CONTROL_FLUJO
 } TipoValor;
 
@@ -92,13 +92,15 @@ typedef enum {
     INTRINSECA_CAST_DECIMAL,
 } FuncionIntrinseca;
 
-/// Una función definida por el usuario, con:
-///     * Una serie de nombres como nombres_args de entrada.
-///     * Un conjunto de variables capturadas de su entorno.
-///     * El cuerpo de la función en sí.
+/// Una función definida por el usuario, resultado
+/// de una expresión de definición de función del
+/// estilo de \x,y => x+y
 typedef struct {
+	/// Una serie de nombres como argumentos de entrada.
     ListaIdentificadores nombres_args;
+    /// Un conjunto de valores capturados de su entorno.
     struct TablaHash *variables_capturadas;
+    /// El cuerpo de la función en sí.
     struct Expresion *cuerpo;
 } Funcion;
 
@@ -111,11 +113,13 @@ typedef struct {
 
 /// Un valor del lenguaje de programación.
 /// Los valores dinámicos (strings, errores, y funciones) llevan
-/// una cuenta de referencias activas para así evitar double free's.
+/// una cuenta de referencias activas para así evitar double free's
+/// y evitar mallocs innecesarios.
 typedef struct {
     //// El tipo de valor.
     TipoValor tipo_valor;
-    /// El número de referencias dinámicas.
+    /// El número de referencias dinámicas,
+    /// o NULL en caso de valores triviales.
     int *referencias;
     /// La localización en el código fuente, si existe.
     Localizacion *loc;

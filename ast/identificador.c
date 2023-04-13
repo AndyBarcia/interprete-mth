@@ -61,6 +61,7 @@ void borrar_lista_identificadores(ListaIdentificadores *lista) {
     for (int i = 0; i < lista->longitud; ++i)
         borrar_identificador(&lista->valores[i]);
     free(lista->valores);
+    lista->valores = NULL;
     lista->capacidad = 0;
     lista->longitud = 0;
 }

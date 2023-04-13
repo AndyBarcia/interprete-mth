@@ -121,7 +121,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             free(exp->llamada_funcion.funcion);
             if (f.tipo_valor == TIPO_ERROR) {
                 borrar_lista_expresiones(&exp->llamada_funcion.args);
-                free(exp->llamada_funcion.loc);
+                if(exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
                 return f;
             }
 
@@ -135,24 +135,23 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
                     free(args.valores);
                     if (args.loc) free(args.loc);
-                    free(exp->llamada_funcion.loc);
-                    free(exp->llamada_funcion.args.loc);
+                    if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
+                    if (f.loc) free(f.loc);
                     return v;
                 }
             }
 
-            // Tenemos que actuar de forma distinta en base a si es una función
-            // intrínseca, una función foranea, o una función definida por el usuario.
+            // Tenemos que actuar de forma distinta en base a si es una
+            // función intrínseca o una función definida por el usuario.
             switch (f.tipo_valor) {
                 case TIPO_FUNCION_INTRINSECA: {
                     // Una función intrínseca se ejecuta simplemente pasando
-                    // el tipo de funciones junto a los argumentos y la tabla de símbolos.
+                    // el tipo de función junto a los argumentos y la tabla de símbolos.
 
-                    FuncionIntrinseca fn = f.funcion_intrinseca;
-                    Valor result = ejecutar_funcion_intrinseca(fn, args, tabla, wd);
+                    Valor result = ejecutar_funcion_intrinseca(f.funcion_intrinseca, args, tabla, wd);
                     borrar_valor(&f);
 
-                    free(exp->llamada_funcion.loc);
+                    if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
                     if (exp->es_sentencia) {
                         borrar_valor(&result);
                         return crear_indefinido();
@@ -171,7 +170,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         Error error = crear_error_numero_argumentos(fn.nombres_args.longitud, args.longitud);
                         Valor v = crear_valor_error(error, exp->llamada_funcion.loc);
                         borrar_lista_valores(&args);
-                        free(exp->llamada_funcion.loc);
+                        if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
+                        borrar_valor(&f);
                         return v;
                     }
 
@@ -195,8 +195,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         switch (v.control_flujo.tipo) {
                             case CTR_FLUJO_EXIT: break;
                             default:
-                                v = *(Valor*) v.control_flujo.valor;
-                                free(v.control_flujo.valor);
+                                if (v.control_flujo.valor) {
+                                    v = *(Valor*) v.control_flujo.valor;
+                                    free(v.control_flujo.valor);
+                                } else {
+                                    v = crear_indefinido();
+                                }
                         }
                     }
 
@@ -205,7 +209,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     reducir_nivel_tabla_simbolos(tabla);
                     free(args.valores);
                     if (args.loc) free(args.loc);
-                    free(exp->llamada_funcion.loc);
+                    if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
                     borrar_valor(&f);
 
                     if (exp->es_sentencia) {
@@ -235,6 +239,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             if (v.tipo_valor == TIPO_ERROR) {
                 borrar_identificador(&exp->asignacion.identificador);
+                if (exp->asignacion.loc) free(exp->asignacion.loc);
                 return v;
             }
 
@@ -243,10 +248,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 Error error = crear_error_contexto_incorrecto("export", "fuera de un módulo");
                 borrar_valor(&v);
                 v = crear_valor_error(error, exp->asignacion.loc);
+                if (exp->asignacion.loc) free(exp->asignacion.loc);
                 borrar_identificador(&exp->asignacion.identificador);
                 return v;
             }
-            free(exp->asignacion.loc);
+            if (exp->asignacion.loc) free(exp->asignacion.loc);
 
             // Si la asignación es una sentencia, simplemente devolvemos indefinido.
             // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
@@ -279,17 +285,16 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             for(int i = 0; i < ids.longitud; ++i) {
                 Valor v = recuperar_valor_tabla(*tabla, ids.valores[i]);
-                // Si la variable no puedo ser capturada, propagar el error.
+                // Si la variable no pudo ser capturada, propagar el error.
                 if (v.tipo_valor == TIPO_ERROR) {
-                    borrar_expresion(cuerpo);
-                    free(cuerpo);
+                    borrar_expresion(exp);
                     borrar_lista_identificadores(&ids);
                     borrar_tabla_hash(capturadas);
                     free(capturadas);
                     return v;
                 }
-                // Si es una función intrínseca, no molestarse en pasarla.
-                if (v.tipo_valor == TIPO_FUNCION_INTRINSECA)  {
+                // Si es una función intrínseca, no molestarse en capturarla.
+                if (v.tipo_valor == TIPO_FUNCION_INTRINSECA) {
                     borrar_valor(&v);
                     continue;
                 }
@@ -298,7 +303,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             borrar_lista_identificadores(&ids);
 
             Valor funcion = crear_funcion(exp->def_funcion.nombres_args, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, exp->def_funcion.loc);
-            free(exp->def_funcion.loc);
+            if (exp->def_funcion.loc) free(exp->def_funcion.loc);
 
             if (exp->es_sentencia) {
                 borrar_valor(&funcion);
@@ -313,7 +318,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             aumentar_nivel_tabla_simbolos(tabla);
             ListaExpresiones lista = exp->bloque.lista;
-            free(exp->bloque.loc);
+            if(exp->bloque.loc) free(exp->bloque.loc);
 
             Valor ultimo_valor = crear_indefinido();
             for (int i = 0; i < lista.longitud; ++i) {
@@ -362,7 +367,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     }
 
                     Valor v = crear_valor_error(error, exp->importe.loc);
-                    free(exp->importe.loc);
+                    if (exp->importe.loc) free(exp->importe.loc);
                     return v;
                 }
 
@@ -374,7 +379,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         borrar_identificador(exp->importe.as);
                         free(exp->importe.as);
                     }
-                    free(exp->importe.loc);
+                    if (exp->importe.loc) free(exp->importe.loc);
                     return crear_valor_error(error, &exp->importe.as->loc);
                 }
             } else {
@@ -390,7 +395,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         free(exp->importe.as);
                     }
                     Valor v = crear_valor_error(error, exp->importe.loc);
-                    free(exp->importe.loc);
+                    if (exp->importe.loc) free(exp->importe.loc);
                     return v;
                 }
 
@@ -434,7 +439,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 borrar_identificador(exp->importe.as);
                 free(exp->importe.as);
             }
-            free(exp->importe.loc);
+            if (exp->importe.loc) free(exp->importe.loc);
             return crear_indefinido();
         }
         case EXP_CONDICIONAL: {
@@ -445,7 +450,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             if (cond.tipo_valor == TIPO_ERROR) {
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
-                free(exp->condicional.loc);
+                if (exp->condicional.loc) free(exp->condicional.loc);
                 return cond;
             }
             if (cond.tipo_valor != TIPO_BOOL) {
@@ -454,7 +459,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 borrar_valor(&cond);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
-                free(exp->condicional.loc);
+                if (exp->condicional.loc) free(exp->condicional.loc);
                 return v;
             }
 
@@ -462,19 +467,19 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 Valor verdadero = evaluar_expresion(tabla, (Expresion*)exp->condicional.verdadero, contexto, wd);
                 if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
                 borrar_valor(&cond);
-                free(exp->condicional.loc);
+                if (exp->condicional.loc) free(exp->condicional.loc);
 
                 return verdadero;
             } else if (exp->condicional.falso) {
                 Valor falso = evaluar_expresion(tabla, (Expresion*)exp->condicional.falso, contexto, wd);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 borrar_valor(&cond);
-                free(exp->condicional.loc);
+                if (exp->condicional.loc) free(exp->condicional.loc);
 
                 return falso;
             } else {
                 borrar_valor(&cond);
-                free(exp->condicional.loc);
+                if (exp->condicional.loc) free(exp->condicional.loc);
                 return crear_indefinido();
             }
         }
