@@ -14,7 +14,7 @@ Evaluador crear_evaluador(Lexer lexer, Contexto contexto, String wd) {
 
 void borrar_evaluador(Evaluador *evaluador) {
     yypstate_delete((yypstate*) evaluador->ps);
-    borrar_analizador_lexico(evaluador->lexer);
+    borrar_analizador_lexico(&evaluador->lexer);
     borrar_string(&evaluador->wd);
 }
 
@@ -66,19 +66,31 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
         case EXP_IDENTIFICADOR: {
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
             Valor v = recuperar_valor_tabla(*tabla, exp->nombre);
-            if (v.tipo_valor == TIPO_ERROR) return v;
+            if (v.tipo_valor == TIPO_ERROR) {
+                borrar_identificador(&exp->nombre);
+                return v;
+            }
             if (v.tipo_valor == TIPO_INDEFINIDO) {
                 Error error = crear_error("Haciendo referencia a un valor aún no definido.");
                 Valor r = crear_valor_error(error, &exp->nombre.loc);
                 borrar_valor(&v);
+                borrar_identificador(&exp->nombre);
                 return r;
             }
-            borrar_identificador(&exp->nombre);
 
             if (exp->es_sentencia) {
                 borrar_valor(&v);
                 return crear_valor_unidad(NULL);
             }
+
+            // Reemplazar la localización original del valor por la localización del identificador.
+            if (v.loc)
+                borrar_loc(v.loc);
+            else
+                v.loc = malloc(sizeof(Localizacion));
+            *v.loc = exp->nombre.loc;
+            borrar_string(&exp->nombre.nombre);
+            
             return v;
         }
         case EXP_ACCESO_MIEMBRO: {
@@ -113,7 +125,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             borrar_valor(&v);
             borrar_identificador(&exp->acceso.miembro);
-            free(exp->acceso.loc);
+            if (exp->acceso.loc) {
+                borrar_loc(exp->acceso.loc);
+                free(exp->acceso.loc);
+            }
             if (exp->es_sentencia && result.tipo_valor != TIPO_ERROR) {
                 borrar_valor(&result);
                 return crear_valor_unidad(NULL);
@@ -127,7 +142,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             free(exp->llamada_funcion.funcion);
             if (f.tipo_valor == TIPO_ERROR) {
                 borrar_lista_expresiones(&exp->llamada_funcion.args);
-                if(exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
+                if(exp->llamada_funcion.loc) {
+                    borrar_loc(exp->llamada_funcion.loc);
+                    free(exp->llamada_funcion.loc);
+                }
                 return f;
             }
 
@@ -140,9 +158,18 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     for (int j = 0; j < args.longitud; ++j)
                         if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
                     free(args.valores);
-                    if (args.loc) free(args.loc);
-                    if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
-                    if (f.loc) free(f.loc);
+                    if (args.loc) {
+                        borrar_loc(args.loc);
+                        free(args.loc);
+                    }
+                    if (exp->llamada_funcion.loc) {
+                        borrar_loc(exp->llamada_funcion.loc);
+                        free(exp->llamada_funcion.loc);
+                    }
+                    if (f.loc) {
+                        borrar_loc(f.loc);
+                        free(f.loc);
+                    }
                     return v;
                 }
             }
@@ -157,7 +184,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     Valor result = ejecutar_funcion_intrinseca(f.funcion_intrinseca, args, tabla, wd);
                     borrar_valor(&f);
 
-                    if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
+                    if (exp->llamada_funcion.loc) {
+                        borrar_loc(exp->llamada_funcion.loc);
+                        free(exp->llamada_funcion.loc);
+                    }
                     if (exp->es_sentencia) {
                         borrar_valor(&result);
                         return crear_valor_unidad(NULL);
@@ -176,7 +206,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         Error error = crear_error_numero_argumentos(fn.nombres_args.longitud, fn.nombres_args.longitud, args.longitud);
                         Valor v = crear_valor_error(error, exp->llamada_funcion.loc);
                         borrar_lista_valores(&args);
-                        if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
+                        if (exp->llamada_funcion.loc) {
+                            borrar_loc(exp->llamada_funcion.loc);
+                            free(exp->llamada_funcion.loc);
+                        }
                         borrar_valor(&f);
                         return v;
                     }
@@ -219,8 +252,14 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     // y libera la memoria.
                     reducir_nivel_tabla_simbolos(tabla);
                     free(args.valores);
-                    if (args.loc) free(args.loc);
-                    if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
+                    if (args.loc) {
+                        borrar_loc(args.loc);
+                        free(args.loc);
+                    }
+                    if (exp->llamada_funcion.loc) {
+                        borrar_loc(exp->llamada_funcion.loc);
+                        free(exp->llamada_funcion.loc);
+                    }
                     borrar_valor(&f);
 
                     if (exp->es_sentencia) {
@@ -267,16 +306,23 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             if (v.tipo_valor == TIPO_ERROR) {
                 borrar_identificador(&exp->asignacion.identificador);
-                if (exp->asignacion.loc) free(exp->asignacion.loc);
+                if (exp->asignacion.loc) {
+                    borrar_loc(exp->asignacion.loc);
+                    free(exp->asignacion.loc);
+                }
                 return v;
             }
 
-            if (exp->asignacion.loc) free(exp->asignacion.loc);
+            if (exp->asignacion.loc) {
+                borrar_loc(exp->asignacion.loc);
+                free(exp->asignacion.loc);
+            }
 
             // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
             // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
             Valor retorno = exp->es_sentencia ? crear_valor_unidad(NULL) : clonar_valor(v);
 
+            borrar_loc(&exp->asignacion.identificador.loc);
             asignar_valor_tabla(tabla, exp->asignacion.identificador.nombre, v, exp->asignacion.tipo);
             return retorno;
         }
@@ -339,7 +385,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             }
             borrar_lista_identificadores(&ids);
 
-            if (exp->def_funcion.loc) free(exp->def_funcion.loc);
+            if (exp->def_funcion.loc) {
+                borrar_loc(exp->def_funcion.loc);
+                free(exp->def_funcion.loc);
+            }
 
             if (exp->es_sentencia) {
                 borrar_valor(&funcion);
@@ -354,7 +403,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             aumentar_nivel_tabla_simbolos(tabla);
             ListaExpresiones lista = exp->bloque.lista;
-            if(exp->bloque.loc) free(exp->bloque.loc);
+            if(exp->bloque.loc) {
+                borrar_loc(exp->bloque.loc);
+                free(exp->bloque.loc);
+            }
 
             Valor ultimo_valor = crear_valor_unidad(NULL);
             for (int i = 0; i < lista.longitud; ++i) {
@@ -403,7 +455,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     }
 
                     Valor v = crear_valor_error(error, exp->importe.loc);
-                    if (exp->importe.loc) free(exp->importe.loc);
+                    if (exp->importe.loc) {
+                        borrar_loc(exp->importe.loc);
+                        free(exp->importe.loc);
+                    }
                     return v;
                 }
 
@@ -415,14 +470,17 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         borrar_identificador(exp->importe.as);
                         free(exp->importe.as);
                     }
-                    if (exp->importe.loc) free(exp->importe.loc);
+                    if (exp->importe.loc) {
+                        borrar_loc(exp->importe.loc);
+                        free(exp->importe.loc);
+                    }
                     return crear_valor_error(error, &exp->importe.as->loc);
                 }
             } else {
                 // Importar un archivo normal con un lexer.
 
-                Lexer lexer;
-                if (!crear_lexer_archivo(&lexer, string_a_puntero(&dir_archivo))) {
+                CodigoFuente src;
+                if (!crear_codigo_fuente_archivo(string_a_puntero(&dir_archivo), &src)) {
                     Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_puntero(&dir_archivo));
                     borrar_string(&exp->importe.archivo);
                     borrar_string(&dir_archivo);
@@ -431,7 +489,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         free(exp->importe.as);
                     }
                     Valor v = crear_valor_error(error, exp->importe.loc);
-                    if (exp->importe.loc) free(exp->importe.loc);
+                    if (exp->importe.loc) {
+                        borrar_loc(exp->importe.loc);
+                        free(exp->importe.loc);
+                    }
                     return v;
                 }
 
@@ -453,17 +514,15 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
                 // Crear un evaluador en contexto de módulo y con el
                 // nuevo directorio de trabajo que hemos calculado.
+                Lexer lexer = crear_lexer(src);
                 Evaluador evaluador = crear_evaluador(lexer, CNTXT_MODULO, wd_import);
 
                 aumentar_nivel_tabla_simbolos(tabla);
 
                 Valor x;
                 while(evaluar_siguiente(&evaluador, tabla, &x)) {
-                    if (x.tipo_valor == TIPO_ERROR) {
-                        char* linea = obtener_linea(lexer, x.loc->first_line);
-                        imprimir_error(x.error, string_a_puntero(&exp->importe.archivo), linea, x.loc);
-                        free(linea);
-                    }
+                    if (x.tipo_valor == TIPO_ERROR)
+                        imprimir_error(x.error, x.loc);
                     borrar_valor(&x);
                 }
                 reducir_nivel_tabla_simbolos(tabla);
@@ -475,7 +534,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 borrar_identificador(exp->importe.as);
                 free(exp->importe.as);
             }
-            if (exp->importe.loc) free(exp->importe.loc);
+            if (exp->importe.loc) {
+                borrar_loc(exp->importe.loc);
+                free(exp->importe.loc);
+            }
             return crear_valor_unidad(NULL);
         }
         case EXP_CONDICIONAL: {
@@ -486,7 +548,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             if (cond.tipo_valor == TIPO_ERROR) {
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
-                if (exp->condicional.loc) free(exp->condicional.loc);
+                if (exp->condicional.loc) {
+                    borrar_loc(exp->condicional.loc);
+                    free(exp->condicional.loc);
+                }
                 return cond;
             }
             if (cond.tipo_valor != TIPO_BOOL) {
@@ -495,7 +560,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 borrar_valor(&cond);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
-                if (exp->condicional.loc) free(exp->condicional.loc);
+                if (exp->condicional.loc) {
+                    borrar_loc(exp->condicional.loc);
+                    free(exp->condicional.loc);
+                }
                 return v;
             }
 
@@ -506,7 +574,10 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     borrar_expresion((Expresion*) exp->condicional.falso);
                     free(exp->condicional.falso);
                 }
-                if (exp->condicional.loc) free(exp->condicional.loc);
+                if (exp->condicional.loc) {
+                    borrar_loc(exp->condicional.loc);
+                    free(exp->condicional.loc);
+                }
                 borrar_valor(&cond);
 
                 return verdadero;
@@ -515,14 +586,20 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 free(exp->condicional.falso);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 free(exp->condicional.verdadero);
-                if (exp->condicional.loc) free(exp->condicional.loc);
+                if (exp->condicional.loc) {
+                    borrar_loc(exp->condicional.loc);
+                    free(exp->condicional.loc);
+                }
                 borrar_valor(&cond);
 
                 return falso;
             } else {
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 free(exp->condicional.verdadero);
-                if (exp->condicional.loc) free(exp->condicional.loc);
+                if (exp->condicional.loc) {
+                    borrar_loc(exp->condicional.loc);
+                    free(exp->condicional.loc);
+                }
                 borrar_valor(&cond);
                 return crear_valor_unidad(NULL);
             }
@@ -552,11 +629,17 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 Valor v = evaluar_expresion(tabla, (Expresion*) exp->control_flujo.retorno, contexto, wd);
                 free(exp->control_flujo.retorno);
                 Valor r = crear_valor_control_flujo(exp->control_flujo.tipo, &v, exp->control_flujo.loc);
-                free(exp->control_flujo.loc);
+                if (exp->control_flujo.loc) {
+                    borrar_loc(exp->control_flujo.loc);
+                    free(exp->control_flujo.loc);
+                }
                 return r;
             } else {
                 Valor r = crear_valor_control_flujo(exp->control_flujo.tipo, NULL, exp->control_flujo.loc);
-                free(exp->control_flujo.loc);
+                if (exp->control_flujo.loc) {
+                    borrar_loc(exp->control_flujo.loc);
+                    free(exp->control_flujo.loc);
+                }
                 return r;
             }
         }
@@ -585,11 +668,14 @@ ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaEx
         push_lista_valores(&valores, v);
     }
 
-    if (valores.loc && listaExpresiones->loc)
-        *valores.loc = *listaExpresiones->loc;
+    //if (valores.loc && listaExpresiones->loc)
+    //    *valores.loc = *listaExpresiones->loc;
 
     free(listaExpresiones->valores);
-    if (listaExpresiones->loc) free(listaExpresiones->loc);
+    if (listaExpresiones->loc) {
+        borrar_loc(listaExpresiones->loc);
+        free(listaExpresiones->loc);
+    }
     listaExpresiones->longitud = 0;
     listaExpresiones->capacidad = 0;
     return valores;

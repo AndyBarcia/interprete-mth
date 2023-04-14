@@ -1,9 +1,28 @@
 %{
-#include "analizador_lexico.h"
 #include "string.h"
 #include "ast/ast.h"
 
 void yyerror(Localizacion *loc, Expresion *exp, const char* s);
+
+# define YYLLOC_DEFAULT(Cur, Rhs, N)                      \
+do                                                        \
+  if (N)                                                  \
+    {                                                     \
+      (Cur).first_line   = YYRHSLOC(Rhs, 1).first_line;   \
+      (Cur).first_column = YYRHSLOC(Rhs, 1).first_column; \
+      (Cur).last_line    = YYRHSLOC(Rhs, N).last_line;    \
+      (Cur).last_column  = YYRHSLOC(Rhs, N).last_column;  \
+      (Cur).fuente       = YYRHSLOC(Rhs, N).fuente;       \
+    }                                                     \
+  else                                                    \
+    {                                                     \
+      (Cur).first_line   = (Cur).last_line   =            \
+        YYRHSLOC(Rhs, 0).last_line;                       \
+      (Cur).first_column = (Cur).last_column =            \
+        YYRHSLOC(Rhs, 0).last_column;                     \
+      (Cur).fuente = YYRHSLOC(Rhs, 0).fuente;             \
+    }                                                     \
+while (0)
 
 %}
 

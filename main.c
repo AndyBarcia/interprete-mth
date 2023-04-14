@@ -14,14 +14,15 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
     while ((read = getline(&linea, &len, stdin)) != -1) {
         linea[read-1] = '\0';
 
-        Lexer lexer = crear_lexer_str(linea);
+        CodigoFuente src = crear_codigo_fuente_str_cpy(linea);
+        Lexer lexer = crear_lexer(src);
         Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, crear_string("."));
 
         Valor x;
         while (evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
             switch (x.tipo_valor) {
                 case TIPO_ERROR: {
-                    imprimir_error(x.error, NULL, linea, x.loc);
+                    imprimir_error(x.error, x.loc);
                     break;
                 }
                 case TIPO_CONTROL_FLUJO: {
@@ -42,20 +43,20 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 }
 
 void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
-    Lexer lexer;
-    if (!crear_lexer_archivo(&lexer, fichero)) {
+    CodigoFuente src;
+    if (!crear_codigo_fuente_archivo(fichero, &src)) {
         printf("No se pudo abrir el archivo \"%s\".", fichero);
         return;
     }
 
+    Lexer lexer = crear_lexer(src);
     Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, crear_string("."));
 
     Valor x;
     while(evaluar_siguiente(&evaluador, simbolos, &x)) {
         switch (x.tipo_valor) {
             case TIPO_ERROR: {
-                char* linea = obtener_linea(lexer, x.loc->first_line);
-                imprimir_error(x.error, NULL, linea, x.loc);
+                imprimir_error(x.error, x.loc);
                 break;
             }
             case TIPO_CONTROL_FLUJO: {

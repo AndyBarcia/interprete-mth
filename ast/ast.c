@@ -4,6 +4,502 @@
 #include <stdio.h>
 #include <string.h>
 
+Expresion crear_exp_nula() {
+    return (Expresion) {EXP_NULA};
+}
+
+Expresion crear_exp_valor(Valor valor) {
+    return (Expresion) {EXP_VALOR, .valor = valor, .es_sentencia = 0};
+}
+
+Expresion crear_exp_nombre(NombreAsignable nombre) {
+    return (Expresion) {EXP_IDENTIFICADOR, .nombre = nombre, .es_sentencia = 0};
+}
+
+Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion *loc) {
+    Expresion *e = malloc(sizeof(Expresion));
+    *e = valor;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+        .tipo = EXP_ACCESO_MIEMBRO,
+        .acceso = (ExpAcceso) {
+            .valor = (struct Expresion*) e,
+            .miembro = miembro,
+            .loc = loc
+        }
+    };
+}
+
+Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion *loc) {
+    Expresion *e = malloc(sizeof(Expresion));
+    *e = funcion;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_OP_LLAMADA,
+            .llamada_funcion = (ExpLlamada) {
+                    .funcion = (struct Expresion *) e,
+                    .args = argumentos,
+                    .loc = loc
+            },
+            .es_sentencia = 0,
+    };
+}
+
+Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc) {
+    ListaExpresiones args = crear_lista_expresiones(NULL);
+    push_lista_expresiones(&args, x);
+    return crear_exp_llamada(crear_exp_valor(crear_funcion_intrinseca(op, opLoc)), args, loc);
+}
+
+Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion a, Expresion b, Localizacion *loc) {
+    ListaExpresiones args = crear_lista_expresiones(NULL);
+    push_lista_expresiones(&args, a);
+    push_lista_expresiones(&args, b);
+    return crear_exp_llamada(crear_exp_valor(crear_funcion_intrinseca(op, opLoc)), args, loc);
+}
+
+Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc) {
+    Expresion *e = malloc(sizeof(Expresion));
+    *e = expresion;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_OP_ASIGNACION,
+            .asignacion = (ExpAsignacion) {
+                    .identificador = identificador,
+                    .expresion = (struct Expresion *) e,
+                    .tipo = asignacion,
+                    .loc = loc,
+            },
+            .es_sentencia = 0,
+    };
+}
+
+Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc) {
+    Expresion *e = malloc(sizeof(Expresion));
+    *e = cuerpo;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_OP_DEF_FUNCION,
+            .def_funcion = (ExpDefFuncion) {
+                    .nombres_args = argumentos,
+                    .cuerpo = (struct Expresion *) e,
+                    .loc = loc
+            },
+            .es_sentencia = 0,
+    };
+}
+
+Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_BLOQUE,
+            .bloque = (ExpBloque) {
+                .lista = expresiones,
+                .loc = loc
+            },
+            .es_sentencia = 0,
+    };
+}
+
+Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_IMPORT,
+            .importe = (ExpImporte) {
+                    .archivo = archivo,
+                    .foraneo = foraneo,
+                    .as = NULL,
+                    .loc = loc,
+            },
+            .es_sentencia = 0
+    };
+}
+
+Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc) {
+    Identificador *as_p = malloc(sizeof(Identificador));
+    *as_p = as;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+        .tipo = EXP_IMPORT,
+        .importe = (ExpImporte) {
+            .archivo = archivo,
+            .foraneo = foraneo,
+            .as = as_p,
+            .loc = loc,
+        },
+        .es_sentencia = 0
+    };
+}
+
+Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expresion *falso, Localizacion *loc) {
+    Expresion *cp = malloc(sizeof(Expresion));
+    *cp = condicion;
+
+    Expresion *vp = malloc(sizeof(Expresion));
+    *vp = verdadero;
+
+    if (falso) {
+        Expresion *fp = malloc(sizeof(Expresion));
+        *fp = *falso;
+        falso = fp;
+    }
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+        .tipo = EXP_CONDICIONAL,
+        .condicional = (ExpCondicional) {
+            .condicion = (struct Expresion*) cp,
+            .verdadero = (struct Expresion*) vp,
+            .falso = (struct Expresion*) falso,
+            .loc = loc
+        },
+        .es_sentencia = 0
+    };
+}
+
+Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc) {
+    if (retorno) {
+        Expresion* retorno_copy = malloc(sizeof(Expresion));
+        *retorno_copy = *(Expresion*) retorno;
+        retorno = retorno_copy;
+    }
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+        .tipo = EXP_CONTROL_FLUJO,
+        .control_flujo = (ExpControlFlujo) {
+            .tipo = tipo,
+            .retorno = (struct Expresion*) retorno,
+            .loc = loc
+        },
+        .es_sentencia = 0
+    };
+}
+
+Expresion clonar_expresion(Expresion exp) {
+    Expresion e = exp;
+    switch (e.tipo) {
+        case EXP_NULA:
+            break;
+        case EXP_VALOR:
+            e.valor = clonar_valor(exp.valor);
+            break;
+        case EXP_IDENTIFICADOR:
+            e.nombre = clonar_identificador(exp.nombre);
+            break;
+        case EXP_OP_LLAMADA:
+            e.llamada_funcion.funcion = malloc(sizeof(Expresion));
+            *(Expresion *) e.llamada_funcion.funcion = clonar_expresion(*(Expresion *) exp.llamada_funcion.funcion);
+            e.llamada_funcion.args = clonar_lista_expresiones(exp.llamada_funcion.args);
+            if (e.llamada_funcion.loc) {
+                e.llamada_funcion.loc = malloc(sizeof(Localizacion));
+                *e.llamada_funcion.loc = clonar_loc(*exp.llamada_funcion.loc);
+            }
+            break;
+        case EXP_OP_ASIGNACION:
+            e.asignacion.identificador = clonar_identificador(exp.asignacion.identificador);
+            e.asignacion.expresion = malloc(sizeof(Expresion)); // Y esto??
+            *(Expresion *) e.asignacion.expresion = clonar_expresion(*(Expresion *) exp.asignacion.expresion);
+            if (e.asignacion.loc) {
+                e.asignacion.loc = malloc(sizeof(Localizacion));
+                *e.asignacion.loc = clonar_loc(*exp.asignacion.loc);
+            }
+            break;
+        case EXP_OP_DEF_FUNCION:
+            e.def_funcion.nombres_args = clonar_lista_identificadores(exp.def_funcion.nombres_args);
+            e.def_funcion.cuerpo = malloc(sizeof(Expresion)); // Esto es necesario
+            *(Expresion *) e.def_funcion.cuerpo = clonar_expresion(*(Expresion *) exp.def_funcion.cuerpo);
+            if (e.def_funcion.loc) {
+                e.def_funcion.loc = malloc(sizeof(Localizacion));
+                *e.def_funcion.loc = clonar_loc(*exp.def_funcion.loc);
+            }
+            break;
+        case EXP_BLOQUE:
+            e.bloque.lista = clonar_lista_expresiones(exp.bloque.lista);
+            if (e.bloque.loc) {
+                e.bloque.loc = malloc(sizeof(Localizacion));
+                *e.bloque.loc = clonar_loc(*exp.bloque.loc);
+            }
+            break;
+        case EXP_IMPORT:
+            e.importe.archivo = clonar_string(exp.importe.archivo);
+            if (e.importe.as) {
+                e.importe.as = malloc(sizeof(Identificador));
+                *e.importe.as = clonar_identificador(*exp.importe.as);
+            }
+            if (e.importe.loc) {
+                e.importe.loc = malloc(sizeof(Localizacion));
+                *e.importe.loc = clonar_loc(*exp.importe.loc);
+            }
+            break;
+        case EXP_ACCESO_MIEMBRO:
+            e.acceso.miembro = clonar_identificador(exp.acceso.miembro);
+            e.acceso.valor = malloc(sizeof(Expresion));
+            *(Expresion *) e.acceso.valor = clonar_expresion(*(Expresion *) exp.acceso.valor);
+            if (e.acceso.loc) {
+                e.acceso.loc = malloc(sizeof(Localizacion));
+                *e.acceso.loc = clonar_loc(*exp.acceso.loc);
+            }
+            break;
+        case EXP_CONDICIONAL:
+            e.condicional.condicion = malloc(sizeof(Expresion));
+            *(Expresion*) e.condicional.condicion = clonar_expresion(*(Expresion*) exp.condicional.condicion);
+            e.condicional.verdadero = malloc(sizeof(Expresion));
+            *(Expresion*) e.condicional.verdadero = clonar_expresion(*(Expresion*) exp.condicional.verdadero);
+            if (e.condicional.falso) {
+                e.condicional.falso = malloc(sizeof(Expresion));
+                *(Expresion*) e.condicional.falso = clonar_expresion(*(Expresion*) exp.condicional.falso);
+            }
+            if (e.condicional.loc) {
+                e.condicional.loc = malloc(sizeof(Localizacion));
+                *e.condicional.loc = clonar_loc(*exp.condicional.loc);
+            }
+            break;
+        case EXP_CONTROL_FLUJO:
+            if (e.control_flujo.retorno) {
+                e.control_flujo.retorno = malloc(sizeof(Expresion));
+                *(Expresion*) e.control_flujo.retorno = clonar_expresion(*(Expresion*) exp.control_flujo.retorno);
+            }
+            if (e.control_flujo.loc) {
+                e.control_flujo.loc = malloc(sizeof(Localizacion));
+                *e.control_flujo.loc = clonar_loc(*exp.control_flujo.loc);
+            }
+            break;
+    }
+    return e;
+}
+
+void borrar_expresion(Expresion *exp) {
+    switch (exp->tipo) {
+        case EXP_NULA:
+            break;
+        case EXP_VALOR:
+            borrar_valor(&exp->valor);
+            break;
+        case EXP_IDENTIFICADOR:
+            borrar_identificador(&exp->nombre);
+            break;
+        case EXP_OP_LLAMADA:
+            borrar_expresion((Expresion *) exp->llamada_funcion.funcion);
+            free(exp->llamada_funcion.funcion);
+            borrar_lista_expresiones(&exp->llamada_funcion.args);
+            if(exp->llamada_funcion.loc) {
+                borrar_loc(exp->llamada_funcion.loc);
+                free(exp->llamada_funcion.loc);
+            }
+            break;
+        case EXP_OP_ASIGNACION:
+            borrar_expresion((Expresion *) exp->asignacion.expresion);
+            free(exp->asignacion.expresion);
+            borrar_string(&exp->asignacion.identificador.nombre);
+            if(exp->asignacion.loc) {
+                borrar_loc(exp->asignacion.loc);
+                free(exp->asignacion.loc);
+            }
+            break;
+        case EXP_OP_DEF_FUNCION:
+            borrar_expresion((Expresion *) exp->def_funcion.cuerpo);
+            free(exp->def_funcion.cuerpo);
+            borrar_lista_identificadores(&exp->def_funcion.nombres_args);
+            if(exp->def_funcion.loc) {
+                borrar_loc(exp->def_funcion.loc);
+                free(exp->def_funcion.loc);
+            }
+            break;
+        case EXP_BLOQUE:
+            borrar_lista_expresiones(&exp->bloque.lista);
+            if (exp->bloque.loc) {
+                borrar_loc(exp->bloque.loc);
+                free(exp->bloque.loc);
+            }
+            break;
+        case EXP_IMPORT:
+            borrar_string(&exp->importe.archivo);
+            if (exp->importe.as) {
+                borrar_identificador(exp->importe.as);
+                free(exp->importe.as);
+            }
+            if(exp->importe.loc) {
+                borrar_loc(exp->importe.loc);
+                free(exp->importe.loc);
+            }
+            break;
+        case EXP_ACCESO_MIEMBRO:
+            borrar_string(&exp->acceso.miembro.nombre);
+            borrar_expresion((Expresion*) exp->acceso.valor);
+            free(exp->acceso.valor);
+            if(exp->acceso.loc) {
+                borrar_loc(exp->acceso.loc);
+                free(exp->acceso.loc);
+            }
+            break;
+        case EXP_CONDICIONAL:
+            borrar_expresion((Expresion*) exp->condicional.condicion);
+            free(exp->condicional.condicion);
+            borrar_expresion((Expresion*) exp->condicional.verdadero);
+            free(exp->condicional.verdadero);
+            if (exp->condicional.falso) {
+                borrar_expresion((Expresion*) exp->condicional.falso);
+                free(exp->condicional.falso);
+            }
+            if(exp->condicional.loc) {
+                borrar_loc(exp->condicional.loc);
+                free(exp->condicional.loc);
+            }
+            break;
+        case EXP_CONTROL_FLUJO:
+            if (exp->control_flujo.retorno) {
+                borrar_expresion((Expresion *) exp->control_flujo.retorno);
+                free(exp->control_flujo.retorno);
+            }
+            if(exp->control_flujo.loc) {
+                borrar_loc(exp->control_flujo.loc);
+                free(exp->control_flujo.loc);
+            }
+            break;
+    }
+    exp->tipo = EXP_NULA;
+}
+
+Localizacion* obtener_loc_exp(Expresion *exp) {
+    switch (exp->tipo) {
+        case EXP_NULA:
+            return NULL;
+        case EXP_VALOR:
+            return exp->valor.loc;
+        case EXP_IDENTIFICADOR:
+            return &exp->nombre.loc;
+        case EXP_ACCESO_MIEMBRO:
+            return exp->acceso.loc;
+        case EXP_OP_LLAMADA:
+            return exp->llamada_funcion.loc;
+        case EXP_OP_ASIGNACION:
+            return exp->asignacion.loc;
+        case EXP_OP_DEF_FUNCION:
+            return exp->def_funcion.loc;
+        case EXP_BLOQUE:
+            return exp->bloque.loc;
+        case EXP_IMPORT:
+            return exp->importe.loc;
+        case EXP_CONTROL_FLUJO:
+            return exp->control_flujo.loc;
+        case EXP_CONDICIONAL:
+            return exp->condicional.loc;
+    }
+}
+
+ListaExpresiones crear_lista_expresiones(Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (ListaExpresiones) {
+            .longitud = 0,
+            .capacidad = 0,
+            .valores = NULL,
+            .loc = loc
+    };
+}
+
+ListaExpresiones crear_lista_expresiones1(Expresion expresion) {
+    ListaExpresiones lista = crear_lista_expresiones(obtener_loc_exp(&expresion));
+    push_lista_expresiones(&lista, expresion);
+    return lista;
+}
+
+void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion) {
+    if (lista->longitud >= lista->capacidad) {
+        lista->valores = realloc(lista->valores, (lista->capacidad + 1) * sizeof(Expresion));
+        ++lista->capacidad;
+    }
+    ((Expresion *) lista->valores)[lista->longitud++] = expresion;
+
+    Localizacion *loc_exp = obtener_loc_exp(&expresion);
+    if (loc_exp && !lista->loc) {
+        lista->loc = malloc(sizeof(Localizacion));
+        *lista->loc = clonar_loc(*loc_exp);
+    } else if (loc_exp) {
+        lista->loc->last_line = loc_exp->last_line;
+        lista->loc->last_column = loc_exp->last_column;
+    }
+}
+
+ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista) {
+    ListaExpresiones result = {
+            .capacidad = lista.longitud,
+            .longitud = lista.longitud,
+            .valores = malloc(sizeof(Expresion) * lista.longitud)
+    };
+    for (int i = 0; i < lista.longitud; ++i)
+        ((Expresion *) result.valores)[i] = clonar_expresion(((Expresion *) lista.valores)[i]);
+    return result;
+}
+
+void borrar_lista_expresiones(ListaExpresiones *lista) {
+    for (int i = 0; i < lista->longitud; ++i)
+        borrar_expresion(&((Expresion *) lista->valores)[i]);
+    if (lista->loc) {
+        borrar_loc(lista->loc);
+        free(lista->loc);
+        lista->loc = NULL;
+    }
+    free(lista->valores);
+    lista->capacidad = 0;
+    lista->longitud = 0;
+}
+
 void _imprimir_lista_expresiones(ListaExpresiones listaValores);
 void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
 
@@ -40,6 +536,10 @@ void _imprimir_expresion(Expresion expresion) {
             break;
         case EXP_IMPORT:
             // TODO:
+            break;
+        case EXP_CONDICIONAL:
+            break;
+        case EXP_CONTROL_FLUJO:
             break;
     }
 }
@@ -120,475 +620,4 @@ ListaIdentificadores variables_capturadas(ExpDefFuncion funcion) {
     _variables_capturadas(cuerpo, &locales, &capturadas);
     borrar_tabla_hash(&locales);
     return capturadas;
-}
-
-Expresion crear_exp_nula() {
-    return (Expresion) {EXP_NULA};
-}
-
-Expresion crear_exp_valor(Valor valor) {
-    return (Expresion) {EXP_VALOR, .valor = valor, .es_sentencia = 0};
-}
-
-Expresion crear_exp_nombre(NombreAsignable nombre) {
-    return (Expresion) {EXP_IDENTIFICADOR, .nombre = nombre, .es_sentencia = 0};
-}
-
-Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion *loc) {
-    Expresion *e = malloc(sizeof(Expresion));
-    *e = valor;
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-        .tipo = EXP_ACCESO_MIEMBRO,
-        .acceso = (ExpAcceso) {
-            .valor = (struct Expresion*) e,
-            .miembro = miembro,
-            .loc = loc
-        }
-    };
-}
-
-Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion *loc) {
-    Expresion *e = malloc(sizeof(Expresion));
-    *e = funcion;
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-            .tipo = EXP_OP_LLAMADA,
-            .llamada_funcion = (ExpLlamada) {
-                    .funcion = (struct Expresion *) e,
-                    .args = argumentos,
-                    .loc = loc
-            },
-            .es_sentencia = 0,
-    };
-}
-
-Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc) {
-    ListaExpresiones args = crear_lista_expresiones(NULL);
-    push_lista_expresiones(&args, x);
-    return crear_exp_llamada(crear_exp_valor(crear_funcion_intrinseca(op, opLoc)), args, loc);
-}
-
-Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion a, Expresion b, Localizacion *loc) {
-    ListaExpresiones args = crear_lista_expresiones(NULL);
-    push_lista_expresiones(&args, a);
-    push_lista_expresiones(&args, b);
-    return crear_exp_llamada(crear_exp_valor(crear_funcion_intrinseca(op, opLoc)), args, loc);
-}
-
-Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc) {
-    Expresion *e = malloc(sizeof(Expresion));
-    *e = expresion;
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-            .tipo = EXP_OP_ASIGNACION,
-            .asignacion = (ExpAsignacion) {
-                    .identificador = identificador,
-                    .expresion = (struct Expresion *) e,
-                    .tipo = asignacion,
-                    .loc = loc,
-            },
-            .es_sentencia = 0,
-    };
-}
-
-Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc) {
-    Expresion *e = malloc(sizeof(Expresion));
-    *e = cuerpo;
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-            .tipo = EXP_OP_DEF_FUNCION,
-            .def_funcion = (ExpDefFuncion) {
-                    .nombres_args = argumentos,
-                    .cuerpo = (struct Expresion *) e,
-                    .loc = loc
-            },
-            .es_sentencia = 0,
-    };
-}
-
-Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc) {
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-            .tipo = EXP_BLOQUE,
-            .bloque = (ExpBloque) {
-                .lista = expresiones,
-                .loc = loc
-            },
-            .es_sentencia = 0,
-    };
-}
-
-Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc) {
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-            .tipo = EXP_IMPORT,
-            .importe = (ExpImporte) {
-                    .archivo = archivo,
-                    .foraneo = foraneo,
-                    .as = NULL,
-                    .loc = loc,
-            },
-            .es_sentencia = 0
-    };
-}
-
-Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc) {
-    Identificador *as_p = malloc(sizeof(Identificador));
-    *as_p = as;
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-        .tipo = EXP_IMPORT,
-        .importe = (ExpImporte) {
-            .archivo = archivo,
-            .foraneo = foraneo,
-            .as = as_p,
-            .loc = loc,
-        },
-        .es_sentencia = 0
-    };
-}
-
-Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expresion *falso, Localizacion *loc) {
-    Expresion *cp = malloc(sizeof(Expresion));
-    *cp = condicion;
-
-    Expresion *vp = malloc(sizeof(Expresion));
-    *vp = verdadero;
-
-    if (falso) {
-        Expresion *fp = malloc(sizeof(Expresion));
-        *fp = *falso;
-        falso = fp;
-    }
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-        .tipo = EXP_CONDICIONAL,
-        .condicional = (ExpCondicional) {
-            .condicion = (struct Expresion*) cp,
-            .verdadero = (struct Expresion*) vp,
-            .falso = (struct Expresion*) falso,
-            .loc = loc
-        },
-        .es_sentencia = 0
-    };
-}
-
-Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc) {
-    if (retorno) {
-        Expresion* retorno_copy = malloc(sizeof(Expresion));
-        *retorno_copy = *(Expresion*) retorno;
-        retorno = retorno_copy;
-    }
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-        .tipo = EXP_CONTROL_FLUJO,
-        .control_flujo = (ExpControlFlujo) {
-            .tipo = tipo,
-            .retorno = (struct Expresion*) retorno,
-            .loc = loc
-        },
-        .es_sentencia = 0
-    };
-}
-
-Expresion clonar_expresion(Expresion exp) {
-    Expresion e = exp;
-    switch (e.tipo) {
-        case EXP_NULA:
-            break;
-        case EXP_VALOR:
-            e.valor = clonar_valor(exp.valor);
-            break;
-        case EXP_IDENTIFICADOR:
-            e.nombre = clonar_identificador(exp.nombre);
-            break;
-        case EXP_OP_LLAMADA:
-            e.llamada_funcion.funcion = malloc(sizeof(Expresion));
-            *(Expresion *) e.llamada_funcion.funcion = clonar_expresion(*(Expresion *) exp.llamada_funcion.funcion);
-            e.llamada_funcion.args = clonar_lista_expresiones(exp.llamada_funcion.args);
-            if (e.llamada_funcion.loc) {
-                e.llamada_funcion.loc = malloc(sizeof(Localizacion));
-                *e.llamada_funcion.loc = *exp.llamada_funcion.loc;
-            }
-            break;
-        case EXP_OP_ASIGNACION:
-            e.asignacion.identificador = clonar_identificador(exp.asignacion.identificador);
-            e.asignacion.expresion = malloc(sizeof(Expresion)); // Y esto??
-            *(Expresion *) e.asignacion.expresion = clonar_expresion(*(Expresion *) exp.asignacion.expresion);
-            if (e.asignacion.loc) {
-                e.asignacion.loc = malloc(sizeof(Localizacion));
-                *e.asignacion.loc = *exp.asignacion.loc;
-            }
-            break;
-        case EXP_OP_DEF_FUNCION:
-            e.def_funcion.nombres_args = clonar_lista_identificadores(exp.def_funcion.nombres_args);
-            e.def_funcion.cuerpo = malloc(sizeof(Expresion)); // Esto es necesario
-            *(Expresion *) e.def_funcion.cuerpo = clonar_expresion(*(Expresion *) exp.def_funcion.cuerpo);
-            if (e.def_funcion.loc) {
-                e.def_funcion.loc = malloc(sizeof(Localizacion));
-                *e.def_funcion.loc = *exp.def_funcion.loc;
-            }
-            break;
-        case EXP_BLOQUE:
-            e.bloque.lista = clonar_lista_expresiones(exp.bloque.lista);
-            if (e.bloque.loc) {
-                e.bloque.loc = malloc(sizeof(Localizacion));
-                *e.bloque.loc = *exp.bloque.loc;
-            }
-            break;
-        case EXP_IMPORT:
-            e.importe.archivo = clonar_string(exp.importe.archivo);
-            if (e.importe.as) {
-                e.importe.as = malloc(sizeof(Identificador));
-                *e.importe.as = clonar_identificador(*exp.importe.as);
-            }
-            if (e.importe.loc) {
-                e.importe.loc = malloc(sizeof(Localizacion));
-                *e.importe.loc = *exp.importe.loc;
-            }
-            break;
-        case EXP_ACCESO_MIEMBRO:
-            e.acceso.miembro = clonar_identificador(exp.acceso.miembro);
-            e.acceso.valor = malloc(sizeof(Expresion));
-            *(Expresion *) e.acceso.valor = clonar_expresion(*(Expresion *) exp.acceso.valor);
-            if (e.acceso.loc) {
-                e.acceso.loc = malloc(sizeof(Localizacion));
-                *e.acceso.loc = *exp.acceso.loc;
-            }
-            break;
-        case EXP_CONDICIONAL:
-            e.condicional.condicion = malloc(sizeof(Expresion));
-            *(Expresion*) e.condicional.condicion = clonar_expresion(*(Expresion*) exp.condicional.condicion);
-            e.condicional.verdadero = malloc(sizeof(Expresion));
-            *(Expresion*) e.condicional.verdadero = clonar_expresion(*(Expresion*) exp.condicional.verdadero);
-            if (e.condicional.falso) {
-                e.condicional.falso = malloc(sizeof(Expresion));
-                *(Expresion*) e.condicional.falso = clonar_expresion(*(Expresion*) exp.condicional.falso);
-            }
-            if (e.condicional.loc) {
-                e.condicional.loc = malloc(sizeof(Localizacion));
-                *e.condicional.loc = *exp.condicional.loc;
-            }
-            break;
-        case EXP_CONTROL_FLUJO:
-            if (e.control_flujo.retorno) {
-                e.control_flujo.retorno = malloc(sizeof(Expresion));
-                *(Expresion*) e.control_flujo.retorno = clonar_expresion(*(Expresion*) exp.control_flujo.retorno);
-            }
-            if (e.control_flujo.loc) {
-                e.control_flujo.loc = malloc(sizeof(Localizacion));
-                *e.control_flujo.loc = *exp.control_flujo.loc;
-            }
-            break;
-    }
-    return e;
-}
-
-void borrar_expresion(Expresion *exp) {
-    switch (exp->tipo) {
-        case EXP_NULA:
-            break;
-        case EXP_VALOR:
-            borrar_valor(&exp->valor);
-            break;
-        case EXP_IDENTIFICADOR:
-            borrar_string(&exp->nombre.nombre);
-            break;
-        case EXP_OP_LLAMADA:
-            borrar_expresion((Expresion *) exp->llamada_funcion.funcion);
-            free(exp->llamada_funcion.funcion);
-            borrar_lista_expresiones(&exp->llamada_funcion.args);
-            if(exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
-            break;
-        case EXP_OP_ASIGNACION:
-            borrar_expresion((Expresion *) exp->asignacion.expresion);
-            free(exp->asignacion.expresion);
-            borrar_string(&exp->asignacion.identificador.nombre);
-            if(exp->asignacion.loc) free(exp->asignacion.loc);
-            break;
-        case EXP_OP_DEF_FUNCION:
-            borrar_expresion((Expresion *) exp->def_funcion.cuerpo);
-            free(exp->def_funcion.cuerpo);
-            borrar_lista_identificadores(&exp->def_funcion.nombres_args);
-            if(exp->def_funcion.loc) free(exp->def_funcion.loc);
-            break;
-        case EXP_BLOQUE:
-            borrar_lista_expresiones(&exp->bloque.lista);
-            if (exp->bloque.loc) free(exp->bloque.loc);
-            break;
-        case EXP_IMPORT:
-            borrar_string(&exp->importe.archivo);
-            if (exp->importe.as) {
-                borrar_identificador(exp->importe.as);
-                free(exp->importe.as);
-            }
-            if(exp->importe.loc) free(exp->importe.loc);
-            break;
-        case EXP_ACCESO_MIEMBRO:
-            borrar_string(&exp->acceso.miembro.nombre);
-            borrar_expresion((Expresion*) exp->acceso.valor);
-            free(exp->acceso.valor);
-            if(exp->acceso.loc) free(exp->acceso.loc);
-            break;
-        case EXP_CONDICIONAL:
-            borrar_expresion((Expresion*) exp->condicional.condicion);
-            free(exp->condicional.condicion);
-            borrar_expresion((Expresion*) exp->condicional.verdadero);
-            free(exp->condicional.verdadero);
-            if (exp->condicional.falso) {
-                borrar_expresion((Expresion*) exp->condicional.falso);
-                free(exp->condicional.falso);
-            }
-            if(exp->condicional.loc) free(exp->condicional.loc);
-            break;
-        case EXP_CONTROL_FLUJO:
-            if (exp->control_flujo.retorno) {
-                borrar_expresion((Expresion *) exp->control_flujo.retorno);
-                free(exp->control_flujo.retorno);
-            }
-            if(exp->control_flujo.loc) free(exp->control_flujo.loc);
-            break;
-    }
-    exp->tipo = EXP_NULA;
-}
-
-Localizacion* obtener_loc_exp(Expresion *exp) {
-    switch (exp->tipo) {
-        case EXP_NULA:
-            return NULL;
-        case EXP_VALOR:
-            return exp->valor.loc;
-        case EXP_IDENTIFICADOR:
-            return &exp->nombre.loc;
-        case EXP_ACCESO_MIEMBRO:
-            return exp->acceso.loc;
-        case EXP_OP_LLAMADA:
-            return exp->llamada_funcion.loc;
-        case EXP_OP_ASIGNACION:
-            return exp->asignacion.loc;
-        case EXP_OP_DEF_FUNCION:
-            return exp->def_funcion.loc;
-        case EXP_BLOQUE:
-            return exp->bloque.loc;
-        case EXP_IMPORT:
-            return exp->importe.loc;
-        case EXP_CONTROL_FLUJO:
-            return exp->control_flujo.loc;
-        case EXP_CONDICIONAL:
-            return exp->condicional.loc;
-    }
-}
-
-ListaExpresiones crear_lista_expresiones(Localizacion *loc) {
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
-        loc = loc_copy;
-    }
-
-    return (ListaExpresiones) {
-            .longitud = 0,
-            .capacidad = 0,
-            .valores = NULL,
-            .loc = loc
-    };
-}
-
-ListaExpresiones crear_lista_expresiones1(Expresion expresion) {
-    ListaExpresiones lista = crear_lista_expresiones(obtener_loc_exp(&expresion));
-    push_lista_expresiones(&lista, expresion);
-    return lista;
-}
-
-void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion) {
-    if (lista->longitud >= lista->capacidad) {
-        lista->valores = realloc(lista->valores, (lista->capacidad + 1) * sizeof(Expresion));
-        ++lista->capacidad;
-    }
-    ((Expresion *) lista->valores)[lista->longitud++] = expresion;
-
-    Localizacion *loc_exp = obtener_loc_exp(&expresion);
-    if (loc_exp && !lista->loc) {
-        lista->loc = malloc(sizeof(Localizacion));
-        *lista->loc = *loc_exp;
-    } else if (loc_exp) {
-        lista->loc->last_line = loc_exp->last_line;
-        lista->loc->last_column = loc_exp->last_column;
-    }
-}
-
-ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista) {
-    ListaExpresiones result = {
-            .capacidad = lista.longitud,
-            .longitud = lista.longitud,
-            .valores = malloc(sizeof(Expresion) * lista.longitud)
-    };
-    for (int i = 0; i < lista.longitud; ++i)
-        ((Expresion *) result.valores)[i] = clonar_expresion(((Expresion *) lista.valores)[i]);
-    return result;
-}
-
-void borrar_lista_expresiones(ListaExpresiones *lista) {
-    for (int i = 0; i < lista->longitud; ++i)
-        borrar_expresion(&((Expresion *) lista->valores)[i]);
-    if (lista->loc) {
-        free(lista->loc);
-        lista->loc = NULL;
-    }
-    free(lista->valores);
-    lista->capacidad = 0;
-    lista->longitud = 0;
 }

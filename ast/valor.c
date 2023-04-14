@@ -6,7 +6,7 @@
 Valor crear_valor_unidad(Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     return (Valor) {TIPO_UNIDAD, NULL, loc};
@@ -19,7 +19,7 @@ Valor crear_valor_indefinido() {
 Valor crear_entero(Entero entero, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     return (Valor) {TIPO_ENTERO, NULL, loc, .entero = entero};
@@ -28,7 +28,7 @@ Valor crear_entero(Entero entero, Localizacion *loc) {
 Valor crear_decimal(Decimal decimal, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     return (Valor) {TIPO_DECIMAL, NULL, loc, .decimal = decimal};
@@ -37,7 +37,7 @@ Valor crear_decimal(Decimal decimal, Localizacion *loc) {
 Valor crear_bool(Bool bool, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     return (Valor) {TIPO_BOOL, NULL, loc, .entero = bool ? 1 : 0};
@@ -46,7 +46,7 @@ Valor crear_bool(Bool bool, Localizacion *loc) {
 Valor crear_valor_string(String string, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     int *referencias = malloc(sizeof(int));
@@ -57,7 +57,7 @@ Valor crear_valor_string(String string, Localizacion *loc) {
 Valor crear_funcion_intrinseca(FuncionIntrinseca funcion, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     return (Valor) {TIPO_FUNCION_INTRINSECA, NULL, loc, .funcion_intrinseca = funcion};
@@ -66,7 +66,7 @@ Valor crear_funcion_intrinseca(FuncionIntrinseca funcion, Localizacion *loc) {
 Valor crear_funcion(ListaIdentificadores argumentos, struct Expresion *cuerpo, struct TablaHash *capturadas, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     int *referencias = malloc(sizeof(int));
@@ -96,7 +96,7 @@ Valor crear_funcion_foranea(FuncionForanea foranea) {
 Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     int *referencias = malloc(sizeof(int));
@@ -112,7 +112,7 @@ Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc) {
 Valor crear_valor_control_flujo(TipoControlFlujo tipo, Valor *v, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     int *referencias = malloc(sizeof(int));
@@ -138,7 +138,7 @@ Valor crear_valor_control_flujo(TipoControlFlujo tipo, Valor *v, Localizacion *l
 Valor crear_valor_error(Error error, Localizacion *loc) {
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = *loc;
+        *loc_copy = clonar_loc(*loc);
         loc = loc_copy;
     }
     int *referencias = malloc(sizeof(int));
@@ -161,7 +161,7 @@ Valor clonar_valor(Valor v) {
         // Si no, clonar también la información de
         // localización del código fuente si fuese necesario.
         copia.loc = malloc(sizeof(Localizacion));
-        *copia.loc = *v.loc;
+        *copia.loc = clonar_loc(*v.loc);
     }
     return copia;
 }
@@ -173,36 +173,9 @@ Valor clonar_valor_debil(Valor v) {
         // Si no, clonar también la información de
         // localización del código fuente si fuese necesario.
         copia.loc = malloc(sizeof(Localizacion));
-        *copia.loc = *v.loc;
+        *copia.loc = clonar_loc(*v.loc);
     }
     return copia;
-}
-
-void _borrar_contenido_valor(Valor *valor) {
-    switch (valor->tipo_valor) {
-        case TIPO_ENTERO: valor->entero = 0; break;
-        case TIPO_DECIMAL: valor->decimal = 0; break;
-        case TIPO_BOOL: valor->bool = 0; break;
-        case TIPO_FUNCION_INTRINSECA: valor->funcion_intrinseca = -1; break;
-        case TIPO_FUNCION_FORANEA: valor->funcion_foranea = NULL; break;
-        case TIPO_ERROR: borrar_error(&valor->error); break;
-        case TIPO_STRING: borrar_string(&valor->string); break;
-        case TIPO_BIBLIOTECA_FORANEA: cerrar_biblioteca_dinamica(&valor->biblioteca); break;
-        case TIPO_FUNCION:
-            borrar_lista_identificadores(&valor->funcion.nombres_args);
-            borrar_expresion((Expresion *) valor->funcion.cuerpo);
-            free(valor->funcion.cuerpo);
-            borrar_tabla_hash((TablaHash *) valor->funcion.variables_capturadas);
-            free(valor->funcion.variables_capturadas);
-            break;
-        case TIPO_CONTROL_FLUJO:
-            if (valor->control_flujo.valor) {
-                borrar_valor((Valor *) valor->control_flujo.valor);
-                free(valor->control_flujo.valor);
-            }
-            break;
-        default: break;
-    }
 }
 
 void borrar_valor(Valor *valor) {
@@ -214,6 +187,7 @@ void borrar_valor(Valor *valor) {
         // Si las referencias llegan a 0, liberar la memoria.
         if (*valor->referencias <= 0) {
             if (valor->loc) {
+                borrar_loc(valor->loc);
                 free(valor->loc);
                 valor->loc = NULL;
             }
@@ -251,6 +225,7 @@ void borrar_valor(Valor *valor) {
         // memoria sobre localización en el código fuente, si
         // la había, y terminar.
         if (valor->loc) {
+            borrar_loc(valor->loc);
             free(valor->loc);
             valor->loc = NULL;
         }
@@ -359,7 +334,7 @@ void push_lista_valores(ListaValores *lista, Valor v) {
     lista->valores[lista->longitud++] = v;
     if (lista->loc == NULL && v.loc) {
         lista->loc = malloc(sizeof(Localizacion));
-        *lista->loc = *v.loc;
+        *lista->loc = clonar_loc(*v.loc);
     } else if (v.loc) {
         lista->loc->last_line = v.loc->last_line;
         lista->loc->last_column = v.loc->last_column;
@@ -371,6 +346,7 @@ void borrar_lista_valores(ListaValores *lista) {
         borrar_valor(&((Valor *) lista->valores)[i]);
     free(lista->valores);
     if (lista->loc) {
+        borrar_loc(lista->loc);
         free(lista->loc);
         lista->loc = NULL;
     }

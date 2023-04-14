@@ -10,12 +10,13 @@ Identificador crear_identificador(String nombre, Localizacion loc) {
 
 void borrar_identificador(Identificador *identificador) {
     borrar_string(&identificador->nombre);
+    borrar_loc(&identificador->loc);
 }
 
 Identificador clonar_identificador(Identificador id) {
     return (Identificador) {
             .nombre = clonar_string(id.nombre),
-            .loc = id.loc
+            .loc = clonar_loc(id.loc)
     };
 }
 

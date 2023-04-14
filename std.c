@@ -36,13 +36,6 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
 /// Lo mismo que la anterior pero para funciones que aceptan un número fijo de argumentos.
 #define comprobacion_n_args(n_args, op) comprobacion_n_m_args(n_args, n_args, op)
 
-/*#define comprobacion_tipos(a,b, op) \
-    if (a.tipo_valor != b.tipo_valor) { \
-        Valor v = crear_valor_error(crear_error_tipos_incompatibles(op, a.tipo_valor, b.tipo_valor), args.loc); \
-        borrar_lista_valores(&args); \
-        return v; \
-    }*/
-
 /// Facilidad para comparar argumentos con operaciones '==', '>', '>=', etc
 #define comparar_args(a, b, comp) \
     int resultado;                \
@@ -522,18 +515,15 @@ Valor eval(Valor arg, TablaSimbolos *t, String wd) {
         borrar_valor(&arg);
         return crear_valor_error(error, NULL);
     } else {
-        Lexer lexer = crear_lexer_str(string_a_puntero(&arg.string));
+        CodigoFuente src = crear_codigo_fuente_str_cpy(string_a_puntero(&arg.string));
+        Lexer lexer = crear_lexer(src);
         Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, wd);
 
         Valor result = crear_valor_unidad(NULL);
         Valor v;
         while(evaluar_siguiente(&evaluador, t, &v)) {
-            if (v.tipo_valor == TIPO_ERROR) {
-                char* linea = obtener_linea(lexer, v.loc->first_line);
-                imprimir_error(v.error, NULL, linea, v.loc);
-                free(linea);
-            }
-
+            if (result.tipo_valor == TIPO_ERROR)
+                imprimir_error(v.error, v.loc);
             borrar_valor(&result);
             result = v;
         }
@@ -805,7 +795,8 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
     free(args.valores);
     if (!result.loc) {
         result.loc = args.loc;
-    } else {
+    } else if (args.loc) {
+        borrar_loc(args.loc);
         free(args.loc);
     }
     return result;

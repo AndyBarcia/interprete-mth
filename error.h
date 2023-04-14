@@ -25,6 +25,6 @@ Error crear_error_casting(int tipoActual, int tipoObjetivo);
 
 void borrar_error(Error *error);
 
-void imprimir_error(Error error, char* nombre, char* linea, Localizacion *loc);
+void imprimir_error(Error error, Localizacion *loc);
 
 #endif //PRACTICA3_ERROR_H

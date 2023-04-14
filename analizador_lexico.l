@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "string.h"
-#include "analizador_lexico.h"
 #include "analizador_sintactico.h"
 #include "tabla_simbolos.h"
 #include "error.h"
@@ -72,7 +71,7 @@ then { return THEN; }
 else { return ELSE; }
 
 {ALFA_US}{ALFANUM_US}* {
-         yylval->identificador = crear_identificador(crear_string(yytext), *yylloc);
+         yylval->identificador = crear_identificador(crear_string(yytext), clonar_loc(*yylloc));
          return IDENTIFICADOR;
      }
 
@@ -203,105 +202,36 @@ else { return ELSE; }
     }
 %%
 
-int crear_lexer_archivo(Lexer *lexer, char *archivo) {
-    FILE* fichero;
-    if ((fichero = fopen(archivo, "r")) == NULL) {
-        return 0;
-    }
+Lexer crear_lexer(CodigoFuente codigo_fuente) {
+    Lexer lexer;
+    yylex_init(&lexer.scanner);
 
-    lexer->nombre_fichero = archivo;
-    lexer->str_buffer = NULL;
-    lexer->str = NULL;
-    lexer->loc = (Localizacion) {
+    lexer.loc = (Localizacion) {
              .first_line = 1,
              .last_line = 1,
              .first_column = 1,
-             .last_column = 1
+             .last_column = 1,
+             .fuente = codigo_fuente
      };
 
-    yylex_init(&lexer->scanner);
-    yyset_in(fichero, lexer->scanner);
-    return 1;
-}
-
-Lexer crear_lexer_str(char *str) {
-     Lexer lexer;
-     lexer.nombre_fichero = NULL;
-     yylex_init(&lexer.scanner);
-
-     lexer.str_buffer = yy_scan_string(str, lexer.scanner);
-     lexer.str = str;
-     lexer.loc = (Localizacion) {
-              .first_line = 1,
-              .last_line = 1,
-              .first_column = 1,
-              .last_column = 1
-      };
-
+     switch (codigo_fuente.tipo) {
+         case SRC_ARCHIVO:
+             yyset_in(codigo_fuente.src.archivo.fd, lexer.scanner);
+             lexer.str_buffer = NULL;
+             break;
+         case SRC_STR:
+             lexer.str_buffer = yy_scan_string(codigo_fuente.src.str, lexer.scanner);
+             break;
+     }
      return lexer;
 }
 
-void borrar_analizador_lexico(Lexer lexer) {
-    if (lexer.str_buffer) {
-        yy_delete_buffer(lexer.str_buffer, lexer.scanner);
-    } else if (yyget_in(lexer.scanner) != stdin) {
-        fclose(yyget_in(lexer.scanner));
+void borrar_analizador_lexico(Lexer *lexer) {
+    if (lexer->str_buffer) {
+        yy_delete_buffer(lexer->str_buffer, lexer->scanner);
     }
-    yylex_destroy(lexer.scanner);
-}
-
-char* obtener_linea(Lexer lexer, int linea) {
-    if (lexer.str_buffer) {
-        char* actual = lexer.str;
-        int current_line = 1;
-
-        while (*actual && current_line < linea) {
-            if (*actual == '\n') ++current_line;
-            ++actual;
-        }
-
-        if (current_line < linea) {
-            return NULL;
-        }
-
-        char* final_linea = actual+1;
-        while (*final_linea && *final_linea != '\n')
-            ++final_linea;
-
-        int longitud = final_linea - actual;
-        return strndup(actual, longitud);
-    } else {
-        FILE* archivo = yyget_in(lexer.scanner);
-
-        // Guardar posición actual en el archivo y movernos al inicio
-        long int pos = ftell(archivo);
-        fseek(archivo, 0, SEEK_SET);
-
-        char* buffer = NULL;
-        size_t bufsize = 0;
-        int current_line = 0;
-
-        while (current_line < linea && getline(&buffer, &bufsize, archivo) != -1) {
-            current_line++;
-        }
-
-        if (current_line < linea) {
-            free(buffer);
-            return NULL;
-        }
-
-        int len = strlen(buffer);
-        if (buffer[len-1] == '\n')
-            buffer[len-1] == '\0';
-
-        // Volver a la posición original y terminar.
-        fseek(archivo, pos, SEEK_SET);
-        return buffer;
-    }
-}
-
-char* obtener_nombre_fichero(Lexer lexer) {
-    return lexer.nombre_fichero;
+    borrar_codigo_fuente(&lexer->loc.fuente);
+    yylex_destroy(lexer->scanner);
 }
 
 Localizacion obtener_localizacion(Lexer lexer) {

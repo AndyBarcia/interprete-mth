@@ -45,7 +45,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 19 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 38 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     #include "ast/ast.h"
 
@@ -111,7 +111,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 23 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 42 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int tipoOperador;
     int valorEntero;

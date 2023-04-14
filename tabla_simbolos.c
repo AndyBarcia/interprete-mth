@@ -34,7 +34,7 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
     free(t->tablas);
 }
 
-Valor recuperar_valor_tabla(TablaSimbolos t, Identificador  identificador) {
+Valor recuperar_valor_tabla(TablaSimbolos t, Identificador identificador) {
     EntradaTablaHash resultado;
     for (int i = t.nivel; i >= 0; --i) {
         if (buscar_hash(t.tablas[i], string_a_puntero(&identificador.nombre), &resultado)) {
