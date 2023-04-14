@@ -15,6 +15,7 @@ unsigned long siguiente_potencia_de_dos(unsigned long v) {
 TablaHash crear_tabla_hash(int capacidad) {
     TablaHash t;
     t.longitud = 0;
+    if (capacidad <= 0) capacidad = 1;
     t.capacidad = (int) siguiente_potencia_de_dos(capacidad);
 
     // Establecer el límite de búsqueda lineal como log2(capacidad).
