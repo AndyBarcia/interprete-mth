@@ -78,12 +78,12 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
                 _variables_capturadas(((Expresion *) expresion.llamada_funcion.args.valores)[i], locales, lista);
             break;
         case EXP_OP_ASIGNACION:
-            insertar_hash(locales, expresion.asignacion.identificador.nombre, crear_indefinido(), 0);
+            insertar_hash(locales, expresion.asignacion.identificador.nombre, crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.asignacion.expresion, locales, lista);
             break;
         case EXP_OP_DEF_FUNCION:
             for (int i = 0; i < expresion.def_funcion.nombres_args.longitud; ++i)
-                insertar_hash(locales, expresion.def_funcion.nombres_args.valores[i].nombre, crear_indefinido(), 0);
+                insertar_hash(locales, expresion.def_funcion.nombres_args.valores[i].nombre, crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.def_funcion.cuerpo, locales, lista);
             break;
         case EXP_BLOQUE:
@@ -114,7 +114,7 @@ ListaIdentificadores variables_capturadas(ExpDefFuncion funcion) {
     ListaIdentificadores capturadas = crear_lista_identificadores();
     TablaHash locales = crear_tabla_hash(funcion.nombres_args.longitud);
     for (int i = 0; i < funcion.nombres_args.longitud; ++i)
-        insertar_hash(&locales, funcion.nombres_args.valores[i].nombre, crear_indefinido(), 0);
+        insertar_hash(&locales, funcion.nombres_args.valores[i].nombre, crear_valor_unidad(NULL), 0);
 
     Expresion cuerpo = *(Expresion *) funcion.cuerpo;
     _variables_capturadas(cuerpo, &locales, &capturadas);

@@ -21,19 +21,40 @@ void inicializar_libreria_estandar(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("decimal"), crear_funcion_intrinseca(INTRINSECA_CAST_DECIMAL, NULL), ASIGNACION_INMUTABLE);
 }
 
-#define comprobacion_n_args(n_args, op) \
-    if (args.longitud != n_args) {      \
-        Valor v = crear_valor_error(crear_error_numero_argumentos(n_args, args.longitud), args.loc); \
-        borrar_lista_valores(&args);                                \
+/// Macro de ayuda para comprobar que se han pasado el rango correcto
+/// de número de argumentos. Si el número de argumentos es menor que
+/// n_args o mayor que m_args se devuelve un error.
+/// Si m_args es -1, viene implícito que se acepta un número arbitrariamente
+/// alto de argumentos.
+#define comprobacion_n_m_args(n_args, m_args, op) \
+    if (args.longitud < n_args || (m_args != -1 && args.longitud > m_args)) { \
+        Valor v = crear_valor_error(crear_error_numero_argumentos(n_args, m_args, args.longitud), args.loc); \
+        borrar_lista_valores(&args); \
         return v; \
     }
 
-#define comprobacion_tipos(a,b, op) \
+/// Lo mismo que la anterior pero para funciones que aceptan un número fijo de argumentos.
+#define comprobacion_n_args(n_args, op) comprobacion_n_m_args(n_args, n_args, op)
+
+/*#define comprobacion_tipos(a,b, op) \
     if (a.tipo_valor != b.tipo_valor) { \
         Valor v = crear_valor_error(crear_error_tipos_incompatibles(op, a.tipo_valor, b.tipo_valor), args.loc); \
         borrar_lista_valores(&args); \
         return v; \
-    }
+    }*/
+
+/// Facilidad para comparar argumentos con operaciones '==', '>', '>=', etc
+#define comparar_args(a, b, comp) \
+    int resultado;                \
+    if (comparar_valor(a, b, &resultado)) { \
+        result = crear_bool(resultado comp, NULL); \
+    } else if (a.tipo_valor != b.tipo_valor) { \
+        result = crear_bool(0, NULL); \
+    } else { \
+        result = crear_valor_error(crear_error_tipos_incompatibles("comparar", a.tipo_valor, b.tipo_valor), NULL); \
+    } \
+    borrar_valor(&a); \
+    borrar_valor(&b); \
 
 Valor sumar(Valor a, Valor b) {
     Valor result;
@@ -263,7 +284,14 @@ Valor modulo(Valor a, Valor b) {
     Valor result;
     switch (a.tipo_valor) {
         case TIPO_ENTERO: {
-            result = crear_entero(a.entero % b.entero, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_ENTERO:
+                    result = crear_entero(a.entero % b.entero, NULL);
+                    break;
+                default:
+                    result = crear_valor_error(crear_error_tipos_incompatibles("módulo", a.tipo_valor, b.tipo_valor), NULL);
+                    break;
+            }
             break;
         }
         default: {
@@ -281,7 +309,14 @@ Valor and(Valor a, Valor b) {
     Valor result;
     switch (a.tipo_valor) {
         case TIPO_BOOL: {
-            result = crear_bool(a.bool && b.bool, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_BOOL:
+                    result = crear_bool(a.bool && b.bool, NULL);
+                    break;
+                default:
+                    result = crear_valor_error(crear_error_tipos_incompatibles("\"&&\"", a.tipo_valor, b.tipo_valor), NULL);
+                    break;
+            }
             break;
         }
         default: {
@@ -299,7 +334,14 @@ Valor or(Valor a, Valor b) {
     Valor result;
     switch (a.tipo_valor) {
         case TIPO_BOOL: {
-            result = crear_bool(a.bool || b.bool, NULL);
+            switch (b.tipo_valor) {
+                case TIPO_BOOL:
+                    result = crear_bool(a.bool || b.bool, NULL);
+                    break;
+                default:
+                    result = crear_valor_error(crear_error_tipos_incompatibles("\"||\"", a.tipo_valor, b.tipo_valor), NULL);
+                    break;
+            }
             break;
         }
         default: {
@@ -354,12 +396,13 @@ Valor negar(Valor a) {
 void ayuda(Valor v) {
     switch (v.tipo_valor) {
         case TIPO_ERROR:
+        case TIPO_CONTROL_FLUJO:
             // No debería de pasar nunca.
             break;
-        case TIPO_NULO:
+        case TIPO_INDEFINIDO:
             printf("Este es un tipo nulo. No deberías de poder tener acceso a él :D");
             break;
-        case TIPO_INDEFINIDO:
+        case TIPO_UNIDAD:
             printf("Este es un tipo indefinido; es el valor de todas las expresiones que"
                    "no tienen un valor, como `print(\"hola\")` o `x=5;`.\n");
             break;
@@ -437,6 +480,11 @@ void ayuda(Valor v) {
                                                     "callforeign(bib.sumar, \"double\", 2.0, 3.0)\n\n"
                                                     "Es importante que los argumentos pasados sean del tipo correcto,"
                                                     "pues si no se pueden producir errores no predecibles.\n"); break;
+                case INTRINSECA_CAST_ENTERO:
+                case INTRINSECA_CAST_DECIMAL:
+                    printf("Realiza un cast de un tipo a otro, o devuelve un error en caso de que el cast no se"
+                           "pueda realizar.\n");
+                    break;
             }
             break;
     }
@@ -477,7 +525,7 @@ Valor eval(Valor arg, TablaSimbolos *t, String wd) {
         Lexer lexer = crear_lexer_str(string_a_puntero(&arg.string));
         Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, wd);
 
-        Valor result = crear_indefinido();
+        Valor result = crear_valor_unidad(NULL);
         Valor v;
         while(evaluar_siguiente(&evaluador, t, &v)) {
             if (v.tipo_valor == TIPO_ERROR) {
@@ -579,7 +627,7 @@ Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
         resultado = crear_decimal((Decimal) rvalue, NULL);
     } else if (strcmp(str_retorno, "void") == 0) {
         llamar_funcion_foranea(f.funcion_foranea, &ffi_type_void, arg_types, nargs, args, NULL);
-        resultado = crear_indefinido();
+        resultado = crear_valor_unidad(NULL);
     } else {
         Error error = crear_error("No se reconoce \"%s\" como un tipo de retorno correcto para una función foránea.", str_retorno);
         resultado = crear_valor_error(error, tipo_retorno.loc);
@@ -630,115 +678,65 @@ Valor casting(Valor v, TipoValor objetivo) {
 
 Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t, String wd) {
     Valor *vargs = (Valor*) args.valores;
-    Valor result = crear_indefinido();
+    Valor result = crear_valor_unidad(NULL);
 
     switch (f) {
         case INTRINSECA_SUMA:
             comprobacion_n_args(2, "sumar");
-
             result = sumar(vargs[0], vargs[1]);
             break;
         case INTRINSECA_RESTA:
             comprobacion_n_args(2, "restar");
-
             result = restar(vargs[0], vargs[1]);
             break;
         case INTRINSECA_MULT:
             comprobacion_n_args(2, "multiplicar");
-
             result = mult(vargs[0], vargs[1]);
             break;
         case INTRINSECA_DIV:
             comprobacion_n_args(2, "dividir");
-
             result = dividir(vargs[0], vargs[1]);
             break;
         case INTRINSECA_MOD:
             comprobacion_n_args(2, "módulo");
-            comprobacion_tipos(vargs[0], vargs[1], "módulo");
-
             result = modulo(vargs[0], vargs[1]);
             break;
         case INTRINSECA_EQ: {
             comprobacion_n_args(2, "igualdad");
-            if (vargs[0].tipo_valor != vargs[1].tipo_valor) {
-                result = crear_bool(0, NULL);
-                break;
-            }
-
-            int resultado;
-            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
-                result = crear_bool(resultado == 0, NULL);
-            } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
-            }
+            comparar_args(vargs[0], vargs[1], == 0);
             break;
         }
         case INTRINSECA_NEQ: {
             comprobacion_n_args(2, "desigualdad");
-            if (vargs[0].tipo_valor != vargs[1].tipo_valor) {
-                result = crear_bool(1, NULL);
-                break;
-            }
-
-            int resultado;
-            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
-                result = crear_bool(resultado != 0, NULL);
-            } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
-            }
+            comparar_args(vargs[0], vargs[1], != 0);
             break;
         }
         case INTRINSECA_GE: {
             comprobacion_n_args(2, "mayor");
-            int resultado;
-            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
-                result = crear_bool(resultado > 0, NULL);
-            } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
-            }
+            comparar_args(vargs[0], vargs[1], > 0);
             break;
         }
         case INTRINSECA_GEQ: {
             comprobacion_n_args(2, "mayor o igual");
-            int resultado;
-            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
-                result = crear_bool(resultado >= 0, NULL);
-            } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
-            }
+            comparar_args(vargs[0], vargs[1], >= 0);
             break;
         }
         case INTRINSECA_LE: {
             comprobacion_n_args(2, "menor");
-            int resultado;
-            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
-                result = crear_bool(resultado < 0, NULL);
-            } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
-            }
+            comparar_args(vargs[0], vargs[1], < 0);
             break;
         }
         case INTRINSECA_LEQ: {
             comprobacion_n_args(2, "menor o igual");
-            int resultado;
-            if (comparar_valor(vargs[0], vargs[1], &resultado)) {
-                result = crear_bool(resultado <= 0, NULL);
-            } else {
-                result = crear_valor_error(crear_error_tipos_incompatibles("comparar", vargs[0].tipo_valor, vargs[1].tipo_valor), NULL);
-            }
+            comparar_args(vargs[0], vargs[1], <= 0);
             break;
         }
         case INTRINSECA_AND:
             comprobacion_n_args(2, "\"&&\"");
-            comprobacion_tipos(vargs[0], vargs[1], "\"&&\"");
-
             result = and(vargs[0], vargs[1]);
             break;
         case INTRINSECA_OR:
             comprobacion_n_args(2, "\"||\"");
-            comprobacion_tipos(vargs[0], vargs[1], "\"||\"");
-
             result = or(vargs[0], vargs[1]);
             break;
         case INTRINSECA_NOT:
@@ -765,13 +763,13 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             inicializar_libreria_estandar(t);
             break;
         case INTRINSECA_AYUDA:
+            comprobacion_n_m_args(0, 1, "pedir ayuda");
             if (args.longitud == 0) {
                 printf("Esta es una función de ayuda. Pasa como parámetro un valor del que quieras saber información.\n"
                        "Ejemplo: `help(resetws)`\n\n"
                        "Para obtener ayuda sobre operadores, escríbelos entre paréntesis.\n"
                        "Ejemplo: `help((+))`\n");
             } else {
-                comprobacion_n_args(1, "ayuda");
                 ayuda(vargs[0]);
             }
             break;
@@ -784,21 +782,15 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             result = eval(vargs[0], t, wd);
             break;
         case INTRINSECA_EXIT:
-            if (args.longitud == 1) {
+            comprobacion_n_m_args(0, 1, "salir");
+            if (args.longitud == 1)
                 result = crear_valor_control_flujo(CTR_FLUJO_EXIT, &vargs[0], NULL);
-            } else {
-                comprobacion_n_args(0, "salir");
+            else
                 result = crear_valor_control_flujo(CTR_FLUJO_EXIT, NULL, NULL);
-            }
             break;
         case INTRINSECA_CALLFOREIGN:
-            if (args.longitud < 3) {
-                Valor v = crear_valor_error(crear_error_numero_argumentos(3, args.longitud), args.loc);
-                borrar_lista_valores(&args);
-                return v;
-            } else {
-                result = callforeign(vargs[0], vargs[1], vargs+2, args.longitud-2);
-            }
+            comprobacion_n_m_args(3, -1, "llamar funciones foráneas");
+            result = callforeign(vargs[0], vargs[1], vargs+2, args.longitud-2);
             break;
         case INTRINSECA_CAST_ENTERO:
             comprobacion_n_args(1, "casting");

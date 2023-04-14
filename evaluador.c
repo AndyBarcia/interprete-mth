@@ -50,7 +50,7 @@ int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor
 Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto, String wd) {
     // Hay que tener en cuenta que sólo hay que devolver un valor
     // si la expresión no es una sentencia. Si no, se tiene que
-    // devolver "indefinido".
+    // devolver el valor unidad.
     // Si en algún momento nos encontramos con un valor de tipo
     // "error", hay que abortar y devolver ese valor, aunque la
     // expresión sea una sentencia.
@@ -59,7 +59,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             // La expresión es un valor; devolverlo si no es una sentencia.
             if (exp->es_sentencia && exp->valor.tipo_valor != TIPO_ERROR) {
                 borrar_valor(&exp->valor);
-                return crear_indefinido();
+                return crear_valor_unidad(NULL);
             }
             return exp->valor;
         }
@@ -67,11 +67,17 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
             Valor v = recuperar_valor_tabla(*tabla, exp->nombre);
             if (v.tipo_valor == TIPO_ERROR) return v;
+            if (v.tipo_valor == TIPO_INDEFINIDO) {
+                Error error = crear_error("Haciendo referencia a un valor aún no definido.");
+                Valor r = crear_valor_error(error, &exp->nombre.loc);
+                borrar_valor(&v);
+                return r;
+            }
             borrar_identificador(&exp->nombre);
 
             if (exp->es_sentencia) {
                 borrar_valor(&v);
-                return crear_indefinido();
+                return crear_valor_unidad(NULL);
             }
             return v;
         }
@@ -85,7 +91,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             // Por ahora los únicos objetos de este tipo que se pueden acceder son
             // tests dinámicas de C.
-            Valor result = crear_indefinido();
+            Valor result = crear_valor_unidad(NULL);
             switch (v.tipo_valor) {
                 case TIPO_BIBLIOTECA_FORANEA: {
                     BibilotecaDinamica bib = v.biblioteca;
@@ -110,7 +116,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             free(exp->acceso.loc);
             if (exp->es_sentencia && result.tipo_valor != TIPO_ERROR) {
                 borrar_valor(&result);
-                return crear_indefinido();
+                return crear_valor_unidad(NULL);
             }
             return result;
         }
@@ -154,7 +160,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
                     if (exp->es_sentencia) {
                         borrar_valor(&result);
-                        return crear_indefinido();
+                        return crear_valor_unidad(NULL);
                     }
                     return result;
                 }
@@ -167,7 +173,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     Funcion fn = f.funcion;
 
                     if (fn.nombres_args.longitud != args.longitud) {
-                        Error error = crear_error_numero_argumentos(fn.nombres_args.longitud, args.longitud);
+                        Error error = crear_error_numero_argumentos(fn.nombres_args.longitud, fn.nombres_args.longitud, args.longitud);
                         Valor v = crear_valor_error(error, exp->llamada_funcion.loc);
                         borrar_lista_valores(&args);
                         if (exp->llamada_funcion.loc) free(exp->llamada_funcion.loc);
@@ -196,10 +202,15 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                             case CTR_FLUJO_EXIT: break;
                             default:
                                 if (v.control_flujo.valor) {
-                                    v = *(Valor*) v.control_flujo.valor;
+                                    Valor r = *(Valor*) v.control_flujo.valor;
                                     free(v.control_flujo.valor);
+                                    v.control_flujo.valor = NULL;
+                                    borrar_valor(&v);
+                                    v = r;
                                 } else {
-                                    v = crear_indefinido();
+                                    Valor r = crear_valor_unidad(v.loc);
+                                    borrar_valor(&v);
+                                    v = r;
                                 }
                         }
                     }
@@ -214,7 +225,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
                     if (exp->es_sentencia) {
                         borrar_valor(&v);
-                        return crear_indefinido();
+                        return crear_valor_unidad(NULL);
                     }
                     return v;
                 }
@@ -234,6 +245,23 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             // Tenemos que evaluar la expresión y después comprobar que
             // la podemos insertar en la tabla de símbolos.
 
+            // Sólo se permiten hacer exports en el contexto de un módulo.
+            if (exp->asignacion.tipo == ASIGNACION_EXPORT && contexto != CNTXT_MODULO) {
+                Error error = crear_error_contexto_incorrecto("export", "fuera de un módulo");
+                Valor v = crear_valor_error(error, exp->asignacion.loc);
+                borrar_expresion(exp);
+                return v;
+            }
+
+            if (!asignar_valor_tabla(tabla, exp->asignacion.identificador.nombre, crear_valor_indefinido(), ASIGNACION_NORMAL)) {
+                Error error = crear_error(
+                        "Intentando reasignar variable inmutable \"%s\"",
+                        identificador_a_str(&exp->asignacion.identificador));
+                Valor v = crear_valor_error(error, &exp->asignacion.identificador.loc);
+                borrar_expresion(exp);
+                return v;
+            }
+
             Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion, CNTXT_ASIGNACION, wd);
             free(exp->asignacion.expresion);
 
@@ -243,30 +271,14 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 return v;
             }
 
-            // Sólo se permiten hacer exports en el contexto de un módulo.
-            if (exp->asignacion.tipo == ASIGNACION_EXPORT && contexto != CNTXT_MODULO) {
-                Error error = crear_error_contexto_incorrecto("export", "fuera de un módulo");
-                borrar_valor(&v);
-                v = crear_valor_error(error, exp->asignacion.loc);
-                if (exp->asignacion.loc) free(exp->asignacion.loc);
-                borrar_identificador(&exp->asignacion.identificador);
-                return v;
-            }
             if (exp->asignacion.loc) free(exp->asignacion.loc);
 
-            // Si la asignación es una sentencia, simplemente devolvemos indefinido.
+            // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
             // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
-            Valor retorno = exp->es_sentencia ? crear_indefinido() : clonar_valor(v);
+            Valor retorno = exp->es_sentencia ? crear_valor_unidad(NULL) : clonar_valor(v);
 
-            if (asignar_valor_tabla(tabla, exp->asignacion.identificador.nombre, v, exp->asignacion.tipo)) {
-                return retorno;
-            } else {
-                Error error = crear_error(
-                        "Intentando reasignar variable inmutable \"%s\"",
-                        identificador_a_str(&exp->asignacion.identificador));
-                borrar_identificador(&exp->asignacion.identificador);
-                return crear_valor_error(error, &exp->asignacion.identificador.loc);
-            }
+            asignar_valor_tabla(tabla, exp->asignacion.identificador.nombre, v, exp->asignacion.tipo);
+            return retorno;
         }
         case EXP_OP_DEF_FUNCION: {
             // Una expresión de definición de función, del estilo de \x,y => x+y.
@@ -283,6 +295,9 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             TablaHash *capturadas = malloc(sizeof(TablaHash));
             *capturadas = crear_tabla_hash(ids.longitud);
 
+            int funcion_recursiva = 0;
+            int i_nombre_funcion_recursiva = -1;
+
             for(int i = 0; i < ids.longitud; ++i) {
                 Valor v = recuperar_valor_tabla(*tabla, ids.valores[i]);
                 // Si la variable no pudo ser capturada, propagar el error.
@@ -298,16 +313,37 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     borrar_valor(&v);
                     continue;
                 }
+                // Si la variable es indefinida, y estamos en un contexto de
+                // asignación, la única posibilidad es que la variable esté
+                // haciendo referencia a la misma función que estamos definiendo
+                // (a.k.a, función recursiva).
+                // Hay que tratarlo de forma especial para evitar referencias
+                // cíclicas.
+                if (v.tipo_valor == TIPO_INDEFINIDO && contexto == CNTXT_ASIGNACION) {
+                    borrar_valor(&v);
+                    i_nombre_funcion_recursiva = i;
+                    funcion_recursiva = 1;
+                    continue;
+                }
                 insertar_hash(capturadas, clonar_string(ids.valores[i].nombre), v, 1);
+            }
+
+            Valor funcion = crear_funcion(exp->def_funcion.nombres_args, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, exp->def_funcion.loc);
+
+            // Si la función es recursiva, entonces insertar un clon débil de la propia
+            // función como variable capturada. Esta no cuenta para el número de referencias
+            // activas al valor, por lo que no evitará que se libere su propia memoria.
+            if (funcion_recursiva) {
+                Valor clon_funcion = clonar_valor_debil(funcion);
+                insertar_hash(capturadas, clonar_string(ids.valores[i_nombre_funcion_recursiva].nombre), clon_funcion, 1);
             }
             borrar_lista_identificadores(&ids);
 
-            Valor funcion = crear_funcion(exp->def_funcion.nombres_args, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, exp->def_funcion.loc);
             if (exp->def_funcion.loc) free(exp->def_funcion.loc);
 
             if (exp->es_sentencia) {
                 borrar_valor(&funcion);
-                return crear_indefinido();
+                return crear_valor_unidad(NULL);
             } else {
                 return funcion;
             }
@@ -320,7 +356,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             ListaExpresiones lista = exp->bloque.lista;
             if(exp->bloque.loc) free(exp->bloque.loc);
 
-            Valor ultimo_valor = crear_indefinido();
+            Valor ultimo_valor = crear_valor_unidad(NULL);
             for (int i = 0; i < lista.longitud; ++i) {
                 borrar_valor(&ultimo_valor);
                 ultimo_valor = evaluar_expresion(tabla, &((Expresion*) lista.valores)[i], contexto, wd);
@@ -340,7 +376,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             free(lista.valores);
             if (exp->es_sentencia) {
                 borrar_valor(&ultimo_valor);
-                return crear_indefinido();
+                return crear_valor_unidad(NULL);
             }
             return ultimo_valor;
         }
@@ -440,7 +476,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 free(exp->importe.as);
             }
             if (exp->importe.loc) free(exp->importe.loc);
-            return crear_indefinido();
+            return crear_valor_unidad(NULL);
         }
         case EXP_CONDICIONAL: {
             // Expresión condicional del estilo `if cond then a else b`.
@@ -465,22 +501,30 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             if (cond.bool) {
                 Valor verdadero = evaluar_expresion(tabla, (Expresion*)exp->condicional.verdadero, contexto, wd);
-                if (exp->condicional.falso) borrar_expresion((Expresion*) exp->condicional.falso);
-                borrar_valor(&cond);
+                free(exp->condicional.verdadero);
+                if (exp->condicional.falso) {
+                    borrar_expresion((Expresion*) exp->condicional.falso);
+                    free(exp->condicional.falso);
+                }
                 if (exp->condicional.loc) free(exp->condicional.loc);
+                borrar_valor(&cond);
 
                 return verdadero;
             } else if (exp->condicional.falso) {
                 Valor falso = evaluar_expresion(tabla, (Expresion*)exp->condicional.falso, contexto, wd);
+                free(exp->condicional.falso);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
-                borrar_valor(&cond);
+                free(exp->condicional.verdadero);
                 if (exp->condicional.loc) free(exp->condicional.loc);
+                borrar_valor(&cond);
 
                 return falso;
             } else {
-                borrar_valor(&cond);
+                borrar_expresion((Expresion*) exp->condicional.verdadero);
+                free(exp->condicional.verdadero);
                 if (exp->condicional.loc) free(exp->condicional.loc);
-                return crear_indefinido();
+                borrar_valor(&cond);
+                return crear_valor_unidad(NULL);
             }
         }
         case EXP_CONTROL_FLUJO: {
@@ -507,9 +551,13 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             if (exp->control_flujo.retorno) {
                 Valor v = evaluar_expresion(tabla, (Expresion*) exp->control_flujo.retorno, contexto, wd);
                 free(exp->control_flujo.retorno);
-                return crear_valor_control_flujo(exp->control_flujo.tipo, &v, exp->control_flujo.loc);
+                Valor r = crear_valor_control_flujo(exp->control_flujo.tipo, &v, exp->control_flujo.loc);
+                free(exp->control_flujo.loc);
+                return r;
             } else {
-                return crear_valor_control_flujo(exp->control_flujo.tipo, NULL, exp->control_flujo.loc);
+                Valor r = crear_valor_control_flujo(exp->control_flujo.tipo, NULL, exp->control_flujo.loc);
+                free(exp->control_flujo.loc);
+                return r;
             }
         }
         default: {

@@ -20,26 +20,45 @@ Error crear_error(const char *formato, ...) {
     return (Error) { mensaje };
 }
 
-Error crear_error_numero_argumentos(int esperado, int actual) {
-    if (esperado == 0) {
-        if (actual == 1) {
-            return crear_error("No se esperaban argumentos, pero se recibió uno.");
+Error crear_error_numero_argumentos(int esperado_n, int esperado_m, int actual) {
+    if (esperado_n == esperado_m) {
+        int esperado = esperado_n;
+        if (esperado == 0) {
+            if (actual == 1) {
+                return crear_error("No se esperaban argumentos, pero se recibió uno.");
+            } else {
+                return crear_error("No se esperaban argumentos, pero se recibieron %d.", actual);
+            }
+        } else if (esperado == 1) {
+            if (actual == 0) {
+                return crear_error("Se esperaba un argumento, pero no se recibió ninguno.");
+            } else {
+                return crear_error("Se esperaba un argumento, pero se recibieron %d.", actual);
+            }
         } else {
-            return crear_error("No se esperaban argumentos, pero se recibieron %d.", actual);
+            if (actual == 0) {
+                return crear_error("Se esperaban %d argumentos, pero no se recibió ninguno.", esperado);
+            } else if (actual == 1) {
+                return crear_error("Se esperaban %d argumentos, pero se recibió sólo uno.", esperado);
+            } else {
+                return crear_error("Se esperaban %d argumentos, pero se recibieron %d.", esperado, actual);
+            }
         }
-    } else if (esperado == 1) {
+    } else if (esperado_m == -1) {
         if (actual == 0) {
-            return crear_error("Se esperaba un argumento, pero no se recibió ninguno.");
+            return crear_error("Se esperaban %d o más argumentos, pero no se recibió ninguno.", esperado_n);
+        } else if (actual == 1) {
+            return crear_error("Se esperaban %d o más argumento, pero se recibió sólo uno.", esperado_n);
         } else {
-            return crear_error("Se esperaba un argumento, pero se recibieron %d.", actual);
+            return crear_error("Se esperaban %d o más argumento, pero se recibieron %d.", esperado_n, actual);
         }
     } else {
         if (actual == 0) {
-            return crear_error("Se esperaban %d argumentos, pero no se recibió ninguno.", esperado);
+            return crear_error("Se esperaban entre %d y %d argumentos, pero no se recibió ninguno.", esperado_n, esperado_m);
         } else if (actual == 1) {
-            return crear_error("Se esperaban %d argumentos, pero se recibió sólo uno.", esperado);
+            return crear_error("Se esperaban entre %d y %d argumentos, pero se recibió sólo uno.", esperado_n, esperado_m);
         } else {
-            return crear_error("Se esperaban %d argumentos, pero se recibieron %d.", esperado, actual);
+            return crear_error("Se esperaban entre %d y %d argumentos, pero se recibieron %d.", esperado_n, esperado_m, actual);
         }
     }
 }

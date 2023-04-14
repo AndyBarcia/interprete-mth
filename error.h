@@ -15,7 +15,7 @@ typedef struct {
  */
 
 Error crear_error(const char *formato, ...);
-Error crear_error_numero_argumentos(int esperado, int actual);
+Error crear_error_numero_argumentos(int esperado_n, int esperado_m, int actual);
 Error crear_error_tipos_incompatibles(char* op, int tipoA, int tipoB);
 Error crear_error_op_incompatible(char* op, int tipo);
 Error crear_error_dividir_entre_cero();

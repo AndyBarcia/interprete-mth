@@ -3,12 +3,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-Valor crear_indefinido() {
-    return (Valor) {TIPO_INDEFINIDO, NULL, NULL};
+Valor crear_valor_unidad(Localizacion *loc) {
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = *loc;
+        loc = loc_copy;
+    }
+    return (Valor) {TIPO_UNIDAD, NULL, loc};
 }
 
-Valor crear_nulo() {
-    return (Valor) {TIPO_NULO, NULL, NULL};
+Valor crear_valor_indefinido() {
+    return (Valor) {TIPO_INDEFINIDO, NULL, NULL};
 }
 
 Valor crear_entero(Entero entero, Localizacion *loc) {
@@ -161,6 +166,45 @@ Valor clonar_valor(Valor v) {
     return copia;
 }
 
+Valor clonar_valor_debil(Valor v) {
+    Valor copia = v;
+    copia.referencias = NULL;
+    if (v.loc) {
+        // Si no, clonar también la información de
+        // localización del código fuente si fuese necesario.
+        copia.loc = malloc(sizeof(Localizacion));
+        *copia.loc = *v.loc;
+    }
+    return copia;
+}
+
+void _borrar_contenido_valor(Valor *valor) {
+    switch (valor->tipo_valor) {
+        case TIPO_ENTERO: valor->entero = 0; break;
+        case TIPO_DECIMAL: valor->decimal = 0; break;
+        case TIPO_BOOL: valor->bool = 0; break;
+        case TIPO_FUNCION_INTRINSECA: valor->funcion_intrinseca = -1; break;
+        case TIPO_FUNCION_FORANEA: valor->funcion_foranea = NULL; break;
+        case TIPO_ERROR: borrar_error(&valor->error); break;
+        case TIPO_STRING: borrar_string(&valor->string); break;
+        case TIPO_BIBLIOTECA_FORANEA: cerrar_biblioteca_dinamica(&valor->biblioteca); break;
+        case TIPO_FUNCION:
+            borrar_lista_identificadores(&valor->funcion.nombres_args);
+            borrar_expresion((Expresion *) valor->funcion.cuerpo);
+            free(valor->funcion.cuerpo);
+            borrar_tabla_hash((TablaHash *) valor->funcion.variables_capturadas);
+            free(valor->funcion.variables_capturadas);
+            break;
+        case TIPO_CONTROL_FLUJO:
+            if (valor->control_flujo.valor) {
+                borrar_valor((Valor *) valor->control_flujo.valor);
+                free(valor->control_flujo.valor);
+            }
+            break;
+        default: break;
+    }
+}
+
 void borrar_valor(Valor *valor) {
     // Si es un valor dinámico (string, error, función, etc),
     // reducir el número de referencias dinámicas.
@@ -173,13 +217,17 @@ void borrar_valor(Valor *valor) {
                 free(valor->loc);
                 valor->loc = NULL;
             }
+            // Restablecemos valores a su valor por defecto
+            // y liberamos memoria.
             switch (valor->tipo_valor) {
-                case TIPO_ERROR:
-                    borrar_error(&valor->error);
-                    break;
-                case TIPO_STRING:
-                    borrar_string(&valor->string);
-                    break;
+                case TIPO_ENTERO: valor->entero = 0; break;
+                case TIPO_DECIMAL: valor->decimal = 0; break;
+                case TIPO_BOOL: valor->bool = 0; break;
+                case TIPO_FUNCION_INTRINSECA: valor->funcion_intrinseca = -1; break;
+                case TIPO_FUNCION_FORANEA: valor->funcion_foranea = NULL; break;
+                case TIPO_ERROR: borrar_error(&valor->error); break;
+                case TIPO_STRING: borrar_string(&valor->string); break;
+                case TIPO_BIBLIOTECA_FORANEA: cerrar_biblioteca_dinamica(&valor->biblioteca); break;
                 case TIPO_FUNCION:
                     borrar_lista_identificadores(&valor->funcion.nombres_args);
                     borrar_expresion((Expresion *) valor->funcion.cuerpo);
@@ -187,15 +235,13 @@ void borrar_valor(Valor *valor) {
                     borrar_tabla_hash((TablaHash *) valor->funcion.variables_capturadas);
                     free(valor->funcion.variables_capturadas);
                     break;
-                case TIPO_BIBLIOTECA_FORANEA:
-                    cerrar_biblioteca_dinamica(&valor->biblioteca);
                 case TIPO_CONTROL_FLUJO:
                     if (valor->control_flujo.valor) {
                         borrar_valor((Valor *) valor->control_flujo.valor);
                         free(valor->control_flujo.valor);
                     }
-                default:
                     break;
+                default: break;
             }
             free(valor->referencias);
             valor->referencias = NULL;
@@ -203,21 +249,42 @@ void borrar_valor(Valor *valor) {
     } else {
         // Si no es un valor dinámico, entonces liberar la
         // memoria sobre localización en el código fuente, si
-        // la había , y terminar.
+        // la había, y terminar.
         if (valor->loc) {
             free(valor->loc);
             valor->loc = NULL;
         }
+        // Restablece los valores de este valor a su valor por
+        // defecto por si acaso, aunque no debería ser necesario.
+        // Importante: no borramos valores dinámicos con free
+        // porque este es un valor que no lleva cuenta de sus
+        // referencias, por lo que no podemos saber si alguien
+        // está utilizando la memoria.
         switch (valor->tipo_valor) {
             case TIPO_ENTERO: valor->entero = 0; break;
             case TIPO_DECIMAL: valor->decimal = 0; break;
             case TIPO_BOOL: valor->bool = 0; break;
             case TIPO_FUNCION_INTRINSECA: valor->funcion_intrinseca = -1; break;
             case TIPO_FUNCION_FORANEA: valor->funcion_foranea = NULL; break;
+            case TIPO_BIBLIOTECA_FORANEA: valor->biblioteca = NULL; break;
+            case TIPO_CONTROL_FLUJO: valor->control_flujo.valor = NULL; break;
+            case TIPO_ERROR:
+                valor->error.mensaje.puntero = 0;
+                valor->error.mensaje.padding[0] = '\0';
+                break;
+            case TIPO_STRING:
+                valor->string.puntero = 0;
+                valor->string.padding[0] = '\0';
+                break;
+            case TIPO_FUNCION:
+                valor->funcion.cuerpo = NULL;
+                valor->funcion.variables_capturadas = NULL;
+                valor->funcion.nombres_args.valores = NULL;
+                break;
             default: break;
         }
     }
-    valor->tipo_valor = TIPO_NULO;
+    valor->tipo_valor = TIPO_INDEFINIDO;
 }
 
 int comparar_valor(Valor a, Valor b, int *resultado) {
@@ -234,7 +301,7 @@ int comparar_valor(Valor a, Valor b, int *resultado) {
                     else *resultado = 0;
                     return 1;
                 }
-                default: return 0;
+                default: return 1;
             }
         case TIPO_DECIMAL:
             switch (b.tipo_valor) {
@@ -254,7 +321,7 @@ int comparar_valor(Valor a, Valor b, int *resultado) {
                 }
                 default: return 0;
             }
-        case TIPO_NULO:
+        case TIPO_INDEFINIDO:
             if (a.tipo_valor != b.tipo_valor) return 0;
             *resultado = 0;
             return 1;
@@ -311,9 +378,9 @@ void borrar_lista_valores(ListaValores *lista) {
 
 void _imprimir_valor(Valor valor) {
     switch (valor.tipo_valor) {
-        case TIPO_INDEFINIDO: /*printf("indefinido");*/ break;
-        case TIPO_NULO:
-            printf("null");
+        case TIPO_UNIDAD: /*printf("unidad");*/ break;
+        case TIPO_INDEFINIDO:
+            printf("indefinido");
             break;
         case TIPO_ERROR:
             printf("%s", string_a_puntero(&valor.error.mensaje));
@@ -356,13 +423,13 @@ void _imprimir_valor(Valor valor) {
 
 void imprimir_valor(Valor valor) {
     _imprimir_valor(valor);
-    if (valor.tipo_valor != TIPO_INDEFINIDO) printf("\n");
+    if (valor.tipo_valor != TIPO_UNIDAD) printf("\n");
 }
 
 char* tipo_valor_a_str(TipoValor tipo) {
     switch (tipo) {
-        case TIPO_NULO: return "nulo";
         case TIPO_INDEFINIDO: return "indefinido";
+        case TIPO_UNIDAD: return "unidad";
         case TIPO_ERROR: return "error";
         case TIPO_ENTERO: return "entero";
         case TIPO_DECIMAL: return "decimal";

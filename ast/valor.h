@@ -10,12 +10,15 @@
 
 /// Todos los tipos de valores que hay en el lenguaje
 typedef enum {
-    /// Valor de tipo nulo.
-    /// Sólo se utiliza internamente en el código.
-    TIPO_NULO,
-    /// Valor de un tipo no especificado.
-    /// Todas las sentencias son de tipo indefinido.
+    /// Valor de tipo indefinido.
+    /// Sólo se utiliza internamente en el código, y
+    /// es el valor de una variable que se va a asignar
+    /// pero que aún no ha sido evaluada.
+    /// Ej: `x = { /* Aquí x es indefinido */ }`
     TIPO_INDEFINIDO,
+    /// Valor de un tipo unidad.
+    /// Todas las sentencias son de tipo unidad.
+    TIPO_UNIDAD,
     /// Valor que representa un error léxico, de
     /// sintaxis, o un error en tiempo de ejecución.
     TIPO_ERROR,
@@ -152,8 +155,8 @@ typedef struct {
  * Funciones ayuda de creación de valores.
  */
 
-Valor crear_indefinido();
-Valor crear_nulo();
+Valor crear_valor_unidad(Localizacion *loc);
+Valor crear_valor_indefinido();
 Valor crear_entero(Entero entero, Localizacion *loc);
 Valor crear_decimal(Decimal decimal, Localizacion *loc);
 Valor crear_bool(Bool bool, Localizacion *loc);
@@ -165,14 +168,52 @@ Valor crear_valor_biblioteca(BibilotecaDinamica biblioteca, Localizacion *loc);
 Valor crear_valor_control_flujo(TipoControlFlujo tipo, Valor *v, Localizacion *loc);
 Valor crear_valor_error(Error error, Localizacion *loc);
 
-/// Crea un clon "ligero" de un valor; esto es, incrementando
-/// la cuenta de referencias dinámicas del valor.
+/**
+ * Crea un clon ligero. Esto simplemente aumenta el número de referencias
+ * dinámicas de los valores con memora dinámica (strings, errores, funciones,
+ * etc), por lo que es bastante barato de llamar.
+ * @param v el valor clonado.
+ * @return
+ */
 Valor clonar_valor(Valor v);
-/// Borra un valor; reduciendo su cuenta de referencias dinámicas,
-/// y liberando su memoria en caso de llegar a 0.
+
+/**
+ * Crea un clon débil, que no aumenta el número de referencias dinámicas
+ * incluso aunque sea de tipo dinámico.
+ * Un clon debil puede apuntar a memoria inválida ya liberada si el valor
+ * subyacente clonado se libera.
+ * @param v
+ * @return
+ */
+Valor clonar_valor_debil(Valor v);
+
+/**
+ * Borra la memoria dinámica de un valor. Esto implica borrar la información
+ * de localización si la hay, y reducir el número de referencias dinámicas
+ * en caso de valores con memoria dinámica.
+ *
+ * En los valores con memoria dinámica sólo se borra la memoria subyacente
+ * si el número de referencias dinámicas llega a 0.
+ * @param valor
+ */
 void borrar_valor(Valor *valor);
 
-/// Devuelve 1 si dos valores son iguales, y 0 en caso contrario.
+/**
+ * Compara dos valores, guardando el resultado de la comparación en un
+ * puntero a entero. El resultado de la función indica si tiene sentido
+ * que se realice la comparación.
+ * @param a el primer valor.
+ * @param b el segundo valor.
+ * @param resultado pasa a ser 0 si a y b son iguales; 1 si a es mayor que
+ * b, y -1 si a es menor que b. Su valor no varía si la comparación no tiene
+ * sentido.
+ * @return devuelve 1 si tiene sentido realizar la comparación y 0 en caso
+ * contrario. Hay ciertos valores, como las funciones, que no tiene sentido
+ * comparar, por lo que se devuelve 0.
+ * En general también se devuelve 0 si se están comparando valores de distintos
+ * tipos, ya que no tiene sentido decir cuál es mayor o menor (excepto, por
+ * ejemplo, con enteros y decimales).
+ */
 int comparar_valor(Valor a, Valor b, int *resultado);
 
 ListaValores crear_lista_valores();

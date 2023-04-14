@@ -33,7 +33,7 @@ TablaHash crear_tabla_hash(int capacidad) {
 
     for (int i = 0; i < capacidad_real; i++) {
         t.buffer[i] = (EntradaTablaHash) {
-                .valor = crear_nulo(),
+                .valor = crear_valor_indefinido(),
                 .clave = crear_string_vacio(),
                 .distancia_posicion_ideal = -1
         };
