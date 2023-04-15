@@ -13,27 +13,7 @@ Expresion crear_exp_valor(Valor valor) {
 }
 
 Expresion crear_exp_nombre(NombreAsignable nombre) {
-    return (Expresion) {EXP_IDENTIFICADOR, .nombre = nombre, .es_sentencia = 0};
-}
-
-Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion *loc) {
-    Expresion *e = malloc(sizeof(Expresion));
-    *e = valor;
-
-    if (loc) {
-        Localizacion* loc_copy = malloc(sizeof(Localizacion));
-        *loc_copy = clonar_loc(*loc);
-        loc = loc_copy;
-    }
-
-    return (Expresion) {
-        .tipo = EXP_ACCESO_MIEMBRO,
-        .acceso = (ExpAcceso) {
-            .valor = (struct Expresion*) e,
-            .miembro = miembro,
-            .loc = loc
-        }
-    };
+    return (Expresion) {EXP_NOMBRE, .nombre = nombre, .es_sentencia = 0};
 }
 
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion *loc) {
@@ -70,7 +50,7 @@ Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expres
     return crear_exp_llamada(crear_exp_valor(crear_funcion_intrinseca(op, opLoc)), args, loc);
 }
 
-Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc) {
+Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = expresion;
 
@@ -83,7 +63,7 @@ Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion,
     return (Expresion) {
             .tipo = EXP_OP_ASIGNACION,
             .asignacion = (ExpAsignacion) {
-                    .identificador = identificador,
+                    .nombre = nombre,
                     .expresion = (struct Expresion *) e,
                     .tipo = asignacion,
                     .loc = loc,
@@ -234,8 +214,8 @@ Expresion clonar_expresion(Expresion exp) {
         case EXP_VALOR:
             e.valor = clonar_valor(exp.valor);
             break;
-        case EXP_IDENTIFICADOR:
-            e.nombre = clonar_identificador(exp.nombre);
+        case EXP_NOMBRE:
+            e.nombre = clonar_nombre_asignable(exp.nombre);
             break;
         case EXP_OP_LLAMADA:
             e.llamada_funcion.funcion = malloc(sizeof(Expresion));
@@ -247,7 +227,7 @@ Expresion clonar_expresion(Expresion exp) {
             }
             break;
         case EXP_OP_ASIGNACION:
-            e.asignacion.identificador = clonar_identificador(exp.asignacion.identificador);
+            e.asignacion.nombre = clonar_nombre_asignable(exp.asignacion.nombre);
             e.asignacion.expresion = malloc(sizeof(Expresion)); // Y esto??
             *(Expresion *) e.asignacion.expresion = clonar_expresion(*(Expresion *) exp.asignacion.expresion);
             if (e.asignacion.loc) {
@@ -280,15 +260,6 @@ Expresion clonar_expresion(Expresion exp) {
             if (e.importe.loc) {
                 e.importe.loc = malloc(sizeof(Localizacion));
                 *e.importe.loc = clonar_loc(*exp.importe.loc);
-            }
-            break;
-        case EXP_ACCESO_MIEMBRO:
-            e.acceso.miembro = clonar_identificador(exp.acceso.miembro);
-            e.acceso.valor = malloc(sizeof(Expresion));
-            *(Expresion *) e.acceso.valor = clonar_expresion(*(Expresion *) exp.acceso.valor);
-            if (e.acceso.loc) {
-                e.acceso.loc = malloc(sizeof(Localizacion));
-                *e.acceso.loc = clonar_loc(*exp.acceso.loc);
             }
             break;
         case EXP_CONDICIONAL:
@@ -326,8 +297,8 @@ void borrar_expresion(Expresion *exp) {
         case EXP_VALOR:
             borrar_valor(&exp->valor);
             break;
-        case EXP_IDENTIFICADOR:
-            borrar_identificador(&exp->nombre);
+        case EXP_NOMBRE:
+            borrar_nombre_asignable(&exp->nombre);
             break;
         case EXP_OP_LLAMADA:
             borrar_expresion((Expresion *) exp->llamada_funcion.funcion);
@@ -341,7 +312,7 @@ void borrar_expresion(Expresion *exp) {
         case EXP_OP_ASIGNACION:
             borrar_expresion((Expresion *) exp->asignacion.expresion);
             free(exp->asignacion.expresion);
-            borrar_string(&exp->asignacion.identificador.nombre);
+            borrar_nombre_asignable(&exp->asignacion.nombre);
             if(exp->asignacion.loc) {
                 borrar_loc(exp->asignacion.loc);
                 free(exp->asignacion.loc);
@@ -372,15 +343,6 @@ void borrar_expresion(Expresion *exp) {
             if(exp->importe.loc) {
                 borrar_loc(exp->importe.loc);
                 free(exp->importe.loc);
-            }
-            break;
-        case EXP_ACCESO_MIEMBRO:
-            borrar_string(&exp->acceso.miembro.nombre);
-            borrar_expresion((Expresion*) exp->acceso.valor);
-            free(exp->acceso.valor);
-            if(exp->acceso.loc) {
-                borrar_loc(exp->acceso.loc);
-                free(exp->acceso.loc);
             }
             break;
         case EXP_CONDICIONAL:
@@ -417,10 +379,9 @@ Localizacion* obtener_loc_exp(Expresion *exp) {
             return NULL;
         case EXP_VALOR:
             return exp->valor.loc;
-        case EXP_IDENTIFICADOR:
-            return &exp->nombre.loc;
-        case EXP_ACCESO_MIEMBRO:
-            return exp->acceso.loc;
+        case EXP_NOMBRE:
+            // TODO Areglar esto
+            return &exp->nombre.nombre_base.loc;
         case EXP_OP_LLAMADA:
             return exp->llamada_funcion.loc;
         case EXP_OP_ASIGNACION:
@@ -502,22 +463,25 @@ void borrar_lista_expresiones(ListaExpresiones *lista) {
 
 void _imprimir_lista_expresiones(ListaExpresiones listaValores);
 void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
+void _imprimir_nombre_asignable(NombreAsignable nombre);
+void _imprimir_acceso(Acceso acceso);
 
 void _imprimir_expresion(Expresion expresion) {
     switch (expresion.tipo) {
         case EXP_VALOR:
             _imprimir_valor(expresion.valor);
             break;
-        case EXP_IDENTIFICADOR:
-            printf("%s", string_a_puntero(&expresion.nombre.nombre));
+        case EXP_NOMBRE:
+            _imprimir_nombre_asignable(expresion.nombre);
             break;
         case EXP_OP_LLAMADA:
             _imprimir_expresion(*(Expresion *) expresion.llamada_funcion.funcion);
             _imprimir_lista_expresiones(expresion.llamada_funcion.args);
             break;
         case EXP_OP_ASIGNACION:
-            printf("%s = ", string_a_puntero(&expresion.asignacion.identificador.nombre));
-            _imprimir_expresion(*(Expresion *) expresion.asignacion.expresion);
+            _imprimir_nombre_asignable(expresion.asignacion.nombre);
+            printf(" = ");
+            _imprimir_expresion(*(Expresion*) expresion.asignacion.expresion);
             break;
         case EXP_OP_DEF_FUNCION:
             printf("\\");
@@ -530,9 +494,6 @@ void _imprimir_expresion(Expresion expresion) {
             break;
         case EXP_BLOQUE:
             _imprimir_lista_expresiones(expresion.bloque.lista);
-            break;
-        case EXP_ACCESO_MIEMBRO:
-            // TODO:
             break;
         case EXP_IMPORT:
             // TODO:
@@ -568,9 +529,9 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
         case EXP_VALOR:
         case EXP_NULA:
             break;
-        case EXP_IDENTIFICADOR:
-            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.nombre.nombre)))
-                push_lista_identificadores(lista, clonar_identificador(expresion.nombre));
+        case EXP_NOMBRE:
+            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.nombre.nombre_base.nombre)))
+                push_lista_identificadores(lista, clonar_identificador(expresion.nombre.nombre_base));
             break;
         case EXP_OP_LLAMADA:
             _variables_capturadas(*(Expresion *) expresion.llamada_funcion.funcion, locales, lista);
@@ -578,7 +539,7 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
                 _variables_capturadas(((Expresion *) expresion.llamada_funcion.args.valores)[i], locales, lista);
             break;
         case EXP_OP_ASIGNACION:
-            insertar_hash(locales, expresion.asignacion.identificador.nombre, crear_valor_unidad(NULL), 0);
+            insertar_hash(locales, expresion.asignacion.nombre.nombre_base.nombre, crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.asignacion.expresion, locales, lista);
             break;
         case EXP_OP_DEF_FUNCION:
@@ -591,9 +552,6 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
                 Expresion subexpresion = ((Expresion *) expresion.bloque.lista.valores)[i];
                 _variables_capturadas(subexpresion, locales, lista);
             }
-            break;
-        case EXP_ACCESO_MIEMBRO:
-            _variables_capturadas(*(Expresion *) expresion.acceso.valor, locales, lista);
             break;
         case EXP_IMPORT:
             break;

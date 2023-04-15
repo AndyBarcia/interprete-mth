@@ -50,9 +50,6 @@ typedef int Bool;
 /// Tipo entero de un número decimal.
 typedef double Decimal;
 
-/// Un valor asignable en una expresión de asignación.
-typedef Identificador NombreAsignable;
-
 /// Las distintas funciones intrínsecas del lenguaje.
 typedef enum {
     /// Operaciones aritméticas básicas
@@ -215,6 +212,18 @@ void borrar_valor(Valor *valor);
  * ejemplo, con enteros y decimales).
  */
 int comparar_valor(Valor a, Valor b, int *resultado);
+
+/**
+ * Trata de acceder a un miembro de un valor con un índice dado. Con esto
+ * se pueden hacer cosas como acceder a un índice de un array; acceder
+ * a una función foránea de una biblioteca con un string, etc.
+ * @param valor el valor que se va a indexar
+ * @param indice el valor que se usará como índice
+ * @param resultado donde se pondrá el resultado.
+ * @return devuelve 1 si tiene sentido la operación, 0 en caso de que
+ * no se pueda realizar el indexado con los tipos de valores usados.
+ */
+int acceder_miembro_valor(Valor valor, Valor indice, Valor *resultado);
 
 ListaValores crear_lista_valores();
 void push_lista_valores(ListaValores *lista, Valor v);

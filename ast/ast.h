@@ -6,6 +6,15 @@
 #include "../analizador_lexico.h"
 #include "../tabla_simbolos.h"
 #include "control_flujo.h"
+#include "nombre_asignable.h"
+
+/// Una expresión que contiene un valor.
+typedef Valor ExpValor;
+
+/// Una expresión que es un nombre,
+/// del estilo de `x`, `x.y`, `x[y]`
+/// y combinaciones de ellos.
+typedef NombreAsignable ExpNombre;
 
 /// Una lista de expresiones, con una
 /// determinada localización en el
@@ -30,7 +39,7 @@ typedef struct {
 typedef struct {
     /// El nombre al que se va a asignar
     /// el valor de la expresión.
-    Identificador identificador;
+    NombreAsignable nombre;
     /// La expresión a evaluar.
     struct Expresion *expresion;
     /// Si la asignación es normal, o
@@ -70,18 +79,6 @@ typedef struct {
     Localizacion* loc;
 } ExpImporte;
 
-/// Una expresión de acceso al miembro
-/// de un valor estructurado.
-/// Ejemplo: `diccionario.test`
-typedef struct {
-    /// La expresión a la que se va a acceder.
-    struct Expresion *valor;
-    /// El miembro que se va a acceder.
-    Identificador miembro;
-    /// La localización en el código fuente.
-    Localizacion* loc;
-} ExpAcceso;
-
 /// Una lista de expresiones en un
 /// bloque de tipo `{ [exp] }`.
 typedef struct {
@@ -119,13 +116,10 @@ typedef enum {
     /// Una expresión que es un simple valor.
     /// Ejemplo: `5`
     EXP_VALOR,
-    /// Una expresión que es un simple identificador.
-    /// Ejemplo: `x`
-    EXP_IDENTIFICADOR,
-    /// Una expresión de acceso al miembro
-    /// de un valor estructurado.
-    /// Ejemplo: `diccionario.test`
-    EXP_ACCESO_MIEMBRO,
+    /// Una expresión que es un nombre que designa una
+    /// variable o lugar.
+    /// Ejemplo: `x`, `x.y`, `x[y]`, etc.
+    EXP_NOMBRE,
     /// Una expresión que es una llamada a una función
     /// con ciertos nombres_args.
     /// Ejemplo: `f(5)`, `(\x=>x+1)(2)`
@@ -164,9 +158,8 @@ typedef struct {
     /// de control de flujo.
     int es_sentencia;
     union {
-        Valor valor;
-        NombreAsignable nombre;
-        ExpAcceso acceso;
+        ExpValor valor;
+        ExpNombre nombre;
         ExpLlamada llamada_funcion;
         ExpAsignacion asignacion;
         ExpDefFuncion def_funcion;
@@ -184,9 +177,9 @@ typedef struct {
 Expresion crear_exp_nula();
 Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_nombre(NombreAsignable nombre);
-Expresion crear_exp_acceso(Expresion valor, Identificador miembro, Localizacion *loc);
+//Expresion crear_exp_acceso(Expresion valor, Acceso acceso, Localizacion *loc);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion *loc);
-Expresion crear_exp_asignacion(Identificador identificador, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc);
+Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc);
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc);
 Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc);

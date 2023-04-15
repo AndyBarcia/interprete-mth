@@ -29,6 +29,10 @@ Error crear_error_reasignando_inmutable(char* nombre) {
     return crear_error("Intentando reasignar variable inmutable \"%s\"", nombre);
 }
 
+Error crear_error_acceso_incorrecto(int tipo_base, int tipo_indice) {
+    return crear_error("No se pueden indexar valores de tipo %s con un %s", tipo_valor_a_str(tipo_base), tipo_valor_a_str(tipo_indice));
+}
+
 Error crear_error_numero_argumentos(int esperado_n, int esperado_m, int actual) {
     if (esperado_n == esperado_m) {
         int esperado = esperado_n;

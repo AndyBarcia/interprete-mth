@@ -63,83 +63,86 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             }
             return exp->valor;
         }
-        case EXP_IDENTIFICADOR: {
-            // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
+        case EXP_NOMBRE: {
+            // La expresión representa el nombre de un lugar, como una variable
+            // `x` o un índice `x.y` o `x[y]`.
 
+            // Primero tenemos que encontrar el nombre base en la tabla de símbolos,
+            // reportando en el caso de que no exista la variable.
+            Valor valor;
+            if (!recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre_base.nombre, &valor, NULL)) {
+                Error error = crear_error_variable_no_definida(string_a_puntero(&exp->nombre.nombre_base.nombre));
+                valor = crear_valor_error(error, &exp->nombre.nombre_base.loc);
+                borrar_nombre_asignable(&exp->nombre);
+                return valor;
+            }
+
+            // Y luego buscar recursivamente los accesos.
+            for (int i = 0; i < exp->nombre.longitud; ++i) {
+                Acceso acceso = exp->nombre.accesos[i];
+
+                // Primero evaluamos el índice que vamos a utilizar
+                Valor indice;
+                switch (acceso.tipo) {
+                    case ACCESO_MIEMBRO:
+                        indice = crear_valor_string(acceso.miembro.nombre, &acceso.miembro.loc);
+                        borrar_loc(&acceso.miembro.loc);
+                        break;
+                    case ACCESO_INDEXADO:
+                        indice = evaluar_expresion(tabla, (Expresion*) acceso.indice, contexto, wd);
+                        free(acceso.indice);
+                        if (indice.tipo_valor == TIPO_ERROR) {
+                            borrar_valor(&valor);
+                            borrar_identificador(&exp->nombre.nombre_base);
+                            for (int j = i+1; j < exp->nombre.longitud; ++j)
+                                borrar_acceso(&exp->nombre.accesos[j]);
+                            free(exp->nombre.accesos);
+                            return indice;
+                        }
+                        break;
+                }
+
+                // Después intentamos acceder al miembro del valor,
+                // reportando el caso de que estemos intentando
+                // hacer algo imposible.
+                Valor miembro;
+                if (!acceder_miembro_valor(valor, indice, &miembro)) {
+                    Error error = crear_error_acceso_incorrecto(valor.tipo_valor, indice.tipo_valor);
+                    Valor r = crear_valor_error(error, indice.loc);
+                    borrar_valor(&valor);
+                    borrar_valor(&indice);
+                    borrar_identificador(&exp->nombre.nombre_base);
+                    for (int j = i+1; j < exp->nombre.longitud; ++j)
+                        borrar_acceso(&exp->nombre.accesos[j]);
+                    free(exp->nombre.accesos);
+                    return r;
+                }
+
+                borrar_valor(&valor);
+                borrar_valor(&indice);
+                valor = miembro;
+            }
+
+            // Si la expresión es una sentencia, simplemente liberar la memoria
+            // y terminar, porque no tenemos que devolver el valor.
             if (exp->es_sentencia) {
-                // Si la expresión es una sentencia, sólo comprobar que el identificador existe
-                // en la tabla de símbolos, y si existe, devolver el valor unidad.
-
-                Valor v = crear_valor_unidad(NULL);
-                if (!recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre, NULL, NULL)) {
-                    Error error = crear_error_variable_no_definida(string_a_puntero(&exp->nombre.nombre));
-                    v = crear_valor_error(error, &exp->nombre.loc);
-                }
-                borrar_identificador(&exp->nombre);
-                return v;
-            } else {
-                // Si no es una sentencia, recuperar un clon del valor de la tabla de símbolos.
-
-                Valor v;
-                if (!recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre, &v, NULL)) {
-                    Error error = crear_error_variable_no_definida(string_a_puntero(&exp->nombre.nombre));
-                    v = crear_valor_error(error, &exp->nombre.loc);
-                    borrar_identificador(&exp->nombre);
-                    return v;
-                }
-
-                // Reemplazar la localización original del valor por la localización del identificador.
-                if (v.loc)
-                    borrar_loc(v.loc);
-                else
-                    v.loc = malloc(sizeof(Localizacion));
-                *v.loc = exp->nombre.loc;
-                borrar_string(&exp->nombre.nombre);
-
-                return v;
-            }
-        }
-        case EXP_ACCESO_MIEMBRO: {
-            // Si es una expresión de acceso, estilo "objeto.miembro", tenemos que evaluar
-            // primero el objeto, y después tratar de acceder a su miembro.
-
-            Valor v = evaluar_expresion(tabla, (Expresion *) exp->acceso.valor, contexto, wd);
-            free(exp->acceso.valor);
-            if (v.tipo_valor == TIPO_ERROR) return v;
-
-            // Por ahora los únicos objetos de este tipo que se pueden acceder son
-            // tests dinámicas de C.
-            Valor result = crear_valor_unidad(NULL);
-            switch (v.tipo_valor) {
-                case TIPO_BIBLIOTECA_FORANEA: {
-                    BibilotecaDinamica bib = v.biblioteca;
-                    FuncionForanea f = cargar_funcion_biblioteca(bib, identificador_a_str(&exp->acceso.miembro));
-                    if (f) {
-                        result = crear_funcion_foranea(f);
-                    } else {
-                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.", identificador_a_str(&exp->acceso.miembro));
-                        result = crear_valor_error(error, &exp->acceso.miembro.loc);
-                    }
-                    break;
-                }
-                default: {
-                    Error error = crear_error("No se puede acceder al miembro \"%s\".", identificador_a_str(&exp->acceso.miembro));
-                    result = crear_valor_error(error, &exp->acceso.miembro.loc);
-                    break;
-                }
-            }
-
-            borrar_valor(&v);
-            borrar_identificador(&exp->acceso.miembro);
-            if (exp->acceso.loc) {
-                borrar_loc(exp->acceso.loc);
-                free(exp->acceso.loc);
-            }
-            if (exp->es_sentencia && result.tipo_valor != TIPO_ERROR) {
-                borrar_valor(&result);
+                borrar_valor(&valor);
+                borrar_identificador(&exp->nombre.nombre_base);
+                if (exp->nombre.accesos) free(exp->nombre.accesos);
                 return crear_valor_unidad(NULL);
             }
-            return result;
+
+            // Si no, reemplazar la localización original del valor por la localización
+            // del nombre asignable, y devolver el valor obtenido.
+            if (valor.loc)
+                borrar_loc(valor.loc);
+            else
+                valor.loc = malloc(sizeof(Localizacion));
+            *valor.loc = clonar_loc(exp->nombre.nombre_base.loc);
+            borrar_identificador(&exp->nombre.nombre_base);
+            if (exp->nombre.accesos) free(exp->nombre.accesos);
+
+            return valor;
         }
         case EXP_OP_LLAMADA: {
             // Si es una llamada, evaluar la expresión que queremos llamar como función,
@@ -287,13 +290,13 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
         }
         case EXP_OP_ASIGNACION: {
             // Expresión de asignación de una expresión a una variable.
-            String nombre = exp->asignacion.identificador.nombre;
+            String nombre = exp->asignacion.nombre.nombre_base.nombre;
 
             // Primero comprobar que no estamos reasignando una variable inmutable definida previamente.
             TipoAsignacion tipo;
             if (recuperar_clon_valor_tabla(*tabla, nombre, NULL, &tipo) && tipo == ASIGNACION_INMUTABLE) {
                 Error error = crear_error_reasignando_inmutable(string_a_puntero(&nombre));
-                Valor v = crear_valor_error(error, &exp->asignacion.identificador.loc);
+                Valor v = crear_valor_error(error, &exp->asignacion.nombre.nombre_base.loc);
                 borrar_expresion(exp);
                 return v;
             }
@@ -319,14 +322,20 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 v = retorno;
             } else {
                 // Si el valor era un error no insertamos nada.
-                borrar_string(&exp->asignacion.identificador.nombre);
+                borrar_nombre_asignable(&exp->asignacion.nombre);
             }
 
+            // Liberar toda la memoria que queda.
             if (exp->asignacion.loc) {
                 borrar_loc(exp->asignacion.loc);
                 free(exp->asignacion.loc);
             }
-            borrar_loc(&exp->asignacion.identificador.loc);
+            borrar_loc(&exp->asignacion.nombre.nombre_base.loc);
+            if (exp->asignacion.nombre.accesos) {
+                for(int i = 0; i < exp->asignacion.nombre.longitud; ++i)
+                    borrar_acceso(&exp->asignacion.nombre.accesos[i]);
+                free(exp->asignacion.nombre.accesos);
+            }
             return v;
         }
         case EXP_OP_DEF_FUNCION: {

@@ -40,11 +40,12 @@ while (0)
 }
 
 %union {
-    int tipoOperador;
     int valorEntero;
     double valorDecimal;
     Error error_lexico;
     Identificador identificador;
+    Acceso acceso;
+    NombreAsignable nombreAsignable;
     String string;
     ListaExpresiones listaExpresiones;
     ListaIdentificadores listaIdentificadores;
@@ -57,9 +58,6 @@ while (0)
 %token <identificador> IDENTIFICADOR "identificador"
 %token <string> STRING "string"
 %token <error_lexico> ERROR
-%token <tipoOperador> OPERADOR_ASIGNACION "operador de asignación"
-
-%token <identificador> OPERADOR "operador"
 
 %token SUMA "+"
 %token RESTA "-"
@@ -67,6 +65,7 @@ while (0)
 %token DIV "/"
 %token MOD "%"
 
+%token IGUAL "="
 %token EQ "=="
 %token NEQ "!="
 %token GE ">"
@@ -101,21 +100,23 @@ while (0)
 %token PUNTO_Y_COMA ";"
 %token COMA ","
 
-%type <identificador> nombre_asignable
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
 %type <listaExpresiones> expression_list
 %type <listaIdentificadores> identifier_list
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
+%type <expresion> statement
+%type <acceso> acceso
+%type <nombreAsignable> nombre_asignable
 
-%precedence ";"
-%precedence RETURN
-%precedence BREAK
-%precedence CONST
-%precedence OPERADOR_ASIGNACION
+%precedence "then"
+%precedence "else"
+%precedence "return"
+%precedence "break"
+%precedence "="
 %precedence "=>"
-%left OPERADOR
+%left "!"
 %left "+" "-"
 %left "*" "/" "%"
 %nonassoc "==" "!=" ">" ">=" "<" "<="
@@ -125,7 +126,8 @@ while (0)
 
 %destructor { borrar_identificador(&$$); } IDENTIFICADOR
 %destructor { borrar_string(&$$); } STRING
-%destructor { borrar_identificador(&$$); } nombre_asignable
+%destructor { borrar_nombre_asignable(&$$); } nombre_asignable
+%destructor { borrar_acceso(&$$); } acceso
 %destructor { borrar_lista_expresiones(&$$); } argument_list
 %destructor { borrar_lista_expresiones(&$$); } argument_list_many
 %destructor { borrar_lista_expresiones(&$$); } expression_list
@@ -135,16 +137,13 @@ while (0)
 
 %%
 
-program: statement_list ;
+program:
+    nuevas_lineas
+    | program statement nuevas_lineas { *exp = $2; }
+    | program error nuevas_lineas { }
+    ;
 
 nuevas_lineas: %empty | nuevas_lineas "\n" ;
-
-statement_list:
-      %empty
-    | nuevas_lineas
-    | statement_list expresion nuevas_lineas { *exp = $2; }
-    | statement_list error nuevas_lineas { }
-    ;
 
 argument_list_many:
     expresion { $$ = crear_lista_expresiones1($1); }
@@ -162,16 +161,23 @@ identifier_list:  identifier_list_many
 
 expression_list:
      nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
-    | expression_list expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
+    | expression_list statement nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
 
-nombre_asignable: IDENTIFICADOR | OPERADOR ;
+acceso:
+    "." IDENTIFICADOR { $$ = crear_acceso_miembro($2); }
+    | "[" expresion "]" { $$ = crear_acceso_indexado((struct Expresion*) &$2); }
+    ;
+
+nombre_asignable:
+    IDENTIFICADOR { $$ = crear_nombre_asignable($1); }
+    | nombre_asignable acceso { push_acceso_nombre_asignable(&$1, $2); $$ = $1; }
+    ;
 
 expresion:
       ENTERO { $$ = crear_exp_valor(crear_entero($1, &@1)); }
     | DECIMAL { $$ = crear_exp_valor(crear_decimal($1, &@1)); }
     | STRING { $$ = crear_exp_valor(crear_valor_string($1, &@1)); }
-    | IDENTIFICADOR { $$ = crear_exp_nombre($1); }
     | "(" "!" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NOT, &@$)); }
     | "(" "*" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MULT, &@$)); }
     | "(" "/" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_DIV, &@$)); }
@@ -203,10 +209,10 @@ expresion:
     | expresion "||" expresion { $$ = crear_exp_op_binaria(INTRINSECA_OR, &@2, $1, $3, &@$); }
     | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, &@$); }
     | "(" expresion ")" { $$ = $2; }
-    | expresion "." IDENTIFICADOR { $$ = crear_exp_acceso($1, $3, &@$); }
-    | nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
-    | "const" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
-    | "export" nombre_asignable OPERADOR_ASIGNACION expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
+    | nombre_asignable { $$ = crear_exp_nombre($1); }
+    | nombre_asignable "=" expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
+    | "const" nombre_asignable "=" expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
+    | "export" nombre_asignable "=" expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
     | "{" expression_list "}" { $$ = crear_exp_bloque($2, &@$); }
     | "if" expresion "then" expresion { $$ = crear_exp_condicional($2, $4, NULL, &@$); }
     | "if" expresion "then" expresion "else" expresion { $$ = crear_exp_condicional($2, $4, &$6, &@$); }
@@ -217,9 +223,13 @@ expresion:
     | "break" expresion { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_BREAK, &$2, &@1); }
     | "return" { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_RETURN, NULL, &@1); }
     | "return" expresion { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_RETURN, &$2, &@$); }
-    | expresion ";" { $$ = $1; $$.es_sentencia = 1; }
     | ERROR { $$ = crear_exp_valor(crear_valor_error($1, &@1)); }
     ;
+
+statement:
+    expresion ";" { $$ = $1; $$.es_sentencia = 1; }
+    | expresion "\n" { $$ = $1;}
+    | expresion YYEOF { $$ = $1; }
 
 %%
 

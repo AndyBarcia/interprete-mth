@@ -317,6 +317,57 @@ int comparar_valor(Valor a, Valor b, int *resultado) {
     }
 }
 
+int acceder_miembro_valor(Valor v, Valor i, Valor *result) {
+    switch (v.tipo_valor) {
+        // En las bibliotecas dinámicas de C se puede acceder
+        // a las funciones foráneas mediante strings, que
+        // representan los nombres de las funciones.
+        case TIPO_BIBLIOTECA_FORANEA: {
+            switch (i.tipo_valor) {
+                case TIPO_STRING: {
+                    BibilotecaDinamica bib = v.biblioteca;
+                    FuncionForanea f = cargar_funcion_biblioteca(bib, string_a_puntero(&i.string));
+                    if (f) {
+                        *result = crear_funcion_foranea(f);
+                    } else {
+                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.", string_a_puntero(&i.string));
+                        *result = crear_valor_error(error, i.loc);
+                    }
+                    return 1;
+                }
+                default: return 0;
+            }
+        }
+        // En los strings se puede acceder a caracteres
+        // del string mediante enteros.
+        case TIPO_STRING: {
+            switch (i.tipo_valor) {
+                case TIPO_ENTERO: {
+                    char* str = string_a_puntero(&v.string);
+                    int len = (int) strlen(str);
+
+                    int n = i.entero;
+                    if (n < 0) n += len;
+
+                    if (n < 0 || n >= len) {
+                        Error error = crear_error("El valor %d está fuera de rango.", i.entero);
+                        *result = crear_valor_error(error, i.loc);
+                    } else {
+                        char xs[2];
+                        xs[0] = str[n];
+                        xs[1] = '\0';
+
+                        *result = crear_valor_string(crear_string(xs), NULL);
+                    }
+                    return 1;
+                }
+                default: return 0;
+            }
+        }
+        default: return 0;
+    }
+}
+
 ListaValores crear_lista_valores() {
     return (ListaValores) {
         .capacidad = 0,

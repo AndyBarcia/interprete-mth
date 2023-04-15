@@ -65,44 +65,43 @@ extern int yydebug;
     IDENTIFICADOR = 260,           /* "identificador"  */
     STRING = 261,                  /* "string"  */
     ERROR = 262,                   /* ERROR  */
-    OPERADOR_ASIGNACION = 263,     /* "operador de asignación"  */
-    OPERADOR = 264,                /* "operador"  */
-    SUMA = 265,                    /* "+"  */
-    RESTA = 266,                   /* "-"  */
-    MULT = 267,                    /* "*"  */
-    DIV = 268,                     /* "/"  */
-    MOD = 269,                     /* "%"  */
-    EQ = 270,                      /* "=="  */
-    NEQ = 271,                     /* "!="  */
-    GE = 272,                      /* ">"  */
-    GEQ = 273,                     /* ">="  */
-    LE = 274,                      /* "<"  */
-    LEQ = 275,                     /* "<="  */
-    AND = 276,                     /* "&&"  */
-    OR = 277,                      /* "||"  */
-    NOT = 278,                     /* "!"  */
-    CONST = 279,                   /* "const"  */
-    EXPORT = 280,                  /* "export"  */
-    IMPORT = 281,                  /* "import"  */
-    FOREIGN = 282,                 /* "foreign"  */
-    AS = 283,                      /* "as"  */
-    BREAK = 284,                   /* "break"  */
-    RETURN = 285,                  /* "return"  */
-    IF = 286,                      /* "if"  */
-    THEN = 287,                    /* "then"  */
-    ELSE = 288,                    /* "else"  */
-    PARENTESIS_IZQ = 289,          /* "("  */
-    PARENTESIS_DER = 290,          /* ")"  */
-    CORCHETE_IZQ = 291,            /* "["  */
-    CORCHETE_DER = 292,            /* "]"  */
-    LLAVE_IZQ = 293,               /* "{"  */
-    LLAVE_DER = 294,               /* "}"  */
-    PUNTO = 295,                   /* "."  */
-    FLECHA = 296,                  /* "=>"  */
-    SLASH_INVERTIDA = 297,         /* "\\"  */
-    NUEVA_LINEA = 298,             /* "\n"  */
-    PUNTO_Y_COMA = 299,            /* ";"  */
-    COMA = 300                     /* ","  */
+    SUMA = 263,                    /* "+"  */
+    RESTA = 264,                   /* "-"  */
+    MULT = 265,                    /* "*"  */
+    DIV = 266,                     /* "/"  */
+    MOD = 267,                     /* "%"  */
+    IGUAL = 268,                   /* "="  */
+    EQ = 269,                      /* "=="  */
+    NEQ = 270,                     /* "!="  */
+    GE = 271,                      /* ">"  */
+    GEQ = 272,                     /* ">="  */
+    LE = 273,                      /* "<"  */
+    LEQ = 274,                     /* "<="  */
+    AND = 275,                     /* "&&"  */
+    OR = 276,                      /* "||"  */
+    NOT = 277,                     /* "!"  */
+    CONST = 278,                   /* "const"  */
+    EXPORT = 279,                  /* "export"  */
+    IMPORT = 280,                  /* "import"  */
+    FOREIGN = 281,                 /* "foreign"  */
+    AS = 282,                      /* "as"  */
+    BREAK = 283,                   /* "break"  */
+    RETURN = 284,                  /* "return"  */
+    IF = 285,                      /* "if"  */
+    THEN = 286,                    /* "then"  */
+    ELSE = 287,                    /* "else"  */
+    PARENTESIS_IZQ = 288,          /* "("  */
+    PARENTESIS_DER = 289,          /* ")"  */
+    CORCHETE_IZQ = 290,            /* "["  */
+    CORCHETE_DER = 291,            /* "]"  */
+    LLAVE_IZQ = 292,               /* "{"  */
+    LLAVE_DER = 293,               /* "}"  */
+    PUNTO = 294,                   /* "."  */
+    FLECHA = 295,                  /* "=>"  */
+    SLASH_INVERTIDA = 296,         /* "\\"  */
+    NUEVA_LINEA = 297,             /* "\n"  */
+    PUNTO_Y_COMA = 298,            /* ";"  */
+    COMA = 299                     /* ","  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -113,11 +112,12 @@ union YYSTYPE
 {
 #line 42 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
-    int tipoOperador;
     int valorEntero;
     double valorDecimal;
     Error error_lexico;
     Identificador identificador;
+    Acceso acceso;
+    NombreAsignable nombreAsignable;
     String string;
     ListaExpresiones listaExpresiones;
     ListaIdentificadores listaIdentificadores;

@@ -10,12 +10,6 @@
                        yylloc->first_column = yylloc->last_column; \
                        yylloc->last_column += yyleng;
 
-#define OP_SUMAR 128
-#define OP_RESTAR 129
-#define OP_COMPARACION_IGUAL 130
-#define OP_COMPARACION_MAYOR_IGUAL 131
-#define OP_COMPARACION_MENOR_IGUAL 132
-
 int nivel_comentario_anidado = 0;
 %}
 
@@ -51,8 +45,6 @@ DECIMAL_MALFORMADO {DIGITO}({ALFANUM_US}|".")+
 
 STRING \"(\\.|[^\n"\\])*\"
 STRING_MALFORMADO \"(\\.|[^\n"\\])*
-
-OPERADORES [+\-*/=,.;{}()\[\]<>!&|]
 
 %x comentario_anidado
 %x comentario_bloque
@@ -115,19 +107,7 @@ else { return ELSE; }
 &&   { return AND; }
 \|\|   { return OR; }
 !   { return NOT; }
-
-= {
-        yylval->tipoOperador = '=';
-        return OPERADOR_ASIGNACION;
-    }
-\+= {
-        yylval->tipoOperador = OP_SUMAR;
-        return OPERADOR_ASIGNACION;
-    }
--= {
-        yylval->tipoOperador = OP_RESTAR;
-        return OPERADOR_ASIGNACION;
-    }
+\=   { return IGUAL; }
 
 \(   { return PARENTESIS_IZQ; }
 \)   { return PARENTESIS_DER; }
