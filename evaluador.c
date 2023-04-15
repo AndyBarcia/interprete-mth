@@ -65,33 +65,39 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
         }
         case EXP_IDENTIFICADOR: {
             // Si la expresión es un identificador; buscar su valor en la tabla de símbolos.
-            Valor v = recuperar_valor_tabla(*tabla, exp->nombre);
-            if (v.tipo_valor == TIPO_ERROR) {
-                borrar_identificador(&exp->nombre);
-                return v;
-            }
-            if (v.tipo_valor == TIPO_INDEFINIDO) {
-                Error error = crear_error("Haciendo referencia a un valor aún no definido.");
-                Valor r = crear_valor_error(error, &exp->nombre.loc);
-                borrar_valor(&v);
-                borrar_identificador(&exp->nombre);
-                return r;
-            }
 
             if (exp->es_sentencia) {
-                borrar_valor(&v);
-                return crear_valor_unidad(NULL);
-            }
+                // Si la expresión es una sentencia, sólo comprobar que el identificador existe
+                // en la tabla de símbolos, y si existe, devolver el valor unidad.
 
-            // Reemplazar la localización original del valor por la localización del identificador.
-            if (v.loc)
-                borrar_loc(v.loc);
-            else
-                v.loc = malloc(sizeof(Localizacion));
-            *v.loc = exp->nombre.loc;
-            borrar_string(&exp->nombre.nombre);
-            
-            return v;
+                Valor v = crear_valor_unidad(NULL);
+                if (!recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre, NULL, NULL)) {
+                    Error error = crear_error_variable_no_definida(string_a_puntero(&exp->nombre.nombre));
+                    v = crear_valor_error(error, &exp->nombre.loc);
+                }
+                borrar_identificador(&exp->nombre);
+                return v;
+            } else {
+                // Si no es una sentencia, recuperar un clon del valor de la tabla de símbolos.
+
+                Valor v;
+                if (!recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre, &v, NULL)) {
+                    Error error = crear_error_variable_no_definida(string_a_puntero(&exp->nombre.nombre));
+                    v = crear_valor_error(error, &exp->nombre.loc);
+                    borrar_identificador(&exp->nombre);
+                    return v;
+                }
+
+                // Reemplazar la localización original del valor por la localización del identificador.
+                if (v.loc)
+                    borrar_loc(v.loc);
+                else
+                    v.loc = malloc(sizeof(Localizacion));
+                *v.loc = exp->nombre.loc;
+                borrar_string(&exp->nombre.nombre);
+
+                return v;
+            }
         }
         case EXP_ACCESO_MIEMBRO: {
             // Si es una expresión de acceso, estilo "objeto.miembro", tenemos que evaluar
@@ -281,50 +287,47 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
         }
         case EXP_OP_ASIGNACION: {
             // Expresión de asignación de una expresión a una variable.
-            // Tenemos que evaluar la expresión y después comprobar que
-            // la podemos insertar en la tabla de símbolos.
+            String nombre = exp->asignacion.identificador.nombre;
 
-            // Sólo se permiten hacer exports en el contexto de un módulo.
-            if (exp->asignacion.tipo == ASIGNACION_EXPORT && contexto != CNTXT_MODULO) {
-                Error error = crear_error_contexto_incorrecto("export", "fuera de un módulo");
-                Valor v = crear_valor_error(error, exp->asignacion.loc);
-                borrar_expresion(exp);
-                return v;
-            }
-
-            if (!asignar_valor_tabla(tabla, exp->asignacion.identificador.nombre, crear_valor_indefinido(), ASIGNACION_NORMAL)) {
-                Error error = crear_error(
-                        "Intentando reasignar variable inmutable \"%s\"",
-                        identificador_a_str(&exp->asignacion.identificador));
+            // Primero comprobar que no estamos reasignando una variable inmutable definida previamente.
+            TipoAsignacion tipo;
+            if (recuperar_clon_valor_tabla(*tabla, nombre, NULL, &tipo) && tipo == ASIGNACION_INMUTABLE) {
+                Error error = crear_error_reasignando_inmutable(string_a_puntero(&nombre));
                 Valor v = crear_valor_error(error, &exp->asignacion.identificador.loc);
                 borrar_expresion(exp);
                 return v;
             }
 
+            // Comportamiento especial cuando estamos asignando una definición
+            // de función a una variable. Esto permite que se pueda utilizar
+            // recursividad del estilo de `f = \x => f(x-1)`, ya que de forma
+            // normal esto causaría un error "variable f no definida" en el
+            // cuerpo de la función.
+            if (((Expresion*)exp->asignacion.expresion)->tipo == EXP_OP_DEF_FUNCION) {
+                asignar_valor_tabla(tabla, nombre, crear_valor_indefinido(), ASIGNACION_NORMAL);
+            }
+
+            // Evaluar el valor que se va a asignar.
             Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion, CNTXT_ASIGNACION, wd);
             free(exp->asignacion.expresion);
 
-            if (v.tipo_valor == TIPO_ERROR) {
-                borrar_identificador(&exp->asignacion.identificador);
-                if (exp->asignacion.loc) {
-                    borrar_loc(exp->asignacion.loc);
-                    free(exp->asignacion.loc);
-                }
-                return v;
+            if (v.tipo_valor != TIPO_ERROR) {
+                // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
+                // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
+                Valor retorno = exp->es_sentencia ? crear_valor_unidad(NULL) : clonar_valor(v);
+                asignar_valor_tabla(tabla, nombre, v, exp->asignacion.tipo);
+                v = retorno;
+            } else {
+                // Si el valor era un error no insertamos nada.
+                borrar_string(&exp->asignacion.identificador.nombre);
             }
 
             if (exp->asignacion.loc) {
                 borrar_loc(exp->asignacion.loc);
                 free(exp->asignacion.loc);
             }
-
-            // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
-            // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
-            Valor retorno = exp->es_sentencia ? crear_valor_unidad(NULL) : clonar_valor(v);
-
             borrar_loc(&exp->asignacion.identificador.loc);
-            asignar_valor_tabla(tabla, exp->asignacion.identificador.nombre, v, exp->asignacion.tipo);
-            return retorno;
+            return v;
         }
         case EXP_OP_DEF_FUNCION: {
             // Una expresión de definición de función, del estilo de \x,y => x+y.
@@ -345,9 +348,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             int i_nombre_funcion_recursiva = -1;
 
             for(int i = 0; i < ids.longitud; ++i) {
-                Valor v = recuperar_valor_tabla(*tabla, ids.valores[i]);
-                // Si la variable no pudo ser capturada, propagar el error.
-                if (v.tipo_valor == TIPO_ERROR) {
+                Valor v;
+                if (!recuperar_clon_valor_tabla(*tabla, ids.valores[i].nombre, &v, NULL)) {
+                    Error error = crear_error_variable_no_definida(string_a_puntero(&ids.valores[i].nombre));
+                    v = crear_valor_error(error, &ids.valores[i].loc);
+
                     borrar_expresion(exp);
                     borrar_lista_identificadores(&ids);
                     borrar_tabla_hash(capturadas);
@@ -610,7 +615,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
             // Tenemos que comprobar que no estamos utilizando controles de flujo en los contextos
             // incorrectos (por ejemplo, un break fuera de un bucle, o un return fuera de una función).
-            if (exp->control_flujo.tipo == CTR_FLUJO_RETURN && contexto != CNTXT_FUNCION) {
+            /*if (exp->control_flujo.tipo == CTR_FLUJO_RETURN && contexto != CNTXT_FUNCION) {
                 Error error = crear_error_contexto_incorrecto("return", "fuera de una función");
                 Valor v = crear_valor_error(error, exp->control_flujo.loc);
                 borrar_expresion(exp);
@@ -621,7 +626,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 Valor v = crear_valor_error(error, exp->control_flujo.loc);
                 borrar_expresion(exp);
                 return v;
-            }
+            }*/
 
             // Si hay un valor de retorno asociado al control de flujo (ej, `return value;`), entonces
             // devolverlo en el valor.

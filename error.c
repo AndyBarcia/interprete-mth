@@ -21,6 +21,14 @@ Error crear_error(const char *formato, ...) {
     return (Error) { mensaje };
 }
 
+Error crear_error_variable_no_definida(char* nombre) {
+    return crear_error("\"%s\" es una variable no definida.", nombre);
+}
+
+Error crear_error_reasignando_inmutable(char* nombre) {
+    return crear_error("Intentando reasignar variable inmutable \"%s\"", nombre);
+}
+
 Error crear_error_numero_argumentos(int esperado_n, int esperado_m, int actual) {
     if (esperado_n == esperado_m) {
         int esperado = esperado_n;

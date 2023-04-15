@@ -34,17 +34,20 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
     free(t->tablas);
 }
 
-Valor recuperar_valor_tabla(TablaSimbolos t, Identificador identificador) {
+int recuperar_clon_valor_tabla(TablaSimbolos t, String nombre, Valor *valor, TipoAsignacion *tipo) {
     EntradaTablaHash resultado;
     for (int i = t.nivel; i >= 0; --i) {
-        if (buscar_hash(t.tablas[i], string_a_puntero(&identificador.nombre), &resultado)) {
-            return clonar_valor(resultado.valor);
+        if (buscar_hash(t.tablas[i], string_a_puntero(&nombre), &resultado)) {
+            if (valor)
+                *valor = clonar_valor(resultado.valor);
+            if (tipo)
+                *tipo = resultado.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL;
+            return 1;
         } else {
             continue;
         }
     }
-    Error error = crear_error("\"%s\" es una variable no definida.", string_a_puntero(&identificador.nombre));
-    return crear_valor_error(error, &identificador.loc);
+    return 0;
 }
 
 int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsignacion tipo) {

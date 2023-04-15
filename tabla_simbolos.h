@@ -55,14 +55,18 @@ void reducir_nivel_tabla_simbolos(TablaSimbolos *t);
 void borrar_tabla_simbolos(TablaSimbolos *t);
 
 /**
- * Recupera el valor asociado a un identificador en la tabla de símbolos.
+ * Recupera un valor de la tabla de símbolos con un nombre dado.
  * Los valores se recuperan mirando primero en los últimos niveles creados,
  * dando preferencia así a las variables locales sobre a las globales.
- * @param t la tabla de símbolos.
- * @param identificador el identificador.
- * @return el valor asociado, o un error en caso de que no exista.
+ * @param t la tabla de símbolos en la que se buscará.
+ * @param nombre el nombre de la variable
+ * @param valor el lugar donde se guardará el clon del valor que hay en la
+ * tabla. Puede ser NULL, en cuyo caso no se creará el clon.
+ * @param tipo el lugar donde se guardará el tipo de asignación que tenía
+ * el valor. Puede ser NULL, en cuyo caso no se guardará el tipo.
+ * @return devuelve 1 si existía el valor, y 0 en caso contrario.
  */
-Valor recuperar_valor_tabla(TablaSimbolos t, Identificador identificador);
+int recuperar_clon_valor_tabla(TablaSimbolos t, String nombre, Valor *valor, TipoAsignacion *tipo);
 
 /**
  * Asigna un determinado valor a un nombre dado en el último nivel de la tabla
