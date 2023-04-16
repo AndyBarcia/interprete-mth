@@ -218,9 +218,10 @@ void imprimir_tabla_hash(TablaHash t) {
         }
         printf("[ \"%s\" \t]", string_a_puntero(&t.buffer[i].clave));
         if (t.buffer[i].distancia_posicion_ideal == 0) {
-            printf(" <--\n");
+            printf(" <-- ");
         } else {
-            printf(" ^%d^\n", t.buffer[i].distancia_posicion_ideal);
+            printf(" ^%d^ ", t.buffer[i].distancia_posicion_ideal);
         }
+        imprimir_valor(t.buffer[i].valor);
     }
 }

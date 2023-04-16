@@ -69,7 +69,9 @@ void borrar_lista_identificadores(ListaIdentificadores *lista) {
 
 void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores) {
     for (int i = 0; i < listaIdentificadores.longitud; ++i) {
-        printf("%s, ", string_a_puntero(&listaIdentificadores.valores[i].nombre));
+        printf("%s", string_a_puntero(&listaIdentificadores.valores[i].nombre));
+        if (i + 1 < listaIdentificadores.longitud)
+            printf(", ");
     }
 }
 

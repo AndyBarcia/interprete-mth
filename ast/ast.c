@@ -592,6 +592,11 @@ void _imprimir_expresion(Expresion expresion) {
             _imprimir_lista_expresiones(expresion.llamada_funcion.args);
             break;
         case EXP_OP_ASIGNACION:
+            switch (expresion.asignacion.tipo) {
+                case ASIGNACION_NORMAL: break;
+                case ASIGNACION_INMUTABLE: printf("const "); break;
+                case ASIGNACION_EXPORT: printf("export "); break;
+            }
             _imprimir_nombre_asignable(expresion.asignacion.nombre);
             printf(" = ");
             _imprimir_expresion(*(Expresion*) expresion.asignacion.expresion);
@@ -609,13 +614,34 @@ void _imprimir_expresion(Expresion expresion) {
             _imprimir_lista_expresiones(expresion.bloque.lista);
             break;
         case EXP_IMPORT:
-            // TODO:
+            printf("import ");
+            if (expresion.importe.foraneo)  printf("foreign ");
+            printf("\"%s\"", string_a_puntero(&expresion.importe.archivo));
+            if (expresion.importe.as) {
+                printf(" as %s", string_a_puntero(&expresion.importe.as->nombre));
+            }
             break;
         case EXP_CONDICIONAL:
+            printf("if ");
+            _imprimir_expresion(*(Expresion*) expresion.condicional.condicion);
+            printf(" then ");
+            _imprimir_expresion(*(Expresion*) expresion.condicional.verdadero);
+            if (expresion.condicional.falso) {
+                printf(" else ");
+                _imprimir_expresion(*(Expresion*) expresion.condicional.falso);
+            }
             break;
         case EXP_CONTROL_FLUJO:
+            printf("%s", tipo_control_flujo_a_str(expresion.control_flujo.tipo));
+            if (expresion.control_flujo.retorno) {
+                _imprimir_expresion(*(Expresion*) expresion.control_flujo.retorno);
+            }
             break;
         case EXP_BUCLE_WHILE:
+            printf("while ");
+            _imprimir_expresion(*(Expresion*) expresion.bucle_while.condicion);
+            printf("do ");
+            _imprimir_expresion(*(Expresion*) expresion.bucle_while.cuerpo);
             break;
     }
 }
@@ -629,7 +655,8 @@ void _imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
     printf("[");
     for (int i = 0; i < listaExpresiones.longitud; ++i) {
         _imprimir_expresion(((Expresion *) listaExpresiones.valores)[i]);
-        printf(", ");
+        if (i + 1 < listaExpresiones.longitud)
+            printf(", ");
     }
     printf("]");
 }
