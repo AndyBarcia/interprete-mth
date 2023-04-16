@@ -562,6 +562,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
         }
         case EXP_CONDICIONAL: {
             // Expresión condicional del estilo `if cond then a else b`.
+            // Evaluar la condición primero; comprobar que es un booleano,
+            // y entonces evaluar una de las dos expresiones.
 
             Valor cond = evaluar_expresion(tabla, (Expresion*)exp->condicional.condicion, wd);
             free(exp->condicional.condicion);
@@ -588,6 +590,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             }
 
             if (cond.bool) {
+                // La condición era verdadera; evaluar la expresión del "then".
+
                 Valor verdadero = evaluar_expresion(tabla, (Expresion*)exp->condicional.verdadero, wd);
                 free(exp->condicional.verdadero);
                 if (exp->condicional.falso) {
@@ -602,6 +606,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
 
                 return verdadero;
             } else if (exp->condicional.falso) {
+                // La condición era falsa; evaluar la expresión del "else".
+
                 Valor falso = evaluar_expresion(tabla, (Expresion*)exp->condicional.falso, wd);
                 free(exp->condicional.falso);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
@@ -614,6 +620,9 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
 
                 return falso;
             } else {
+                // La condición era falsa, pero no había un "else".
+                // Simplemente borrar la memoria y devolver unidad.
+
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 free(exp->condicional.verdadero);
                 if (exp->condicional.loc) {
@@ -623,6 +632,62 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                 borrar_valor(&cond);
                 return crear_valor_unidad(NULL);
             }
+        }
+        case EXP_BUCLE_WHILE: {
+            // Un bucle while del estilo de `while x do y`.
+            // Tenemos que evaluar reiteradamente la condición (recordando clonarla,
+            // y después evaluar el cuerpo repetidamente).
+
+            do {
+                Expresion cond_exp = clonar_expresion(*(Expresion*) exp->bucle_while.condicion);
+                Valor cond = evaluar_expresion(tabla, &cond_exp, wd);
+                if (cond.tipo_valor != TIPO_BOOL) {
+                    Error error = crear_error("Sólo se pueden utilizar booleanos como condicionales.");
+                    Valor v = crear_valor_error(error, cond.loc);
+                    borrar_valor(&cond);
+                    borrar_expresion(exp);
+                    return v;
+                }
+
+                if (!cond.bool) {
+                    borrar_valor(&cond);
+                    borrar_expresion(exp);
+                    return crear_valor_unidad(NULL);
+                } else {
+                    borrar_valor(&cond);
+                    Expresion cuerpo_exp = clonar_expresion(*(Expresion*) exp->bucle_while.cuerpo);
+                    Valor v = evaluar_expresion(tabla, &cuerpo_exp, wd);
+
+                    // Si el cuerpo del bucle dio un error, terminar ya.
+                    if (v.tipo_valor == TIPO_ERROR) {
+                        borrar_expresion(exp);
+                        return v;
+                    }
+                    // Si el cuerpo devolvió un control de flujo, comprobar
+                    // si era un exit (en cuyo caso, tenemos que propagar
+                    // el valor), y si no, capturar el valor de control de flujo.
+                    if (v.tipo_valor == TIPO_CONTROL_FLUJO) {
+                        borrar_expresion(exp);
+                        switch (v.control_flujo.tipo) {
+                            case CTR_FLUJO_EXIT: return v;
+                            default:
+                                if (v.control_flujo.valor) {
+                                    Valor r = *(Valor*) v.control_flujo.valor;
+                                    free(v.control_flujo.valor);
+                                    v.control_flujo.valor = NULL;
+                                    borrar_valor(&v);
+                                    return r;
+                                } else {
+                                    Valor r = crear_valor_unidad(v.loc);
+                                    borrar_valor(&v);
+                                    return r;
+                                }
+                        }
+                    } else {
+                        borrar_valor(&v);
+                    }
+                }
+            } while (1);
         }
         case EXP_CONTROL_FLUJO: {
             // En una expresión de control de flujo siempre se crea un valor de control de flujo,

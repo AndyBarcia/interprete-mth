@@ -95,6 +95,14 @@ typedef struct {
     Localizacion *loc;
 } ExpCondicional;
 
+/// Una expresión de bucle while
+/// del tipo de `while a do b`
+typedef struct {
+    struct Expresion* condicion;
+    struct Expresion* cuerpo;
+    Localizacion *loc;
+} ExpWhile;
+
 /// Una expresión de control de flujo, como
 /// un `return` o un `break`.
 /// Tiene un posible valor de retorno asociado,
@@ -144,6 +152,9 @@ typedef enum {
     /// Una expresión condicional.
     /// Ejemplo: `if cond { a } else { b }`
     EXP_CONDICIONAL,
+    /// Una expresión de bucle while.
+    /// Ejemplo: `while cond do { a }`
+    EXP_BUCLE_WHILE,
     /// Un `return` o un `break`.
     EXP_CONTROL_FLUJO,
 } TipoExpresion;
@@ -166,6 +177,7 @@ typedef struct {
         ExpBloque bloque;
         ExpImporte importe;
         ExpCondicional condicional;
+        ExpWhile bucle_while;
         ExpControlFlujo control_flujo;
     };
 } Expresion;
@@ -185,6 +197,7 @@ Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc);
 Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc);
 Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc);
 Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expresion *falso, Localizacion *loc);
+Expresion crear_exp_bucle_while(Expresion condicion, Expresion cuerpo, Localizacion *loc);
 Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc);
 
 Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc);

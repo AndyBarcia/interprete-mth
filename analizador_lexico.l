@@ -57,6 +57,8 @@ return  { return RETURN; }
 if      { return IF; }
 then    { return THEN; }
 else    { return ELSE; }
+while   { return WHILE; }
+do      { return DO; }
 
 {IDENTIFICADOR} {
          yylval->identificador = crear_identificador(crear_string(yytext), clonar_loc(*yylloc));

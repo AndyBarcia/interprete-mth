@@ -86,6 +86,8 @@ while (0)
 %token IF "if"
 %token THEN "then"
 %token ELSE "else"
+%token WHILE "while"
+%token DO "do"
 
 %token PARENTESIS_IZQ "("
 %token PARENTESIS_DER ")"
@@ -216,6 +218,7 @@ expresion:
     | "{" expression_list "}" { $$ = crear_exp_bloque($2, &@$); }
     | "if" expresion "then" expresion { $$ = crear_exp_condicional($2, $4, NULL, &@$); }
     | "if" expresion "then" expresion "else" expresion { $$ = crear_exp_condicional($2, $4, &$6, &@$); }
+    | "while" expresion "do" expresion { $$ = crear_exp_bucle_while($2, $4, &@$); }
     | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
     | "import" STRING {$$ = crear_exp_importe($2, 0, &@2); }
     | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, &@3); }

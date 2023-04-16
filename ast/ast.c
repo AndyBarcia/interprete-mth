@@ -182,6 +182,30 @@ Expresion crear_exp_condicional(Expresion condicion, Expresion verdadero, Expres
     };
 }
 
+Expresion crear_exp_bucle_while(Expresion condicion, Expresion cuerpo, Localizacion *loc) {
+    Expresion *cp = malloc(sizeof(Expresion));
+    *cp = condicion;
+
+    Expresion *vp = malloc(sizeof(Expresion));
+    *vp = cuerpo;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_BUCLE_WHILE,
+            .bucle_while = (ExpWhile) {
+                .condicion = (struct Expresion*) cp,
+                .cuerpo = (struct Expresion*) vp,
+                .loc = loc
+            },
+            .es_sentencia = 0
+    };
+}
+
 Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Localizacion *loc) {
     if (retorno) {
         Expresion* retorno_copy = malloc(sizeof(Expresion));
@@ -260,6 +284,11 @@ void validar_expresion(Expresion *e, ContextoExpresion ctx) {
             validar_expresion((Expresion*) e->condicional.verdadero, ctx);
             validar_expresion((Expresion*) e->condicional.falso, ctx);
             break;
+        case EXP_BUCLE_WHILE:
+            validar_expresion((Expresion*) e->bucle_while.condicion, ctx);
+            ctx.es_bucle = 1;
+            validar_expresion((Expresion*) e->bucle_while.cuerpo, ctx);
+            break;
         case EXP_OP_DEF_FUNCION:
             ctx.es_funcion = 1;
             validar_expresion((Expresion*) e->def_funcion.cuerpo, ctx);
@@ -336,6 +365,16 @@ Expresion clonar_expresion(Expresion exp) {
             if (e.condicional.loc) {
                 e.condicional.loc = malloc(sizeof(Localizacion));
                 *e.condicional.loc = clonar_loc(*exp.condicional.loc);
+            }
+            break;
+        case EXP_BUCLE_WHILE:
+            e.bucle_while.condicion = malloc(sizeof(Expresion));
+            *(Expresion*) e.bucle_while.condicion = clonar_expresion(*(Expresion*) exp.bucle_while.condicion);
+            e.bucle_while.cuerpo = malloc(sizeof(Expresion));
+            *(Expresion*) e.bucle_while.cuerpo = clonar_expresion(*(Expresion*) exp.bucle_while.cuerpo);
+            if (e.bucle_while.loc) {
+                e.bucle_while.loc = malloc(sizeof(Localizacion));
+                *e.bucle_while.loc = clonar_loc(*exp.bucle_while.loc);
             }
             break;
         case EXP_CONTROL_FLUJO:
@@ -421,6 +460,16 @@ void borrar_expresion(Expresion *exp) {
                 free(exp->condicional.loc);
             }
             break;
+        case EXP_BUCLE_WHILE:
+            borrar_expresion((Expresion*) exp->bucle_while.condicion);
+            free(exp->bucle_while.condicion);
+            borrar_expresion((Expresion*) exp->bucle_while.cuerpo);
+            free(exp->bucle_while.cuerpo);
+            if(exp->bucle_while.loc) {
+                borrar_loc(exp->bucle_while.loc);
+                free(exp->bucle_while.loc);
+            }
+            break;
         case EXP_CONTROL_FLUJO:
             if (exp->control_flujo.retorno) {
                 borrar_expresion((Expresion *) exp->control_flujo.retorno);
@@ -458,6 +507,8 @@ Localizacion* obtener_loc_exp(Expresion *exp) {
             return exp->control_flujo.loc;
         case EXP_CONDICIONAL:
             return exp->condicional.loc;
+        case EXP_BUCLE_WHILE:
+            return exp->bucle_while.loc;
     }
 }
 
@@ -564,6 +615,8 @@ void _imprimir_expresion(Expresion expresion) {
             break;
         case EXP_CONTROL_FLUJO:
             break;
+        case EXP_BUCLE_WHILE:
+            break;
     }
 }
 
@@ -622,6 +675,10 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
             _variables_capturadas(*(Expresion *) expresion.condicional.verdadero, locales, lista);
             if (expresion.condicional.falso)
                 _variables_capturadas(*(Expresion *) expresion.condicional.falso, locales, lista);
+            break;
+        case EXP_BUCLE_WHILE:
+            _variables_capturadas(*(Expresion*) expresion.bucle_while.condicion, locales, lista);
+            _variables_capturadas(*(Expresion*) expresion.bucle_while.cuerpo, locales, lista);
             break;
         case EXP_CONTROL_FLUJO:
             if (expresion.control_flujo.retorno)
