@@ -38,14 +38,27 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 }
 
 void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
+    // Trata de cargar el código fuente
     CodigoFuente src;
     if (!crear_codigo_fuente_archivo(fichero, &src)) {
-        printf("No se pudo abrir el archivo \"%s\".", fichero);
+        printf("No se pudo abrir el archivo \"%s\".\n", fichero);
         return;
     }
 
+    // Obtiene el directorio de trabajo en base al fichero.
+    String wd = crear_string(".");
+    char* subdir = fichero;
+    long longitud_subdir = strlen(subdir);
+    for (long i = longitud_subdir; i > 0; --i) {
+        if (subdir[i] == '/') {
+            extender_string(&wd, "/");
+            extender_string_n(&wd, subdir, i);
+            break;
+        }
+    }
+
     Lexer lexer = crear_lexer(src);
-    Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_INTERACTIVO, crear_string("."));
+    Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_INTERACTIVO, wd);
 
     Valor x;
     while(evaluar_siguiente(&evaluador, simbolos, &x)) {
