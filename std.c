@@ -509,27 +509,55 @@ Valor cargar(Valor arg) {
     }
 }
 
+// Implementación de la función `eval`, que permite evaluar un string creado
+// por el usuario como si se hubiese ejecutado en la terminal.
+// Se aplican algunas restricciones para que la ejecución de código arbitrario
+// sea seguro:
+//  * Se ejecuta en su propio nivel de la tabla de símbolos, por lo que no puede
+//    modificar variables definidas anteriormente.
+//  * Se capturan valores de control de flujo creados, por lo que no
+//    se puede terminar la ejecución de la terminal con `eval`, ni tampoco
+//    salir prematuramente de una función, ni terminar un bucle.
 Valor eval(Valor arg, TablaSimbolos *t, String wd) {
     if (arg.tipo_valor != TIPO_STRING) {
+        // Si el único argumento no es un string, reportar un error.
         Error error = crear_error_op_incompatible("evaluar", arg.tipo_valor);
         borrar_valor(&arg);
         return crear_valor_error(error, NULL);
     } else {
+        // Si no, crear un evaluador en contexto de EVAL.
         CodigoFuente src = crear_codigo_fuente_str_cpy(string_a_puntero(&arg.string));
         Lexer lexer = crear_lexer(src);
-        Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, wd);
+        Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_EVAL, wd);
 
+        aumentar_nivel_tabla_simbolos(t);
         Valor result = crear_valor_unidad(NULL);
         Valor v;
         while(evaluar_siguiente(&evaluador, t, &v)) {
-            if (result.tipo_valor == TIPO_ERROR)
-                imprimir_error(v.error, v.loc);
+            if (result.tipo_valor == TIPO_ERROR) imprimir_valor(v);
             borrar_valor(&result);
             result = v;
         }
 
+        reducir_nivel_tabla_simbolos(t);
         borrar_evaluador(&evaluador);
         borrar_valor(&arg);
+
+        // Importante: si el resultado es un tipo de control
+        // de flujo, capturarlo para que no se propage fuera
+        // de la llamada a `eval`.
+        if (result.tipo_valor == TIPO_CONTROL_FLUJO) {
+            if (result.control_flujo.valor) {
+                Valor r = *(Valor*) result.control_flujo.valor;
+                borrar_valor(&result);
+                result = r;
+            } else {
+                Valor r = crear_valor_unidad(result.loc);
+                borrar_valor(&result);
+                result = r;
+            }
+        }
+
         return result;
     }
 }
