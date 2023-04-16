@@ -81,6 +81,36 @@ String crear_string(char *str) {
     return string;
 }
 
+String crear_string_escapado(char *str) {
+    long len = strlen(str);
+    String s = crear_string_n(len);
+    char* s_ptr = string_a_puntero(&s);
+
+    long escrito = 0;
+    for (long i = 0; i < len; ++i) {
+        if (str[i] == '\\') {
+            if (i+1 > len) {
+                s_ptr[escrito++] = '\\';
+                break;
+            }
+            switch (str[i+1]) {
+                case '\"': s_ptr[escrito++] = '\"'; break;
+                case '\'': s_ptr[escrito++] = '\''; break;
+                case '\\': s_ptr[escrito++] = '\\'; break;
+                case 'n': s_ptr[escrito++] = '\n'; break;
+                case 'r': s_ptr[escrito++] = '\r'; break;
+                case 't': s_ptr[escrito++] = '\t'; break;
+                default: s_ptr[escrito++] = '\\'; break;
+            }
+            ++i;
+        } else {
+            s_ptr[escrito++] = str[i];
+        }
+    }
+    s_ptr[escrito] = '\0';
+    return s;
+}
+
 void extender_string(String *string, char *str) {
     extender_string_n(string, str, strlen(str));
 }

@@ -403,6 +403,8 @@ void borrar_lista_valores(ListaValores *lista) {
     }
 }
 
+void _imprimir_error(Error error, Localizacion *loc);
+
 void _imprimir_valor(Valor valor) {
     switch (valor.tipo_valor) {
         case TIPO_UNIDAD: /*printf("unidad");*/ break;
@@ -410,7 +412,7 @@ void _imprimir_valor(Valor valor) {
             printf("indefinido");
             break;
         case TIPO_ERROR:
-            printf("%s", string_a_puntero(&valor.error.mensaje));
+            _imprimir_error(valor.error, valor.loc);
             break;
         case TIPO_FUNCION_INTRINSECA:
             printf("[función intrínseca]");

@@ -50,6 +50,14 @@ String crear_string_vacio();
 String crear_string(char *str);
 
 /**
+ * Crea un nuevo string escapando los caracteres
+ * especiales de una cadena dada.
+ * @param str la cadena que se va a escapar.
+ * @return el nuevo string.
+ */
+String crear_string_escapado(char *str);
+
+/**
  * Crea un nuevo string con una capacidad dada
  * (sin contar el '\0' final), y con unos contenidos
  * sin especificar.

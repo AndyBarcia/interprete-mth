@@ -66,7 +66,7 @@ typedef struct {
 
 /// Una expresión de importación, ya sea
 /// del estilo de `import "fichero.mth"
-/// o `import foreign "fichero.so" as nombre.
+/// o `import foreign "fichero.so" as nombre`
 typedef struct {
     /// El archivo o biblioteca a cargar.
     String archivo;

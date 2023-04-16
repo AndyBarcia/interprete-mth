@@ -104,9 +104,10 @@ void borrar_error(Error *error) {
     borrar_string(&error->mensaje);
 }
 
-void imprimir_error(Error error, Localizacion *loc) {
-    printf("error: %s\n", string_a_puntero(&error.mensaje));
+void _imprimir_error(Error error, Localizacion *loc) {
+    printf("error: %s", string_a_puntero(&error.mensaje));
     if (loc) {
+        printf("\n");
         if (loc->fuente.tipo == SRC_ARCHIVO)
             printf("  -> %s\n", loc->fuente.src.archivo.nombre);
         printf("   |\n");
@@ -122,6 +123,10 @@ void imprimir_error(Error error, Localizacion *loc) {
         int width = (loc->last_column - loc->first_column);
         for (int i = 0; i < width; ++i)
             printf("^");
-        printf("\n");
     }
+}
+
+void imprimir_error(Error error, Localizacion *loc) {
+    _imprimir_error(error, loc);
+    printf("\n");
 }

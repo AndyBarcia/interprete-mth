@@ -20,19 +20,14 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 
         Valor x;
         while (evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
-            switch (x.tipo_valor) {
-                case TIPO_ERROR: {
-                    imprimir_error(x.error, x.loc);
-                    break;
-                }
-                case TIPO_CONTROL_FLUJO: {
-                    borrar_valor(&x);
-                    borrar_evaluador(&evaluador);
-                    free(linea);
-                    return;
-                }
-                default: imprimir_valor(x);
+            if (x.tipo_valor == TIPO_CONTROL_FLUJO && x.control_flujo.tipo == CTR_FLUJO_EXIT) {
+                borrar_valor(&x);
+                borrar_evaluador(&evaluador);
+                free(linea);
+                return;
             }
+
+            imprimir_valor(x);
             borrar_valor(&x);
         }
         borrar_evaluador(&evaluador);
@@ -54,64 +49,20 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
 
     Valor x;
     while(evaluar_siguiente(&evaluador, simbolos, &x)) {
-        switch (x.tipo_valor) {
-            case TIPO_ERROR: {
-                imprimir_error(x.error, x.loc);
-                break;
-            }
-            case TIPO_CONTROL_FLUJO: {
-                borrar_valor(&x);
-                borrar_evaluador(&evaluador);
-                return;
-            }
-            default: break;
+        if (x.tipo_valor == TIPO_CONTROL_FLUJO && x.control_flujo.tipo == CTR_FLUJO_EXIT) {
+            borrar_valor(&x);
+            borrar_evaluador(&evaluador);
+            return;
         }
+
+        imprimir_valor(x);
         borrar_valor(&x);
     }
 
     borrar_evaluador(&evaluador);
 }
 
-#include "bibliotecas/ffi.h"
-#include <dlfcn.h>
-
 int main(int argc, char *argv[]) {
-
-    /*void* libhandle = dlopen("../tests/test.so", RTLD_LAZY);
-    if (!libhandle) {
-        fprintf(stderr, "dlopen error: %s\n", dlerror());
-        exit(1);
-    }
-
-    printf("dlopen success: handle %p\n", libhandle);
-
-    void* add_data_fn = dlsym(libhandle, "sumar");
-    char* err = dlerror();
-    if (err) {
-        fprintf(stderr, "dlsym failed: %s\n", err);
-        exit(1);
-    }
-
-    ffi_type* arg_types[] = {&ffi_type_sint, &ffi_type_sint};
-    ffi_type* rtype = &ffi_type_sint;
-    ffi_cif cif;
-    ffi_status status = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 2, rtype, arg_types);
-    if (status != FFI_OK) {
-        fprintf(stderr, "ffi_prep_cif failed: %d\n", status);
-        exit(1);
-    }
-
-    int arg1 = 2;
-    int arg2 = 3;
-
-    void *args[2] = {&arg1,&arg2};
-    int out;
-    ffi_call(&cif, FFI_FN(add_data_fn), &out, args);
-
-    printf("%d\n", out);
-
-    return 0;*/
-
     crear_buffer_strings();
 
     TablaSimbolos simbolos = crear_tabla_simbolos();

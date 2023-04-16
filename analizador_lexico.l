@@ -16,32 +16,28 @@ int nivel_comentario_anidado = 0;
 ALFA [a-zA-Z]
 ALFA_US [a-zA-Z_]
 DIGITO [0-9]
-DIGITO_US [0-9_]
 
 ALFANUM ({ALFA}|{DIGITO})
 ALFANUM_US ({ALFA}|{DIGITO}|_)
 
+IDENTIFICADOR ({ALFA_US}{ALFANUM_US}*)
+
 ESPACIO_EN_BLANCO [ \t\n]
 
-INICIO_ENTERO_BINARIO 0[bB]
+ENTERO {DIGITO}+
+
 DIGITO_BINARIO [01]
-DIGITO_BINARIO_US [01_]
-CUERPO_ENTERO_BINARIO ({DIGITO_BINARIO}{DIGITO_BINARIO_US}*)|(_{DIGITO_BINARIO_US}*{DIGITO_BINARIO}{DIGITO_BINARIO_US}*)
+ENTERO_BINARIO 0[bB]{DIGITO_BINARIO}+
 
-INICIO_ENTERO_HEXA 0[xX]
 DIGITO_HEXA [0-9a-fA-F]
-DIGITO_HEXA_US [0-9a-fA-F_]
-CUERPO_ENTERO_HEXA ({DIGITO_HEXA}{DIGITO_HEXA_US}*)|(_{DIGITO_HEXA_US}*{DIGITO_HEXA}{DIGITO_HEXA_US}*)
+ENTERO_HEXA 0[xX]{DIGITO_HEXA}+
 
-INICIO_ENTERO {DIGITO}
-CUERPO_ENTERO {DIGITO_US}*
-CUERPO_ENTERO_MALFORMADO {ALFANUM_US}+
+DECIMAL {DIGITO}+\.{DIGITO}*
+DECIMAL_PUNTO \.{DIGITO}+
 
-EXPONENTE [eE][+-]?{DIGITO_US}+
-EXPONENTE_MALFORMADO [eE][+-]?{ALFANUM_US}*
-DECIMAL {DIGITO}{DIGITO_US}*\.{DIGITO}?{DIGITO_US}*
-DECIMAL_PUNTO \.{DIGITO}{DIGITO_US}*
-DECIMAL_MALFORMADO {DIGITO}({ALFANUM_US}|".")+
+EXPONENTE [eE][+-]?{DIGITO}+
+
+NUMERO_MALFORMADO {DIGITO}({ALFANUM_US}|".")+
 
 STRING \"(\\.|[^\n"\\])*\"
 STRING_MALFORMADO \"(\\.|[^\n"\\])*
@@ -51,40 +47,48 @@ STRING_MALFORMADO \"(\\.|[^\n"\\])*
 %option reentrant bison-bridge bison-locations
 %%
 
-const { return CONST; }
-export { return EXPORT; }
-import { return IMPORT; }
+const   { return CONST; }
+export  { return EXPORT; }
+import  { return IMPORT; }
 foreign { return FOREIGN; }
-as { return AS; }
-break { return BREAK; }
-return { return RETURN; }
-if { return IF; }
-then { return THEN; }
-else { return ELSE; }
+as      { return AS; }
+break   { return BREAK; }
+return  { return RETURN; }
+if      { return IF; }
+then    { return THEN; }
+else    { return ELSE; }
 
-{ALFA_US}{ALFANUM_US}* {
+{IDENTIFICADOR} {
          yylval->identificador = crear_identificador(crear_string(yytext), clonar_loc(*yylloc));
          return IDENTIFICADOR;
      }
 
-{INICIO_ENTERO}{CUERPO_ENTERO} {
+{ENTERO} {
         yylval->valorEntero = atoi(yytext);
         return ENTERO;
     }
-{INICIO_ENTERO}{CUERPO_ENTERO_MALFORMADO} {
-        yylval->error_lexico = crear_error("Número \"%s\" malformado.", yytext);
-        return ERROR;
+{ENTERO_BINARIO} {
+        yylval->valorEntero = strtoul(yytext+2, NULL, 2);
+        return ENTERO;
+    }
+{ENTERO_HEXA} {
+        yylval->valorEntero = strtoul(yytext+2, NULL, 16);
+        return ENTERO;
     }
 
-{DECIMAL} {
+(({DECIMAL}|{DECIMAL_PUNTO}){EXPONENTE}?)|{ENTERO}{EXPONENTE} {
         yylval->valorDecimal = atof(yytext);
         return DECIMAL;
     }
 
+{NUMERO_MALFORMADO} {
+        yylval->error_lexico = crear_error("Número \"%s\" malformado.", yytext);
+        return ERROR;
+    }
+
 {STRING} {
         yytext[yyleng-1] = '\0';
-        // TODO: escapar caracteres
-        yylval->string = crear_string(yytext+1);
+        yylval->string = crear_string_escapado(yytext+1);
         return STRING;
     }
 {STRING_MALFORMADO} {
@@ -92,21 +96,21 @@ else { return ELSE; }
         return ERROR;
     }
 
-\+  { return SUMA; }
--  { return RESTA; }
-\*  { return MULT; }
-\/  { return DIV; }
-%  { return MOD; }
+\+   { return SUMA; }
+-    { return RESTA; }
+\*   { return MULT; }
+\/   { return DIV; }
+%    { return MOD; }
 
-\=\=   { return EQ; }
-!\=   { return NEQ; }
->   { return GE; }
+\=\= { return EQ; }
+!\=  { return NEQ; }
+>    { return GE; }
 >=   { return GEQ; }
 \<   { return LE; }
-\<=   { return LEQ; }
+\<=  { return LEQ; }
 &&   { return AND; }
-\|\|   { return OR; }
-!   { return NOT; }
+\|\| { return OR; }
+!    { return NOT; }
 \=   { return IGUAL; }
 
 \(   { return PARENTESIS_IZQ; }
@@ -115,19 +119,17 @@ else { return ELSE; }
 \]   { return CORCHETE_DER; }
 \{   { return LLAVE_IZQ; }
 \}   { return LLAVE_DER; }
-
-,   { return COMA; }
+;    { return PUNTO_Y_COMA; }
+\.   { return PUNTO; }
+,    { return COMA; }
+=>  { return FLECHA;}
+\\  { return SLASH_INVERTIDA; }
 
 \n  {
         yylloc->last_column = 1;
         ++yylloc->last_line;
         return NUEVA_LINEA;
     }
-;  { return PUNTO_Y_COMA; }
-\. { return PUNTO; }
-
-=>  { return FLECHA;}
-\\  { return SLASH_INVERTIDA; }
 
 \/\/[^\n]* { /* ignorar comentarios de una línea */ }
 
