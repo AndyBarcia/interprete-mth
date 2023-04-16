@@ -11,10 +11,8 @@
 /// Todos los tipos de valores que hay en el lenguaje
 typedef enum {
     /// Valor de tipo indefinido.
-    /// Sólo se utiliza internamente en el código, y
-    /// es el valor de una variable que se va a asignar
-    /// pero que aún no ha sido evaluada.
-    /// Ej: `x = { /* Aquí x es indefinido */ }`
+    /// Es un tipo especial que se usa internamente en
+    /// algunos lugares del evaluador.
     TIPO_INDEFINIDO,
     /// Valor de un tipo unidad.
     /// Todas las sentencias son de tipo unidad.
@@ -52,26 +50,45 @@ typedef double Decimal;
 
 /// Las distintas funciones intrínsecas del lenguaje.
 typedef enum {
-    /// Operaciones aritméticas básicas
+    /// Operación (+) de suma de enteros y decimales
+    /// y concatenación de strings.
     INTRINSECA_SUMA,
+    /// Operación de resta (-) de enteros y decimales.
     INTRINSECA_RESTA,
+    /// Operación de multiplicación (*) de enteros y decimales.
+    /// También permite concatenación repetida de strings.
     INTRINSECA_MULT,
+    /// Operación de división (/) decimal de enteros y decimales.
+    /// Siempre devuelve un decimal aunque se dividan dos enteros
+    /// y el resultado esa exacto.
     INTRINSECA_DIV,
+    /// Operación de módulo (%) para enteros y decimales.
     INTRINSECA_MOD,
+    /// Operación de igualdad (==) o `equal`
     INTRINSECA_EQ,
+    /// Operación de desigualdad (!=) o `not equal`
     INTRINSECA_NEQ,
+    /// Operación de comparación (>) o `greater`
     INTRINSECA_GE,
+    /// Operación de comparación (>=) o `greater or equal`
     INTRINSECA_GEQ,
+    /// Operación de comparación (<) o `lesser`
     INTRINSECA_LE,
+    /// Operación de comparación (<=) o `lesser or equal`
     INTRINSECA_LEQ,
+    /// Operación lógica AND
     INTRINSECA_AND,
+    /// Operación lógica OR
     INTRINSECA_OR,
+    /// Operación lógica NOT
     INTRINSECA_NOT,
+    /// Operación de negación (-) de enteros y decimales.
     INTRINSECA_NEGAR,
     /// Imprimir uno o varios valores.
     INTRINSECA_PRINT,
-    /// Imprimir o resetear el espacio de trabajo.
+    /// Imprimir el espacio de trabajo.
     INTRINSECA_PRINTWS,
+    /// Resetear el espacio de trabajo
     INTRINSECA_RESETWS,
     /// Ayuda sobre un determinado valor.
     INTRINSECA_AYUDA,
@@ -85,10 +102,13 @@ typedef enum {
     /// Llama a una función de una biblioteca
     /// externa de C.
     INTRINSECA_CALLFOREIGN,
-    /// Funciones de casting de distintos tipos.
-    /// Se devuelve un error en caso de que no
-    /// se pueda hacer el casting.
+    /// Función de casting a enteros.
+    /// Es un casting estricto, por lo que sólo
+    /// decimales se pueden convertir a enteros.
     INTRINSECA_CAST_ENTERO,
+    /// Función de casting a decimales.
+    /// Es un casting estricto, por lo que sólo
+    /// enteros se pueden convertir a decimales.
     INTRINSECA_CAST_DECIMAL,
 } FuncionIntrinseca;
 

@@ -4,33 +4,38 @@
 #include "ast/ast.h"
 #include "tabla_simbolos.h"
 
-/// El contexto en el que se va a evaluar una función.
+/// El contexto en el que se va a evaluar una expresión.
 /// Dependiendo del contexto algunos tipos de expresiones
 /// se permiten o no. Por ejemplo, expresiones sin efectos
 /// como `5` a nivel de módulo no se permiten, pero sí en
-/// modo interactivo o en modo evaluación.
+/// modo interactivo o en modo evaluación. O expresiones como
+/// `export` sólo se permiten a nivel de módulo.
 typedef enum {
     /// Este es el contexto del código que se está
     /// ejecutando directamente en la terminal.
     CONTEXTO_INTERACTIVO,
     /// Este es el contexto de un módulo.
-    /// Se permiten las expresiones del tipo `export`,
-    /// pero fuera de las funciones y bloques sólo se
-    /// permiten asignaciones.
+    /// A este nivel sólo se permiten 2 tipos de expresiones:
+    ///   * Imports, para importar otros módulos.
+    ///   * Asignaciones, para establecer variables locales
+    ///     o exportar valores fuera del módulo.
     CONTEXTO_MODULO,
     /// Este es el contexto de una expresión evaluada
     /// dentro de una llamada a `eval`.
+    /// Por ahora funciona como el contexto interactivo, pero
+    /// se podrían limitar las funciones que interactúan con
+    /// el sistema operativo, por ejemplo, para aumentar su
+    /// seguridad.
     CONTEXTO_EVAL
 } ContextoEvaluacion;
 
-/// Un evaluador del lenguaje matemático, con un
-/// lexer y localización actual.
+/// Un evaluador del lenguaje matemático.
 typedef struct {
-    /// Estado del analizador léxico.
+    /// Estado actual del analizador léxico.
     Lexer lexer;
-    /// Estado del analizador sintáctico.
+    /// Estado actual del analizador sintáctico.
     void *ps;
-    /// El contexto actual.
+    /// El contexto de evaluación.
     ContextoEvaluacion contexto;
     /// El working directory en el que se encuentra
     /// el evaluador a efectos de cargar archivos.
