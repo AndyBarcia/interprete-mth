@@ -316,7 +316,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             // normal esto causaría un error "variable f no definida" en el
             // cuerpo de la función.
             if (((Expresion*)exp->asignacion.expresion)->tipo == EXP_OP_DEF_FUNCION) {
-                asignar_valor_tabla(tabla, nombre, crear_valor_indefinido(), ASIGNACION_NORMAL);
+                asignar_valor_tabla(tabla, clonar_string(nombre), crear_valor_indefinido(), ASIGNACION_NORMAL);
             }
 
             // Evaluar el valor que se va a asignar.
@@ -518,20 +518,16 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                     return v;
                 }
 
-                // Calcular el nuevo directorio de trabajo extrayendo
-                // lo que viene antes del último '/' del path del import.
-                String wd_import = crear_string(string_a_puntero(&wd));
-                char* subdir = string_a_puntero(&exp->importe.archivo);
+                // Calcular el nuevo directorio de trabajo extrayendo lo
+                // que viene antes del último '/' del directorio del import.
+                String wd_import = crear_string("");
+                char* subdir = string_a_puntero(&dir_archivo);
                 long longitud_subdir = strlen(subdir);
                 for (long i = longitud_subdir; i > 0; --i) {
                     if (subdir[i] == '/') {
-                        subdir[i] = '\0';
+                        extender_string_n(&wd_import, subdir, i);
                         break;
                     }
-                }
-                if (subdir[0] != '\0') {
-                    extender_string(&wd_import, "/");
-                    extender_string(&wd_import, subdir);
                 }
 
                 // Crear un evaluador en contexto de módulo y con el

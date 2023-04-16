@@ -105,6 +105,7 @@ while (0)
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
 %type <listaExpresiones> expression_list
+%type <listaExpresiones> expression_list_many
 %type <listaIdentificadores> identifier_list
 %type <listaIdentificadores> identifier_list_many
 %type <expresion> expresion
@@ -132,6 +133,7 @@ while (0)
 %destructor { borrar_acceso(&$$); } acceso
 %destructor { borrar_lista_expresiones(&$$); } argument_list
 %destructor { borrar_lista_expresiones(&$$); } argument_list_many
+%destructor { borrar_lista_expresiones(&$$); } expression_list_many
 %destructor { borrar_lista_expresiones(&$$); } expression_list
 %destructor { borrar_lista_identificadores(&$$); } identifier_list
 %destructor { borrar_lista_identificadores(&$$); } identifier_list_many
@@ -161,10 +163,14 @@ identifier_list_many:
 identifier_list:  identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
 
-expression_list:
-     nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
-    | expression_list statement nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
+expression_list_many:
+      nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
+    | expression_list_many statement nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
+expression_list:
+      nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
+    | expression_list_many expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
+    | expression_list_many nuevas_lineas { $$ = $1; }
 
 acceso:
     "." IDENTIFICADOR { $$ = crear_acceso_miembro($2); }
