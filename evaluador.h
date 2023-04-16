@@ -4,29 +4,24 @@
 #include "ast/ast.h"
 #include "tabla_simbolos.h"
 
-/// El contexto en el que se va a ejecutar una función.
+/// El contexto en el que se va a evaluar una función.
 /// Dependiendo del contexto algunos tipos de expresiones
-/// se permiten o no.
+/// se permiten o no. Por ejemplo, expresiones sin efectos
+/// como `5` a nivel de módulo no se permiten, pero sí en
+/// modo interactivo o en modo evaluación.
 typedef enum {
     /// Este es el contexto del código que se está
     /// ejecutando directamente en la terminal.
-    CNTXT_INTERACTIVO,
-    /// Este es el contexto de una expresión que
-    /// se va a asignar en una asignación.
-    CNTXT_ASIGNACION,
-    /// Este es el contexto de las expresiones
-    /// que se van a pasar como argumentos a una función.
-    CNTXT_ARGS,
+    CONTEXTO_INTERACTIVO,
     /// Este es el contexto de un módulo.
-    /// Se permiten las expresiones del tipo `export`.
-    CNTXT_MODULO,
-    /// Este es el contexto de una función.
-    /// Se permiten expresiones del tipo `return`
-    CNTXT_FUNCION,
-    /// Este es el contexto de un bucle.
-    /// Se permiten expresiones del tipo `break`.
-    CNTXT_BUCLE,
-} Contexto;
+    /// Se permiten las expresiones del tipo `export`,
+    /// pero fuera de las funciones y bloques sólo se
+    /// permiten asignaciones.
+    CONTEXTO_MODULO,
+    /// Este es el contexto de una expresión evaluada
+    /// dentro de una llamada a `eval`.
+    CONTEXTO_EVAL
+} ContextoEvaluacion;
 
 /// Un evaluador del lenguaje matemático, con un
 /// lexer y localización actual.
@@ -36,7 +31,7 @@ typedef struct {
     /// Estado del analizador sintáctico.
     void *ps;
     /// El contexto actual.
-    Contexto contexto;
+    ContextoEvaluacion contexto;
     /// El working directory en el que se encuentra
     /// el evaluador a efectos de cargar archivos.
     /// Por defecto se puede establecer a ".".
@@ -48,12 +43,12 @@ typedef struct {
  * analizador léxico dado, que puede provenir
  * de un archivo, cadena de caracteres, o entrada
  * estándar.
- * @param lexer
+ * @param lexer el analizador léxico a utilizar.
  * @param contexto el contexto de evaluación.
  * @param wd el working directory.
  * @return
  */
-Evaluador crear_evaluador(Lexer lexer, Contexto contexto, String wd);
+Evaluador crear_evaluador(Lexer lexer, ContextoEvaluacion contexto, String wd);
 
 /**
  * Libera la memoria de un evaluador.

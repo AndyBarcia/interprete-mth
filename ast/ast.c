@@ -206,6 +206,68 @@ Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Locali
     };
 }
 
+void validar_expresion(Expresion *e, ContextoExpresion ctx) {
+    if (!e) return;
+
+    // Dentro de un módulo sólo se permiten imports y asignaciones.
+    // Otras expresiones como `5` o `print("hola")` y otras expresiones
+    // sin efectos no están permitidas.
+    if (ctx.es_modulo && !ctx.es_asignacion && (e->tipo != EXP_IMPORT && e->tipo != EXP_OP_ASIGNACION)) {
+        Valor v = crear_valor_error(crear_error_contexto_incorrecto("expresión sin efectos", "fuera de una asignación"),
+                                    obtener_loc_exp(e));
+        borrar_expresion(e);
+        *e = crear_exp_valor(v);
+        return;
+    }
+
+    switch (e->tipo) {
+        case EXP_OP_ASIGNACION:
+            // Los exports sólo se permiten en un módulo, y sólo en el
+            // primer nivel del módulo. Algo como `x = { export y = 5; }`
+            // tampoco se permite.
+            if (e->asignacion.tipo == ASIGNACION_EXPORT && (!ctx.es_modulo || ctx.es_asignacion)) {
+                Valor v = crear_valor_error(crear_error_contexto_incorrecto("export", "fuera de un módulo"), e->asignacion.loc);
+                borrar_expresion(e);
+                *e = crear_exp_valor(v);
+                return;
+            }
+            ctx.es_asignacion = 1;
+            validar_expresion((Expresion*) e->asignacion.expresion, ctx);
+            break;
+        case EXP_CONTROL_FLUJO:
+            // Los `breaks` sólo se permiten si estamos dentro de un bucle.
+            if (e->control_flujo.tipo == CTR_FLUJO_BREAK && !ctx.es_bucle) {
+                Valor v = crear_valor_error(crear_error_contexto_incorrecto("break", "fuera de un bucle"), e->control_flujo.loc);
+                borrar_expresion(e);
+                *e = crear_exp_valor(v);
+                return;
+            // Y los `return` sólo si estamos dentro de la definición de una función.
+            } else if (e->control_flujo.tipo == CTR_FLUJO_RETURN && !ctx.es_funcion) {
+                Valor v = crear_valor_error(crear_error_contexto_incorrecto("return", "fuera de una función"), e->control_flujo.loc);
+                borrar_expresion(e);
+                *e = crear_exp_valor(v);
+                return;
+            }
+            validar_expresion((Expresion*) e->control_flujo.retorno, ctx);
+            break;
+        case EXP_BLOQUE:
+            ctx.es_bloque = 1;
+            for (int i = 0; i < e->bloque.lista.longitud; ++i)
+                validar_expresion(&((Expresion*) e->bloque.lista.valores)[i], ctx);
+            break;
+        case EXP_CONDICIONAL:
+            validar_expresion((Expresion*) e->condicional.condicion, ctx);
+            validar_expresion((Expresion*) e->condicional.verdadero, ctx);
+            validar_expresion((Expresion*) e->condicional.falso, ctx);
+            break;
+        case EXP_OP_DEF_FUNCION:
+            ctx.es_funcion = 1;
+            validar_expresion((Expresion*) e->def_funcion.cuerpo, ctx);
+            break;
+        default: break;
+    }
+}
+
 Expresion clonar_expresion(Expresion exp) {
     Expresion e = exp;
     switch (e.tipo) {

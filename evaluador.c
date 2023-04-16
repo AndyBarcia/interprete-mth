@@ -3,7 +3,7 @@
 #include "analizador_lexico.h"
 #include "std.h"
 
-Evaluador crear_evaluador(Lexer lexer, Contexto contexto, String wd) {
+Evaluador crear_evaluador(Lexer lexer, ContextoEvaluacion contexto, String wd) {
     return (Evaluador) {
         .lexer = lexer,
         .ps = yypstate_new(),
@@ -18,10 +18,18 @@ void borrar_evaluador(Evaluador *evaluador) {
     borrar_string(&evaluador->wd);
 }
 
-Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto, String wd);
-ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaExpresiones, Contexto contexto, String wd);
+Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd);
+ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaExpresiones, String wd);
 
 int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor *valor) {
+    ContextoExpresion ctx = {
+        .es_modulo = evaluador->contexto == CONTEXTO_MODULO,
+        .es_bucle = 0,
+        .es_asignacion = 0,
+        .es_funcion = 0,
+        .es_bloque = 0
+    };
+
     int status;
     do {
         YYSTYPE token;
@@ -31,7 +39,8 @@ int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor
         status = yypush_parse((yypstate*) evaluador->ps, c, &token, (YYLTYPE*) &evaluador->lexer.loc, &exp);
 
         if (exp.tipo != EXP_NULA) {
-            *valor = evaluar_expresion(tabla_simbolos, &exp, evaluador->contexto, evaluador->wd);
+            validar_expresion(&exp, ctx);
+            *valor = evaluar_expresion(tabla_simbolos, &exp, evaluador->wd);
             return 1;
         }
     } while (status == YYPUSH_MORE);
@@ -47,7 +56,7 @@ int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor
  * @param wd el working directory en el que se debería evaluar la expresión.
  * @return valor de la expresión.
  */
-Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto, String wd) {
+Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
     // Hay que tener en cuenta que sólo hay que devolver un valor
     // si la expresión no es una sentencia. Si no, se tiene que
     // devolver el valor unidad.
@@ -89,7 +98,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                         borrar_loc(&acceso.miembro.loc);
                         break;
                     case ACCESO_INDEXADO:
-                        indice = evaluar_expresion(tabla, (Expresion*) acceso.indice, contexto, wd);
+                        indice = evaluar_expresion(tabla, (Expresion*) acceso.indice, wd);
                         free(acceso.indice);
                         if (indice.tipo_valor == TIPO_ERROR) {
                             borrar_valor(&valor);
@@ -147,7 +156,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
         case EXP_OP_LLAMADA: {
             // Si es una llamada, evaluar la expresión que queremos llamar como función,
             // y comprobar que efectivamente es una función.
-            Valor f = evaluar_expresion(tabla, (Expresion*)exp->llamada_funcion.funcion, contexto, wd);
+            Valor f = evaluar_expresion(tabla, (Expresion*)exp->llamada_funcion.funcion, wd);
             free(exp->llamada_funcion.funcion);
             if (f.tipo_valor == TIPO_ERROR) {
                 borrar_lista_expresiones(&exp->llamada_funcion.args);
@@ -159,7 +168,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             }
 
             // Obtener la lista de argumentos y abortar si alguno de ellos es un error.
-            ListaValores args = evaluar_expresiones(tabla, &exp->llamada_funcion.args, CNTXT_ARGS, wd);
+            ListaValores args = evaluar_expresiones(tabla, &exp->llamada_funcion.args, wd);
             for(int i = 0; i < args.longitud; ++i) {
                 Valor v = ((Valor*)args.valores)[i];
                 if (v.tipo_valor == TIPO_ERROR) {
@@ -234,7 +243,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
                     // Evaluar la propia función, recordando clonar el cuerpo.
                     Expresion cuerpo = clonar_expresion(*(Expresion*)fn.cuerpo);
-                    Valor v = evaluar_expresion(tabla, &cuerpo, CNTXT_FUNCION, wd);
+                    Valor v = evaluar_expresion(tabla, &cuerpo, wd);
 
                     // Si se devolvió un valor de control de flujo, tenemos que
                     // sacar el valor del elemento de control (o propagarlo en el
@@ -311,7 +320,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             }
 
             // Evaluar el valor que se va a asignar.
-            Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion, CNTXT_ASIGNACION, wd);
+            Valor v = evaluar_expresion(tabla, (Expresion*)exp->asignacion.expresion, wd);
             free(exp->asignacion.expresion);
 
             if (v.tipo_valor != TIPO_ERROR) {
@@ -322,7 +331,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 v = retorno;
             } else {
                 // Si el valor era un error no insertamos nada.
-                borrar_nombre_asignable(&exp->asignacion.nombre);
+                borrar_string(&exp->asignacion.nombre.nombre_base.nombre);
             }
 
             // Liberar toda la memoria que queda.
@@ -373,13 +382,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                     borrar_valor(&v);
                     continue;
                 }
-                // Si la variable es indefinida, y estamos en un contexto de
-                // asignación, la única posibilidad es que la variable esté
-                // haciendo referencia a la misma función que estamos definiendo
-                // (a.k.a, función recursiva).
+                // Si la variable es indefinida la única posibilidad es que
+                // la variable esté haciendo referencia a la misma función que
+                // estamos definiendo (a.k.a, función recursiva).
                 // Hay que tratarlo de forma especial para evitar referencias
                 // cíclicas.
-                if (v.tipo_valor == TIPO_INDEFINIDO && contexto == CNTXT_ASIGNACION) {
+                if (v.tipo_valor == TIPO_INDEFINIDO) {
                     borrar_valor(&v);
                     i_nombre_funcion_recursiva = i;
                     funcion_recursiva = 1;
@@ -425,7 +433,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             Valor ultimo_valor = crear_valor_unidad(NULL);
             for (int i = 0; i < lista.longitud; ++i) {
                 borrar_valor(&ultimo_valor);
-                ultimo_valor = evaluar_expresion(tabla, &((Expresion*) lista.valores)[i], contexto, wd);
+                ultimo_valor = evaluar_expresion(tabla, &((Expresion*) lista.valores)[i], wd);
 
                 // Si nos encontramos un error o un valor de control de flujo,
                 // terminar prematuramente sin evaluar el resto de expresiones.
@@ -529,14 +537,12 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 // Crear un evaluador en contexto de módulo y con el
                 // nuevo directorio de trabajo que hemos calculado.
                 Lexer lexer = crear_lexer(src);
-                Evaluador evaluador = crear_evaluador(lexer, CNTXT_MODULO, wd_import);
+                Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_MODULO, wd_import);
 
                 aumentar_nivel_tabla_simbolos(tabla);
-
                 Valor x;
                 while(evaluar_siguiente(&evaluador, tabla, &x)) {
-                    if (x.tipo_valor == TIPO_ERROR)
-                        imprimir_error(x.error, x.loc);
+                    if (x.tipo_valor == TIPO_ERROR) imprimir_valor(x);
                     borrar_valor(&x);
                 }
                 reducir_nivel_tabla_simbolos(tabla);
@@ -557,7 +563,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
         case EXP_CONDICIONAL: {
             // Expresión condicional del estilo `if cond then a else b`.
 
-            Valor cond = evaluar_expresion(tabla, (Expresion*)exp->condicional.condicion, contexto, wd);
+            Valor cond = evaluar_expresion(tabla, (Expresion*)exp->condicional.condicion, wd);
             free(exp->condicional.condicion);
             if (cond.tipo_valor == TIPO_ERROR) {
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
@@ -582,7 +588,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             }
 
             if (cond.bool) {
-                Valor verdadero = evaluar_expresion(tabla, (Expresion*)exp->condicional.verdadero, contexto, wd);
+                Valor verdadero = evaluar_expresion(tabla, (Expresion*)exp->condicional.verdadero, wd);
                 free(exp->condicional.verdadero);
                 if (exp->condicional.falso) {
                     borrar_expresion((Expresion*) exp->condicional.falso);
@@ -596,7 +602,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
 
                 return verdadero;
             } else if (exp->condicional.falso) {
-                Valor falso = evaluar_expresion(tabla, (Expresion*)exp->condicional.falso, contexto, wd);
+                Valor falso = evaluar_expresion(tabla, (Expresion*)exp->condicional.falso, wd);
                 free(exp->condicional.falso);
                 borrar_expresion((Expresion*) exp->condicional.verdadero);
                 free(exp->condicional.verdadero);
@@ -622,25 +628,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
             // En una expresión de control de flujo siempre se crea un valor de control de flujo,
             // aunque la expresión sea una sentencia.
 
-            // Tenemos que comprobar que no estamos utilizando controles de flujo en los contextos
-            // incorrectos (por ejemplo, un break fuera de un bucle, o un return fuera de una función).
-            /*if (exp->control_flujo.tipo == CTR_FLUJO_RETURN && contexto != CNTXT_FUNCION) {
-                Error error = crear_error_contexto_incorrecto("return", "fuera de una función");
-                Valor v = crear_valor_error(error, exp->control_flujo.loc);
-                borrar_expresion(exp);
-                return v;
-            }
-            if (exp->control_flujo.tipo == CTR_FLUJO_BREAK && contexto != CNTXT_BUCLE) {
-                Error error = crear_error_contexto_incorrecto("break", "fuera de un bucle");
-                Valor v = crear_valor_error(error, exp->control_flujo.loc);
-                borrar_expresion(exp);
-                return v;
-            }*/
-
-            // Si hay un valor de retorno asociado al control de flujo (ej, `return value;`), entonces
-            // devolverlo en el valor.
             if (exp->control_flujo.retorno) {
-                Valor v = evaluar_expresion(tabla, (Expresion*) exp->control_flujo.retorno, contexto, wd);
+                // Si hay un valor de retorno asociado al control de flujo (ej, `return value;`), entonces
+                // devolverlo en el valor.
+
+                Valor v = evaluar_expresion(tabla, (Expresion*) exp->control_flujo.retorno, wd);
                 free(exp->control_flujo.retorno);
                 Valor r = crear_valor_control_flujo(exp->control_flujo.tipo, &v, exp->control_flujo.loc);
                 if (exp->control_flujo.loc) {
@@ -649,6 +641,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
                 }
                 return r;
             } else {
+                // Si no, simplemente crear un valor de control de flujo y terminar.
+
                 Valor r = crear_valor_control_flujo(exp->control_flujo.tipo, NULL, exp->control_flujo.loc);
                 if (exp->control_flujo.loc) {
                     borrar_loc(exp->control_flujo.loc);
@@ -674,11 +668,11 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, Contexto contexto,
  * @param wd el working directory en el que se deberían evaluar las expresiones.
  * @return lista de valores de las expresiones.
  */
-ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaExpresiones, Contexto contexto, String wd) {
+ListaValores evaluar_expresiones(TablaSimbolos *tabla, ListaExpresiones *listaExpresiones, String wd) {
     ListaValores valores = crear_lista_valores();
 
     for (int i = 0; i < listaExpresiones->longitud; ++i) {
-        Valor v = evaluar_expresion(tabla, &((Expresion*)listaExpresiones->valores)[i], contexto, wd);
+        Valor v = evaluar_expresion(tabla, &((Expresion*)listaExpresiones->valores)[i], wd);
         push_lista_valores(&valores, v);
     }
 

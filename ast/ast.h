@@ -190,13 +190,45 @@ Expresion crear_exp_ctrl_flujo(TipoControlFlujo tipo, Expresion *retorno, Locali
 Expresion crear_exp_op_unaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion x, Localizacion *loc);
 Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expresion a, Expresion b, Localizacion *loc);
 
-/// Crea un clon profundo de una expresión.
+/// El contexto en el que aparece una función.
+/// Dependiendo del contexto en el que aparezca,
+/// ciertas expresiones se convierten a errores.
+typedef struct {
+    int es_modulo;
+    int es_funcion;
+    int es_asignacion;
+    int es_bucle;
+    int es_bloque;
+} ContextoExpresion;
+
+/**
+ * Comprueba que una expresión es válida dentro
+ * de un contexto dado, y si no lo es, la convierte
+ * en un error.
+ * @param e expresión a validar.
+ * @param contexto el contexto utilizado.
+ */
+void validar_expresion(Expresion *e, ContextoExpresion contexto);
+
+/**
+ * Realiza un clon profundo de una expresión.
+ * @param exp la expresión a clonar.
+ * @return una nueva expresión.
+ */
 Expresion clonar_expresion(Expresion exp);
-/// Libera la memoria de una expresión, ignorando su valor.
+
+/**
+ * Libera toda la memoria asociada a una expresión.
+ * @param exp la expresión a borrar.
+ */
 void borrar_expresion(Expresion *exp);
 
-/// Devuelve la posible localización de una expresión.
-/// Se devuelve NULL si no se conoce su localización.
+/**
+ * Devuelve la posible localización de una expresión.
+ * Se devuelve NULL si no se conoce su localización.
+ * @param exp
+ * @return
+ */
 Localizacion* obtener_loc_exp(Expresion *exp);
 
 /*

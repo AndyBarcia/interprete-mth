@@ -16,7 +16,7 @@ void modo_interactivo(TablaSimbolos *tabla_simbolos) {
 
         CodigoFuente src = crear_codigo_fuente_str_cpy(linea);
         Lexer lexer = crear_lexer(src);
-        Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, crear_string("."));
+        Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_INTERACTIVO, crear_string("."));
 
         Valor x;
         while (evaluar_siguiente(&evaluador, tabla_simbolos, &x)) {
@@ -45,7 +45,7 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
     }
 
     Lexer lexer = crear_lexer(src);
-    Evaluador evaluador = crear_evaluador(lexer, CNTXT_INTERACTIVO, crear_string("."));
+    Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_INTERACTIVO, crear_string("."));
 
     Valor x;
     while(evaluar_siguiente(&evaluador, simbolos, &x)) {
