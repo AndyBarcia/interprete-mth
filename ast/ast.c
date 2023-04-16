@@ -578,6 +578,7 @@ void _imprimir_lista_expresiones(ListaExpresiones listaValores);
 void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores);
 void _imprimir_nombre_asignable(NombreAsignable nombre);
 void _imprimir_acceso(Acceso acceso);
+void _imprimir_valor(Valor valor);
 
 void _imprimir_expresion(Expresion expresion) {
     switch (expresion.tipo) {

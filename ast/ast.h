@@ -244,26 +244,60 @@ void borrar_expresion(Expresion *exp);
  */
 Localizacion* obtener_loc_exp(Expresion *exp);
 
-/*
- * Funciones ayuda de creación de expresiones
+/**
+ * Crea una nueva lista expresiones vacía, a la que se puede
+ * añadir elementos con la función `push_lista_expresiones`.
+ * No reserva memoria con malloc hasta que se inserta al menos
+ * un valor.
+ * @param loc la localización de la lista de expresiones, o NULL
+ * si se desea que se calcule automáticamente en base a las
+ * expresiones que se vayan añadiendo.
+ * @return una nueva lista de expresiones.
  */
-
 ListaExpresiones crear_lista_expresiones(Localizacion *loc);
+
+/**
+ * Como `crear_lista_expresiones`, pero se crea una lista con
+ * un elemento inicial dado y no una lista vacía.
+ * @param expresion
+ * @return la lista de expresiones.
+ */
 ListaExpresiones crear_lista_expresiones1(Expresion expresion);
+
+/**
+ * Inserta una expresión en una lista de expresiones.
+ * @param lista
+ * @param expresion
+ */
 void push_lista_expresiones(ListaExpresiones *lista, Expresion expresion);
+
+/**
+ * Realiza un clonado profundo de una lista de expresiones.
+ * @param lista
+ * @return
+ */
 ListaExpresiones clonar_lista_expresiones(ListaExpresiones lista);
+
+/**
+ * Borra una lista de expresiones y libera toda su memoria asociada.
+ * @param lista
+ */
 void borrar_lista_expresiones(ListaExpresiones *lista);
 
-/*
- * Funciones ayuda de impresión
+/**
+ * Imprime una expresión por la terminal.
+ * Se utiliza para debugging.
+ * @param expresion
  */
-
 void imprimir_expresion(Expresion expresion);
-void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
 
-/*
- * Funciones adicionales
+/**
+ * Imprime una lista de expresiones por la terminal, separadas
+ * por comas.
+ * Se utiliza para debugging.
+ * @param listaExpresiones
  */
+void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
 
 /**
  * Funciones que calcula la lista de identificadores que una determinada

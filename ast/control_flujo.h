@@ -19,8 +19,13 @@ typedef enum {
     CTR_FLUJO_EXIT
 } TipoControlFlujo;
 
-/// Convierte un elemento de control de flujo a
-/// una representación en forma de string.
+/**
+ * Convierte un elemento de control de flujo a
+ * una representación en forma de string, como
+ * `break` o `return`
+ * @param tipo
+ * @return
+ */
 char* tipo_control_flujo_a_str(TipoControlFlujo tipo);
 
 #endif //PRACTICA3_CONTROL_FLUJO_H

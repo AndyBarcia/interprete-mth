@@ -563,6 +563,8 @@ Valor eval(Valor arg, TablaSimbolos *t, String wd) {
     }
 }
 
+void _imprimir_valor(Valor valor);
+
 void _imprimir_entrada_tabla(EntradaTablaHash entrada) {
     // No imprimir las funciones intrínsecas para evitar saturar la consola.
     if (entrada.valor.tipo_valor != TIPO_FUNCION_INTRINSECA) {

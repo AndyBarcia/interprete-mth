@@ -90,6 +90,11 @@ int borrar_hash(TablaHash *t, char *claveborrar);
  */
 void iterar_tabla_hash(TablaHash t, void (*visitador)(EntradaTablaHash entrada));
 
+/**
+ * Imprime las entradas de una tabla hash.
+ * Es usado para debugging.
+ * @param t
+ */
 void imprimir_tabla_hash(TablaHash t);
 
 #endif //LEXER_TABLA_HASH_H

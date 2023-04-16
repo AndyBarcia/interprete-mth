@@ -197,7 +197,7 @@ Valor clonar_valor(Valor v);
 /**
  * Crea un clon débil, que no aumenta el número de referencias dinámicas
  * incluso aunque sea de tipo dinámico.
- * Un clon debil puede apuntar a memoria inválida ya liberada si el valor
+ * Un clon débil puede apuntar a memoria inválida ya liberada si el valor
  * subyacente clonado se libera.
  * @param v
  * @return
@@ -245,19 +245,45 @@ int comparar_valor(Valor a, Valor b, int *resultado);
  */
 int acceder_miembro_valor(Valor valor, Valor indice, Valor *resultado);
 
+/**
+ * Crea una nueva lista vacía de valores, a la que se puede
+ * añadir elementos con la función `push_lista_valores`.
+ * No reserva memoria con malloc hasta que se inserta al menos
+ * un valor.
+ * @return una nueva lista de valores.
+ */
 ListaValores crear_lista_valores();
+
+/**
+ * Añade un valor a una lista de valores dada.
+ * La memoria del valor insertado pasa a ser manejada por la
+ * lista, por lo que no se debe liberar la memoria del valor
+ * manualmente.
+ * @param lista la lista en la que se insertará el valor.
+ * @param v el valor insertado.
+ */
 void push_lista_valores(ListaValores *lista, Valor v);
+
+/**
+ * Borra una lista de valores y libera la memoria de todos
+ * los valores de la lista.
+ * @param lista
+ */
 void borrar_lista_valores(ListaValores *lista);
 
-/*
- * Funciones ayuda de impresión
+/**
+ * Imprime un valor por consola, con
+ * un salto de línea final.
+ * @param valor el valor a imprimir
  */
-
-void _imprimir_valor(Valor valor);
 void imprimir_valor(Valor valor);
 
-/// Convierte un tipo de valor a una
-/// representación en forma de string.
+/**
+ * Convierte un tipo de valor a una representación en forma
+ * de string, como "entero" o "decimal".
+ * @param tipo el tipo a convertir.
+ * @return la cadena estática.
+ */
 char* tipo_valor_a_str(TipoValor tipo);
 
 #endif //PRACTICA3_VALOR_H
