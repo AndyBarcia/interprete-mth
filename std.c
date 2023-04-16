@@ -504,6 +504,7 @@ Valor cargar(Valor arg) {
             borrar_valor(&arg);
 
             String str = crear_string(buffer);
+            free(buffer);
             return crear_valor_string(str, NULL);
         }
     }
