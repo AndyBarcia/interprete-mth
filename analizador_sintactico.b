@@ -123,9 +123,9 @@ while (0)
 %left "!"
 %left "+" "-"
 %left "*" "/" "%"
-%nonassoc "==" "!=" ">" ">=" "<" "<="
-%left "&&"
 %left "||"
+%left "&&"
+%nonassoc "==" "!=" ">" ">=" "<" "<="
 %precedence "("
 
 %destructor { borrar_identificador(&$$); } IDENTIFICADOR

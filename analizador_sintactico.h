@@ -45,11 +45,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 38 "analizador_sintactico.b"
+#line 38 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     #include "ast/ast.h"
 
-#line 53 "analizador_sintactico.h"
+#line 53 "../analizador_sintactico.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -112,7 +112,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 42 "analizador_sintactico.b"
+#line 42 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
 
     int valorEntero;
     double valorDecimal;
@@ -126,7 +126,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 130 "analizador_sintactico.h"
+#line 130 "../analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
