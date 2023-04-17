@@ -7,6 +7,9 @@ TablaSimbolos crear_tabla_simbolos() {
     TablaSimbolos t = {
             .capacidad = 1,
             .nivel = 0,
+            .barreras = NULL,
+            .longitud_barreras = 0,
+            .capacidad_barreras = 0,
     };
     t.tablas = malloc(t.capacidad*sizeof(TablaHash));
     t.tablas[t.nivel] = crear_tabla_hash(16);
@@ -23,8 +26,32 @@ void aumentar_nivel_tabla_simbolos(TablaSimbolos *t) {
 }
 
 void reducir_nivel_tabla_simbolos(TablaSimbolos *t) {
+    // Comprobar si había una barrera establecida para este nivel.
+    if (t->barreras && t->longitud_barreras > 0 && t->barreras[t->longitud_barreras-1] == t->nivel)
+        t->longitud_barreras -= 1;
+
+    // Borrar la tabla hash de este nivel.
     borrar_tabla_hash(&t->tablas[t->nivel]);
     --t->nivel;
+}
+
+void establecer_barrera_tabla_simbolos(TablaSimbolos *t) {
+    // Comprobar si ya había una barrera establecida para este nivel.
+    if (t->barreras && t->longitud_barreras > 0 && t->barreras[t->longitud_barreras-1] == t->nivel)
+        return;
+
+    ++t->longitud_barreras;
+    if (t->longitud_barreras >= t->capacidad_barreras) {
+        t->capacidad_barreras *= 2;
+        t->barreras = realloc(t->barreras, t->capacidad*sizeof(int));
+    }
+    t->barreras[t->longitud_barreras-1] = t->nivel;
+}
+
+int nivel_ultima_barrera(TablaSimbolos t) {
+    if (t.barreras)
+        return t.barreras[t.longitud_barreras-1];
+    return 0;
 }
 
 void borrar_tabla_simbolos(TablaSimbolos *t) {
@@ -32,17 +59,18 @@ void borrar_tabla_simbolos(TablaSimbolos *t) {
         borrar_tabla_hash(&t->tablas[i]);
     }
     free(t->tablas);
+    if (t->barreras) free(t->barreras);
 }
 
-int recuperar_clon_valor_tabla(TablaSimbolos t, String nombre, Valor *valor, TipoAsignacion *tipo) {
-    EntradaTablaHash resultado;
-    for (int i = t.nivel; i >= 0; --i) {
-        if (buscar_hash(t.tablas[i], string_a_puntero(&nombre), &resultado)) {
-            if (valor)
-                *valor = clonar_valor(resultado.valor);
+Valor* recuperar_valor_tabla(TablaSimbolos t, char *nombre, TipoAsignacion *tipo, int *nivel, int max_nivel) {
+    for (int i = t.nivel; i >= max_nivel; --i) {
+        EntradaTablaHash *resultado;
+        if ((resultado = buscar_hash(t.tablas[i], nombre))) {
             if (tipo)
-                *tipo = resultado.inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL;
-            return 1;
+                *tipo = resultado->inmutable ? ASIGNACION_INMUTABLE : ASIGNACION_NORMAL;
+            if (nivel)
+                *nivel = i;
+            return &resultado->valor;
         } else {
             continue;
         }
@@ -50,26 +78,67 @@ int recuperar_clon_valor_tabla(TablaSimbolos t, String nombre, Valor *valor, Tip
     return 0;
 }
 
-int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsignacion tipo) {
-    // Buscar sólo en el último nivel si esta variable ya estaba definida como inmutable.
-    EntradaTablaHash entrada;
-
-    // El nivel en el que se asignará la variable.
-    // De forma normal, se hace en el último nivel de la tabla; pero si
-    // se está exportando, se hace en un nivel inferior.
-    int nivel = t->nivel;
-    if (nivel > 0 && tipo == ASIGNACION_EXPORT) --nivel;
-
-    if (buscar_hash(t->tablas[nivel], string_a_puntero(&nombre), &entrada) && entrada.inmutable) {
-        // Se estaba intentando reasignar una variable inmutable
-        borrar_string(&nombre);
-        borrar_valor(&valor);
-        return 0;
+Valor recuperar_clon_valor_tabla(TablaSimbolos t, Identificador nombre) {
+    Valor *v;
+    if ((v = recuperar_valor_tabla(t, identificador_a_str(&nombre), NULL, NULL, 0))) {
+        return clonar_valor(*v);
+    } else {
+        Error error = crear_error_variable_no_definida(identificador_a_str(&nombre));
+        return crear_valor_error(error, &nombre.loc);
     }
+}
 
+int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsignacion tipo) {
     int inmutable = tipo != ASIGNACION_NORMAL;
-    insertar_hash(&t->tablas[nivel], nombre, valor, inmutable);
-    return 1;
+
+    // Tenemos que actuar de distintas maneras en base al tipo de asignación.
+    switch (tipo) {
+        case ASIGNACION_INMUTABLE: {
+            // En una asignación inmutable siempre asignamos la variable en el nivel local.
+            if (recuperar_valor_tabla(*t, string_a_puntero(&nombre), NULL, NULL, nivel_ultima_barrera(*t))) {
+                // Si la variable ya estaba definida. Abortar
+                borrar_valor(&valor);
+                return 0;
+            } else {
+                // La variable no estaba definida. Insertarla como una variable local.
+                insertar_hash(&t->tablas[t->nivel], nombre, valor, inmutable);
+                return 1;
+            }
+        }
+        case ASIGNACION_EXPORT: {
+            // En una asignación de tipo export es igual a una inmutable, pero asignamos
+            // si podemos en un nivel inferior de la tabla, haciendo que ésta pase a ser
+            // una variable local del scope superior.
+            int nivel = t->nivel > 0 ? t->nivel - 1: 0;
+            // No comprobamos que la variable ya esté definida. Si reimportamos una
+            // variable, no pasa nada.
+            insertar_hash(&t->tablas[nivel], nombre, valor, inmutable);
+            return 1;
+        }
+        case ASIGNACION_NORMAL: {
+            int nivel_barrera = nivel_ultima_barrera(*t);
+
+            Valor *actual;
+            TipoAsignacion tipo_actual;
+            int nivel;
+            if ((actual = recuperar_valor_tabla(*t, string_a_puntero(&nombre), &tipo_actual, &nivel, nivel_barrera))) {
+                // Si la variable ya estaba definida. Actualizar el valor que ya había si
+                // la variable era mutable, y abortar si es inmutable.
+                if (tipo_actual == ASIGNACION_NORMAL) {
+                    borrar_valor(actual);
+                    *actual = valor;
+                    return 1;
+                } else {
+                    borrar_valor(&valor);
+                    return 0;
+                }
+            } else {
+                // La variable no estaba definida. Insertarla como una variable local.
+                insertar_hash(&t->tablas[t->nivel], nombre, valor, inmutable);
+                return 1;
+            }
+        }
+    }
 }
 
 int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {

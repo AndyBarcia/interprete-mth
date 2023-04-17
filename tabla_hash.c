@@ -69,7 +69,7 @@ unsigned int funcion_hash(char *cad) {
     return (unsigned int) hash;
 }
 
-int buscar_hash(TablaHash t, char *identificador, EntradaTablaHash *entrada_salida) {
+EntradaTablaHash* buscar_hash(TablaHash t, char *identificador) {
     unsigned int hash = funcion_hash(identificador);
     int posicion_ideal = hash & (t.capacidad - 1);
     EntradaTablaHash *entrada_actual = &t.buffer[posicion_ideal];
@@ -80,9 +80,7 @@ int buscar_hash(TablaHash t, char *identificador, EntradaTablaHash *entrada_sali
         // nosotros, y tiene el mismo hash, seguramente es la entrada que buscamos.
         if (distancia_entrada_actual == distancia) {
             if (entrada_actual->hash == hash && strcmp(string_a_puntero(&entrada_actual->clave), identificador) == 0) {
-                if (entrada_salida)
-                    *entrada_salida = *entrada_actual;
-                return 1;
+                return entrada_actual;
             }
         } else if (distancia > distancia_entrada_actual) {
             // Si no, seguir buscando sólo mientras la distancia de la
@@ -96,11 +94,11 @@ int buscar_hash(TablaHash t, char *identificador, EntradaTablaHash *entrada_sali
         // Reservamos "limite_busqueda" slots adicionales a la capacidad de la tabla.
         ++entrada_actual;
     }
-    return 0;
+    return NULL;
 }
 
 int es_miembro_hash(TablaHash t, char *clavebuscar) {
-    return buscar_hash(t, clavebuscar, NULL);
+    return buscar_hash(t, clavebuscar) != NULL;
 }
 
 void crecer_tabla_hash(TablaHash *t, int nueva_capacidad);

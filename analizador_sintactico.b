@@ -113,6 +113,7 @@ while (0)
 %type <acceso> acceso
 %type <nombreAsignable> nombre_asignable
 
+%precedence "do"
 %precedence "then"
 %precedence "else"
 %precedence "return"
@@ -168,9 +169,9 @@ expression_list_many:
     | expression_list_many statement nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
 expression_list:
-      nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
+      expression_list_many { $$ = $1; }
     | expression_list_many expresion nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
-    | expression_list_many nuevas_lineas { $$ = $1; }
+    ;
 
 acceso:
     "." IDENTIFICADOR { $$ = crear_acceso_miembro($2); }

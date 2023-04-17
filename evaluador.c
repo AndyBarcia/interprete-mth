@@ -79,9 +79,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             // Primero tenemos que encontrar el nombre base en la tabla de símbolos,
             // reportando en el caso de que no exista la variable.
             Valor valor;
-            if (!recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre_base.nombre, &valor, NULL)) {
-                Error error = crear_error_variable_no_definida(string_a_puntero(&exp->nombre.nombre_base.nombre));
-                valor = crear_valor_error(error, &exp->nombre.nombre_base.loc);
+            if ((valor = recuperar_clon_valor_tabla(*tabla, exp->nombre.nombre_base)).tipo_valor == TIPO_ERROR) {
                 borrar_nombre_asignable(&exp->nombre);
                 return valor;
             }
@@ -232,11 +230,17 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                         return v;
                     }
 
-                    // Introducir los argumentos en la tabla de símbolos.
+                    // Introducir los argumentos en la tabla de símbolos, introduciendo
+                    // una barrera para que las modificaciones de variables dentro de la
+                    // función no se propaguen fuera del cuerpo de la función.
                     aumentar_nivel_tabla_simbolos(tabla);
+                    establecer_barrera_tabla_simbolos(tabla);
+
                     for (int i = 0; i < args.longitud; ++i) {
                         String nombre = clonar_string(fn.nombres_args.valores[i].nombre);
-                        asignar_valor_tabla(tabla, nombre, args.valores[i], ASIGNACION_NORMAL);
+
+                        insertar_hash(&tabla->tablas[tabla->nivel], nombre, args.valores[i], 0);
+                        //asignar_valor_tabla(tabla, nombre, args.valores[i], ASIGNACION_NORMAL);
                     }
                     // Introducir las variables capturadas por la función
                     asignar_clones_valores_tabla(tabla, *(TablaHash *) fn.variables_capturadas);
@@ -301,22 +305,16 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             // Expresión de asignación de una expresión a una variable.
             String nombre = exp->asignacion.nombre.nombre_base.nombre;
 
-            // Primero comprobar que no estamos reasignando una variable inmutable definida previamente.
-            TipoAsignacion tipo;
-            if (recuperar_clon_valor_tabla(*tabla, nombre, NULL, &tipo) && tipo == ASIGNACION_INMUTABLE) {
-                Error error = crear_error_reasignando_inmutable(string_a_puntero(&nombre));
-                Valor v = crear_valor_error(error, &exp->asignacion.nombre.nombre_base.loc);
-                borrar_expresion(exp);
-                return v;
-            }
-
             // Comportamiento especial cuando estamos asignando una definición
             // de función a una variable. Esto permite que se pueda utilizar
             // recursividad del estilo de `f = \x => f(x-1)`, ya que de forma
             // normal esto causaría un error "variable f no definida" en el
             // cuerpo de la función.
             if (((Expresion*)exp->asignacion.expresion)->tipo == EXP_OP_DEF_FUNCION) {
-                asignar_valor_tabla(tabla, clonar_string(nombre), crear_valor_indefinido(), ASIGNACION_NORMAL);
+                //printf("%s\n", string_a_puntero(&nombre));
+                // Asignar un valor especial indefinido.
+                TipoAsignacion t = exp->asignacion.tipo != ASIGNACION_EXPORT ? ASIGNACION_NORMAL : ASIGNACION_EXPORT;
+                asignar_valor_tabla(tabla, clonar_string(nombre), crear_valor_indefinido(), t);
             }
 
             // Evaluar el valor que se va a asignar.
@@ -327,7 +325,20 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                 // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
                 // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
                 Valor retorno = exp->es_sentencia ? crear_valor_unidad(NULL) : clonar_valor(v);
-                asignar_valor_tabla(tabla, nombre, v, exp->asignacion.tipo);
+
+                // Intentar asignar el valor, y si no se puede, porque estamos intentando
+                // cambiar el valor de una variable inmutable, reportar un error.
+                if (!asignar_valor_tabla(tabla, nombre, v, exp->asignacion.tipo)) {
+                    Error error = crear_error_reasignando_inmutable(string_a_puntero(&nombre));
+                    v = crear_valor_error(error, &exp->asignacion.nombre.nombre_base.loc);
+                    borrar_valor(&retorno);
+                    borrar_nombre_asignable(&exp->asignacion.nombre);
+                    if(exp->asignacion.loc) {
+                        borrar_loc(exp->asignacion.loc);
+                        free(exp->asignacion.loc);
+                    }
+                    return v;
+                }
                 v = retorno;
             } else {
                 // Si el valor era un error no insertamos nada.
@@ -367,10 +378,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
 
             for(int i = 0; i < ids.longitud; ++i) {
                 Valor v;
-                if (!recuperar_clon_valor_tabla(*tabla, ids.valores[i].nombre, &v, NULL)) {
-                    Error error = crear_error_variable_no_definida(string_a_puntero(&ids.valores[i].nombre));
-                    v = crear_valor_error(error, &ids.valores[i].loc);
-
+                if ((v = recuperar_clon_valor_tabla(*tabla, ids.valores[i])).tipo_valor == TIPO_ERROR) {
                     borrar_expresion(exp);
                     borrar_lista_identificadores(&ids);
                     borrar_tabla_hash(capturadas);
@@ -402,6 +410,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             // función como variable capturada. Esta no cuenta para el número de referencias
             // activas al valor, por lo que no evitará que se libere su propia memoria.
             if (funcion_recursiva) {
+                //printf("Función recursiva!");
                 Valor clon_funcion = clonar_valor_debil(funcion);
                 insertar_hash(capturadas, clonar_string(ids.valores[i_nombre_funcion_recursiva].nombre), clon_funcion, 1);
             }
@@ -536,6 +545,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                 Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_MODULO, wd_import);
 
                 aumentar_nivel_tabla_simbolos(tabla);
+                establecer_barrera_tabla_simbolos(tabla);
                 Valor x;
                 while(evaluar_siguiente(&evaluador, tabla, &x)) {
                     if (x.tipo_valor == TIPO_ERROR) imprimir_valor(x);

@@ -55,14 +55,16 @@ void borrar_tabla_hash(TablaHash *t);
 int es_miembro_hash(TablaHash t, char *clavebuscar);
 
 /**
- * Buscar una clave en la tabla hash
+ * Buscar una clave en la tabla hash, devolviendo una
+ * referencia a la entrada de la tabla hash.
+ * Es importante que no se modifique nunca la clave
+ * de la entrada devuelta.
  * @param t es la tabla hash en la que buscamos la clave
  * @param identificador: es la clave que buscamos
- * @param entrada aquí se pondrá la entrada encontrada.
- *        No se modificará si no se encontró la clave.
- * @return si la búsqueda tuvo éxito
+ * @return el puntero a la entrada de la tabla hash, o
+ * NULL si no se encontró la clave.
  */
-int buscar_hash(TablaHash t, char *identificador, EntradaTablaHash *entrada);
+EntradaTablaHash* buscar_hash(TablaHash t, char *identificador);
 
 /**
  * Inserta un elemento en una tabla hash al principio de la lista.

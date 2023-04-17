@@ -531,7 +531,12 @@ Valor eval(Valor arg, TablaSimbolos *t, String wd) {
         Lexer lexer = crear_lexer(src);
         Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_EVAL, wd);
 
+        // Aumentar el nivel de la tabla de símbolos y establecer
+        // una barrera, para que no se puedan modificar variables
+        // externas desde dentro del `eval`.
         aumentar_nivel_tabla_simbolos(t);
+        establecer_barrera_tabla_simbolos(t);
+
         Valor result = crear_valor_unidad(NULL);
         Valor v;
         while(evaluar_siguiente(&evaluador, t, &v)) {
@@ -627,6 +632,7 @@ Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
             default: {
                 Error error = crear_error("No se puede pasar un valor de tipo %s como argumento a una función foránea.",
                                           tipo_valor_a_str(vargs[i].tipo_valor));
+                // TODO: liberar memoria
                 return crear_valor_error(error, vargs[i].loc);
             }
         }
