@@ -76,8 +76,6 @@ void modo_fichero(TablaSimbolos *simbolos, char* fichero) {
 }
 
 int main(int argc, char *argv[]) {
-    crear_buffer_strings();
-
     TablaSimbolos simbolos = crear_tabla_simbolos();
     inicializar_libreria_estandar(&simbolos);
 
@@ -89,7 +87,6 @@ int main(int argc, char *argv[]) {
     }
 
     borrar_tabla_simbolos(&simbolos);
-    borrar_buffer_strings();
 
     return 0;
 }

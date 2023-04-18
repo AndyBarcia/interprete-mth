@@ -92,7 +92,7 @@ void _imprimir_expresion(Expresion expresion);
 void _imprimir_acceso(Acceso acceso) {
     switch (acceso.tipo) {
         case ACCESO_MIEMBRO:
-            printf(".%s", string_a_puntero(&acceso.miembro.nombre));
+            printf(".%s", string_a_str(&acceso.miembro.nombre));
             break;
         case ACCESO_INDEXADO:
             printf("[");
@@ -108,7 +108,7 @@ void imprimir_acceso(Acceso acceso) {
 }
 
 void _imprimir_nombre_asignable(NombreAsignable nombre) {
-    printf("%s", string_a_puntero(&nombre.nombre_base.nombre));
+    printf("%s", string_a_str(&nombre.nombre_base.nombre));
     if (nombre.accesos) {
         for (int i = 0; i < nombre.longitud; ++i)
             _imprimir_acceso(nombre.accesos[i]);

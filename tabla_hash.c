@@ -79,7 +79,7 @@ EntradaTablaHash* buscar_hash(TablaHash t, char *identificador) {
         // Si este slot está a la misma distancia de su posición ideal que
         // nosotros, y tiene el mismo hash, seguramente es la entrada que buscamos.
         if (distancia_entrada_actual == distancia) {
-            if (entrada_actual->hash == hash && strcmp(string_a_puntero(&entrada_actual->clave), identificador) == 0) {
+            if (entrada_actual->hash == hash && strcmp(string_a_str(&entrada_actual->clave), identificador) == 0) {
                 return entrada_actual;
             }
         } else if (distancia > distancia_entrada_actual) {
@@ -134,7 +134,7 @@ void _insertar_hash_precalculado(TablaHash *t, String lexema, Valor valor, int i
                    entrada_a_insertar.hash == entrada_actual->hash) {
             // Este slot podría tener la misma clave que nosotros, pues está a la misma distancia
             // de la posición ideal y tiene el mismo hash. Comparar las claves para asegurarnos.
-            if (strcmp(string_a_puntero(&entrada_actual->clave), string_a_puntero(&entrada_a_insertar.clave)) == 0) {
+            if (strcmp(string_a_str(&entrada_actual->clave), string_a_str(&entrada_a_insertar.clave)) == 0) {
                 // Liberar la memoria que ya estaba en la entrada, porque la vamos
                 // a sobreescribir con la que nos pasó como argumento.
                 borrar_string(&entrada_actual->clave);
@@ -187,7 +187,7 @@ Valor insertar_hash(TablaHash *t, String identificador, Valor valor, int inmutab
     }
 
     // Calcular el hash del lexema e insertarlo en la tabla.
-    unsigned int hash = funcion_hash(string_a_puntero(&identificador));
+    unsigned int hash = funcion_hash(string_a_str(&identificador));
     _insertar_hash_precalculado(t, identificador, valor, inmutable, hash);
     return valor;
 }
@@ -214,7 +214,7 @@ void imprimir_tabla_hash(TablaHash t) {
             printf("[  \t\t]\n");
             continue;
         }
-        printf("[ \"%s\" \t]", string_a_puntero(&t.buffer[i].clave));
+        printf("[ \"%s\" \t]", string_a_str(&t.buffer[i].clave));
         if (t.buffer[i].distancia_posicion_ideal == 0) {
             printf(" <-- ");
         } else {

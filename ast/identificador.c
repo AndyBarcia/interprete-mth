@@ -21,7 +21,7 @@ Identificador clonar_identificador(Identificador id) {
 }
 
 char* identificador_a_str(Identificador *id) {
-    return string_a_puntero(&id->nombre);
+    return string_a_str(&id->nombre);
 }
 
 ListaIdentificadores crear_lista_identificadores() {
@@ -69,7 +69,7 @@ void borrar_lista_identificadores(ListaIdentificadores *lista) {
 
 void _imprimir_lista_identificadores(ListaIdentificadores listaIdentificadores) {
     for (int i = 0; i < listaIdentificadores.longitud; ++i) {
-        printf("%s", string_a_puntero(&listaIdentificadores.valores[i].nombre));
+        printf("%s", string_a_str(&listaIdentificadores.valores[i].nombre));
         if (i + 1 < listaIdentificadores.longitud)
             printf(", ");
     }

@@ -87,10 +87,13 @@ Valor sumar(Valor a, Valor b) {
         case TIPO_STRING: {
             switch (b.tipo_valor) {
                 case TIPO_STRING: {
-                    String x = crear_string(string_a_puntero(&a.string));
-                    extender_string(&x, string_a_puntero(&b.string));
-                    result = crear_valor_string(x, NULL);
-                    break;
+                    String x = clonar_string(a.string);
+                    borrar_valor(&a);
+
+                    extender_string(&x, string_a_str(&b.string));
+                    borrar_valor(&b);
+
+                    return crear_valor_string(x, NULL);
                 }
                 default: {
                     Error error = crear_error_tipos_incompatibles("sumar", a.tipo_valor, b.tipo_valor);
@@ -171,9 +174,9 @@ Valor mult(Valor a, Valor b) {
                     break;
                 }
                 case TIPO_STRING: {
-                    String x = crear_string(string_a_puntero(&b.string));
+                    String x = clonar_string(b.string);
                     for (int i = 1; i < a.entero; ++i)
-                        extender_string(&x, string_a_puntero(&b.string));
+                        extender_string(&x, string_a_str(&b.string));
                     result = crear_valor_string(x, NULL);
                     break;
                 }
@@ -489,9 +492,9 @@ Valor cargar(Valor arg) {
         borrar_valor(&arg);
         return crear_valor_error(error, NULL);
     } else {
-        FILE *fp = fopen(string_a_puntero(&arg.string), "r");
+        FILE *fp = fopen(string_a_str(&arg.string), "r");
         if (!fp) {
-            Error error = crear_error_archivo_no_encontrado(string_a_puntero(&arg.string));
+            Error error = crear_error_archivo_no_encontrado(string_a_str(&arg.string));
             borrar_valor(&arg);
             return crear_valor_error(error, NULL);
         } else {
@@ -527,7 +530,7 @@ Valor eval(Valor arg, TablaSimbolos *t, String wd) {
         return crear_valor_error(error, NULL);
     } else {
         // Si no, crear un evaluador en contexto de EVAL.
-        CodigoFuente src = crear_codigo_fuente_str_cpy(string_a_puntero(&arg.string));
+        CodigoFuente src = crear_codigo_fuente_str_cpy(string_a_str(&arg.string));
         Lexer lexer = crear_lexer(src);
         Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_EVAL, wd);
 
@@ -573,7 +576,7 @@ void _imprimir_valor(Valor valor);
 void _imprimir_entrada_tabla(EntradaTablaHash entrada) {
     // No imprimir las funciones intrínsecas para evitar saturar la consola.
     if (entrada.valor.tipo_valor != TIPO_FUNCION_INTRINSECA) {
-        printf("%s := ", string_a_puntero(&entrada.clave));
+        printf("%s := ", string_a_str(&entrada.clave));
         imprimir_valor(entrada.valor);
     }
 }
@@ -622,7 +625,7 @@ Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
                 break;
             case TIPO_STRING:
                 arg_types[i] = &ffi_type_pointer;
-                char* ptr = string_a_puntero(&vargs[i].string);
+                char* ptr = string_a_str(&vargs[i].string);
                 args[i] = &ptr;
                 break;
             case TIPO_FUNCION_FORANEA:
@@ -638,7 +641,7 @@ Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
         }
     }
 
-    char* str_retorno = string_a_puntero(&tipo_retorno.string);
+    char* str_retorno = string_a_str(&tipo_retorno.string);
     Valor resultado;
     if (strcmp(str_retorno, "int") == 0) {
         int rvalue;

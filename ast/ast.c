@@ -617,9 +617,9 @@ void _imprimir_expresion(Expresion expresion) {
         case EXP_IMPORT:
             printf("import ");
             if (expresion.importe.foraneo)  printf("foreign ");
-            printf("\"%s\"", string_a_puntero(&expresion.importe.archivo));
+            printf("\"%s\"", string_a_str(&expresion.importe.archivo));
             if (expresion.importe.as) {
-                printf(" as %s", string_a_puntero(&expresion.importe.as->nombre));
+                printf(" as %s", string_a_str(&expresion.importe.as->nombre));
             }
             break;
         case EXP_CONDICIONAL:
@@ -673,7 +673,7 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
         case EXP_NULA:
             break;
         case EXP_NOMBRE:
-            if (!es_miembro_hash(*locales, string_a_puntero(&expresion.nombre.nombre_base.nombre)))
+            if (!es_miembro_hash(*locales, string_a_str(&expresion.nombre.nombre_base.nombre)))
                 push_lista_identificadores(lista, clonar_identificador(expresion.nombre.nombre_base));
             break;
         case EXP_OP_LLAMADA:
@@ -682,12 +682,12 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
                 _variables_capturadas(((Expresion *) expresion.llamada_funcion.args.valores)[i], locales, lista);
             break;
         case EXP_OP_ASIGNACION:
-            insertar_hash(locales, expresion.asignacion.nombre.nombre_base.nombre, crear_valor_unidad(NULL), 0);
+            insertar_hash(locales, clonar_string(expresion.asignacion.nombre.nombre_base.nombre), crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.asignacion.expresion, locales, lista);
             break;
         case EXP_OP_DEF_FUNCION:
             for (int i = 0; i < expresion.def_funcion.nombres_args.longitud; ++i)
-                insertar_hash(locales, expresion.def_funcion.nombres_args.valores[i].nombre, crear_valor_unidad(NULL), 0);
+                insertar_hash(locales, clonar_string(expresion.def_funcion.nombres_args.valores[i].nombre), crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.def_funcion.cuerpo, locales, lista);
             break;
         case EXP_BLOQUE:
@@ -719,7 +719,7 @@ ListaIdentificadores variables_capturadas(ExpDefFuncion funcion) {
     ListaIdentificadores capturadas = crear_lista_identificadores();
     TablaHash locales = crear_tabla_hash(funcion.nombres_args.longitud);
     for (int i = 0; i < funcion.nombres_args.longitud; ++i)
-        insertar_hash(&locales, funcion.nombres_args.valores[i].nombre, crear_valor_unidad(NULL), 0);
+        insertar_hash(&locales, clonar_string(funcion.nombres_args.valores[i].nombre), crear_valor_unidad(NULL), 0);
 
     Expresion cuerpo = *(Expresion *) funcion.cuerpo;
     _variables_capturadas(cuerpo, &locales, &capturadas);

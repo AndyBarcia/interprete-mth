@@ -13,7 +13,7 @@ Error crear_error(const char *formato, ...) {
     size_t longitud = vsnprintf(NULL, 0, formato, args);
     mensaje = crear_string_n(longitud);
     // Escribir el resultado en el string creado.
-    char *str = string_a_puntero(&mensaje);
+    char *str = string_a_str(&mensaje);
     vsnprintf(str, longitud + 1, formato, args2);
     va_end(args);
     va_end(args2);
@@ -105,7 +105,7 @@ void borrar_error(Error *error) {
 }
 
 void _imprimir_error(Error error, Localizacion *loc) {
-    printf("error: %s", string_a_puntero(&error.mensaje));
+    printf("error: %s", string_a_str(&error.mensaje));
     if (loc) {
         printf("\n");
         if (loc->fuente.tipo == SRC_ARCHIVO)

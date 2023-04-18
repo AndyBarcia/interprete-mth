@@ -310,7 +310,7 @@ int comparar_valor(Valor a, Valor b, int *resultado) {
             return 1;
         case TIPO_STRING:
             if (a.tipo_valor != b.tipo_valor) return 0;
-            *resultado = strcmp(string_a_puntero(&a.string), string_a_puntero(&b.string));
+            *resultado = strcmp(string_a_str(&a.string), string_a_str(&b.string));
             return 1;
         default:
             return 0;
@@ -326,11 +326,12 @@ int acceder_miembro_valor(Valor v, Valor i, Valor *result) {
             switch (i.tipo_valor) {
                 case TIPO_STRING: {
                     BibilotecaDinamica bib = v.biblioteca;
-                    FuncionForanea f = cargar_funcion_biblioteca(bib, string_a_puntero(&i.string));
+                    FuncionForanea f = cargar_funcion_biblioteca(bib, string_a_str(&i.string));
                     if (f) {
                         *result = crear_funcion_foranea(f);
                     } else {
-                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.", string_a_puntero(&i.string));
+                        Error error = crear_error("No existe la función foránea \"%s\" en la biblioteca.",
+                                                  string_a_str(&i.string));
                         *result = crear_valor_error(error, i.loc);
                     }
                     return 1;
@@ -343,7 +344,7 @@ int acceder_miembro_valor(Valor v, Valor i, Valor *result) {
         case TIPO_STRING: {
             switch (i.tipo_valor) {
                 case TIPO_ENTERO: {
-                    char* str = string_a_puntero(&v.string);
+                    char* str = string_a_str(&v.string);
                     int len = (int) strlen(str);
 
                     int n = i.entero;
@@ -433,7 +434,7 @@ void _imprimir_valor(Valor valor) {
             printf("%s", valor.bool ? "Verdadero" : "Falso");
             break;
         case TIPO_STRING:
-            printf("%s", string_a_puntero(&valor.string));
+            printf("%s", string_a_str(&valor.string));
             break;
         case TIPO_BIBLIOTECA_FORANEA:
             printf("[biblioteca]");

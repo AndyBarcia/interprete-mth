@@ -95,7 +95,7 @@ int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsigna
     switch (tipo) {
         case ASIGNACION_INMUTABLE: {
             // En una asignación inmutable siempre asignamos la variable en el nivel local.
-            if (recuperar_valor_tabla(*t, string_a_puntero(&nombre), NULL, NULL, nivel_ultima_barrera(*t))) {
+            if (recuperar_valor_tabla(*t, string_a_str(&nombre), NULL, NULL, nivel_ultima_barrera(*t))) {
                 // Si la variable ya estaba definida. Abortar
                 borrar_valor(&valor);
                 return 0;
@@ -121,7 +121,7 @@ int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsigna
             Valor *actual;
             TipoAsignacion tipo_actual;
             int nivel;
-            if ((actual = recuperar_valor_tabla(*t, string_a_puntero(&nombre), &tipo_actual, &nivel, nivel_barrera))) {
+            if ((actual = recuperar_valor_tabla(*t, string_a_str(&nombre), &tipo_actual, &nivel, nivel_barrera))) {
                 // Si la variable ya estaba definida. Actualizar el valor que ya había si
                 // la variable era mutable, y abortar si es inmutable.
                 if (tipo_actual == ASIGNACION_NORMAL) {
@@ -158,7 +158,7 @@ int asignar_clones_valores_tabla(TablaSimbolos *t, TablaHash otro) {
 }
 
 void imprimir(EntradaTablaHash entrada) {
-    printf("%s:= ", string_a_puntero(&entrada.clave));
+    printf("%s:= ", string_a_str(&entrada.clave));
     imprimir_valor(entrada.valor);
 }
 

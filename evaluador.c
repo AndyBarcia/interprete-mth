@@ -311,7 +311,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             // normal esto causaría un error "variable f no definida" en el
             // cuerpo de la función.
             if (((Expresion*)exp->asignacion.expresion)->tipo == EXP_OP_DEF_FUNCION) {
-                //printf("%s\n", string_a_puntero(&nombre));
+                //printf("%s\n", string_a_str(&nombre));
                 // Asignar un valor especial indefinido.
                 TipoAsignacion t = exp->asignacion.tipo != ASIGNACION_EXPORT ? ASIGNACION_NORMAL : ASIGNACION_EXPORT;
                 asignar_valor_tabla(tabla, clonar_string(nombre), crear_valor_indefinido(), t);
@@ -329,7 +329,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                 // Intentar asignar el valor, y si no se puede, porque estamos intentando
                 // cambiar el valor de una variable inmutable, reportar un error.
                 if (!asignar_valor_tabla(tabla, nombre, v, exp->asignacion.tipo)) {
-                    Error error = crear_error_reasignando_inmutable(string_a_puntero(&nombre));
+                    Error error = crear_error_reasignando_inmutable(string_a_str(&nombre));
                     v = crear_valor_error(error, &exp->asignacion.nombre.nombre_base.loc);
                     borrar_valor(&retorno);
                     borrar_nombre_asignable(&exp->asignacion.nombre);
@@ -468,16 +468,17 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             // que tendremos que evaluar con un Lexer y un Evaluador; o de un
             // archivo biblioteca dinámica de C.
 
-            String dir_archivo = crear_string(string_a_puntero(&wd));
+            String dir_archivo = clonar_string(wd);
             extender_string(&dir_archivo, "/");
-            extender_string(&dir_archivo, string_a_puntero(&exp->importe.archivo));
+            extender_string(&dir_archivo, string_a_str(&exp->importe.archivo));
 
             if (exp->importe.foraneo) {
                 // Importar una biblioteca dinámica de C
 
-                BibilotecaDinamica bib = cargar_biblioteca_dinamica(string_a_puntero(&dir_archivo));
+                BibilotecaDinamica bib = cargar_biblioteca_dinamica(string_a_str(&dir_archivo));
                 if (!bib) {
-                    Error error = crear_error("No se pudo abrir la biblioteca dinámica \"%s\".", string_a_puntero(&dir_archivo));
+                    Error error = crear_error("No se pudo abrir la biblioteca dinámica \"%s\".",
+                                              string_a_str(&dir_archivo));
                     borrar_string(&exp->importe.archivo);
                     borrar_string(&dir_archivo);
                     if (exp->importe.as) {
@@ -511,8 +512,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
                 // Importar un archivo normal con un lexer.
 
                 CodigoFuente src;
-                if (!crear_codigo_fuente_archivo(string_a_puntero(&dir_archivo), &src)) {
-                    Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_puntero(&dir_archivo));
+                if (!crear_codigo_fuente_archivo(string_a_str(&dir_archivo), &src)) {
+                    Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_str(&dir_archivo));
                     borrar_string(&exp->importe.archivo);
                     borrar_string(&dir_archivo);
                     if (exp->importe.as) {
@@ -529,8 +530,8 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
 
                 // Calcular el nuevo directorio de trabajo extrayendo lo
                 // que viene antes del último '/' del directorio del import.
-                String wd_import = crear_string("");
-                char* subdir = string_a_puntero(&dir_archivo);
+                String wd_import = crear_string_vacio();
+                char* subdir = string_a_str(&dir_archivo);
                 long longitud_subdir = strlen(subdir);
                 for (long i = longitud_subdir; i > 0; --i) {
                     if (subdir[i] == '/') {
@@ -556,6 +557,7 @@ Valor evaluar_expresion(TablaSimbolos *tabla, Expresion *exp, String wd) {
             }
 
             borrar_string(&exp->importe.archivo);
+            borrar_string(&dir_archivo);
             if (exp->importe.as) {
                 borrar_identificador(exp->importe.as);
                 free(exp->importe.as);
