@@ -1,0 +1,133 @@
+OPTIONS
+
+Utilizar getopt_long para implementar las siguientes funciones
+
+* Por defecto importar "math.mth", y mover a ese fichero las
+  definiciones de "e" y "pi".
+* Opciones
+
+	--no-prelude No importa módulo por defecto
+	-p --prelude fichero Este es el módulo que se cargará por defecto ("math.mth" por defecto)
+	-d --debug Imprime las expresiones antes de evaluarlas
+
+MODULOS VERDADERAMENTE INDEPENDIENTES
+
+Generalizar el sistema de módulos para permitir también cosas
+del estilo de "import "math.mth" as math". Para esto
+las asignaciones export no hacen simplemente una asignación
+en la tabla de un nivel inferior, si no que guardan sus valores
+en una tabla hash especial "TablaHash *exportPoint". 
+
+Los módulos no comparten tabla de símbolos. Esto aseguro que
+realmente son independientes-
+
+APLICACIÓN PARCIAL DE FUNCIONES
+
+suma = |x:Numero,y:Numero| -> x+y
+
+suma5 = suma(5)
+
+print(suma5(10)) // 15 
+
+DEFINICIÓN DE FUNCIONES
+
+mitad: Even -> Int
+mitad = \x -> x/2
+
+mitad = |x:Even| : Int -> x/2
+
+TIPOS COMO FUNCIONES
+
+Como en LiquidHaskell, un "tipo de datos" es sólo una función
+que, dado un valor, nos devuelve verdadero si el valor pertenece
+al tipo dado, y falso en caso contrario.
+
+Pero esto va en contra del principio de "parsear, no validar".
+
+type NonZeroNumber = |n:Number| -> n != 0
+
+div = |x:Number, y:NonZeroNumber| : NonZeroNumber -> x/y
+mul = |x:Number, y:Number| : Number -> x*y  
+
+type Int = |n| -> *Intrinseca*
+type Decimal = |n| -> *Intrinseca*
+type String = |s| -> *Intrinseca*
+type Funcion = |s| -> *Intrinseca*
+
+type Par = |n:Int| -> n % 2 == 0
+type Impar = |n:Int| -> !Par(n)
+
+mitad(5)
+
+error: el valor dado no es de tipo Par
+   |
+ 1 | mitad(5)
+   |	   ^
+nota: Para que el valor sea de tipo Par, se tiene que cumplir:
+
+	|n:Int| -> n % 2 == 0
+
+error: el valor dado no es de tipo Par
+   |
+ 1 | mitad("hola")
+   |	   ^^^^^^
+nota: Para que el valor sea de tipo Par, primero tiene que ser un entero.
+
+
+type NonZeroInt = |n:Int| -> n != 0
+
+type Number = |n| -> Int(n) || Decimal(n)
+type NonZeronumber = |n:Number| -> n != 0
+
+
+type Multiple = |m:Int, n| -> m%n == 0
+type Par = Multiple(2)
+type Impar = !Par
+
+????
+
+type Lista = |v, n| -> n(v[i]) for all i
+
+????
+
+type Animal = |n| -> n is {{
+    tipo: String,
+    nombre: String
+}}
+
+export crear_gato = |nombre:String| : Animal -> {{
+    tipo: "Gato",
+    nombre: nombre
+}}
+
+APLICACIÓN IMPLÍCITA DE ALGUNAS OPERACIONES
+
+Al realizar una operación con una función, se
+crea implícitamente otra función
+
+!f es equivalente a \x -> !f(x)
+
+f+g es equivalente a \x,y -> f(x)+g(x)
+
+f(g) es equivalente a \x -> f(g(x))
+
+Claro, el problema sería que con esto no
+podríamos pasar funciones como argumentos
+Aunque bueno, sí que podríamos aplicar esto
+a un número limitado de operaciones intrínsecas
+que no tiene sentido sobre funciones, como
+!, +, -, etc.
+
+TRAITS
+
+trait Field = |m:Type| -> {{
+	suma: |a:m, b:m| : m,
+	identidad: m
+}}
+
+type Even = |m:Int| -> m%2 == 0
+
+implement Field for Even {
+	
+}
+

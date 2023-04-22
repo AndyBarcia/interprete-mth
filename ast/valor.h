@@ -186,6 +186,16 @@ Valor crear_valor_control_flujo(TipoControlFlujo tipo, Valor *v, Localizacion *l
 Valor crear_valor_error(Error error, Localizacion *loc);
 
 /**
+ * Extra el valor asociado a un elemento de control de flujo.
+ * Por ejemplo, dado el valor `return 5`, se extrae el valor `5`.
+ * En caso de que no haya ningún valor asociado, se devuelve
+ * el valor unidad.
+ * @param control_flujo
+ * @return
+ */
+Valor extraer_valor_control_flujo(ValorControlFlujo *control_flujo);
+
+/**
  * Crea un clon ligero. Esto simplemente aumenta el número de referencias
  * dinámicas de los valores con memora dinámica (strings, errores, funciones,
  * etc), por lo que es bastante barato de llamar.

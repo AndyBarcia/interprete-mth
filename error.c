@@ -100,6 +100,12 @@ Error crear_error_casting(int tipoActual, int tipoObjetivo) {
     return crear_error("No se puede hacer un cast de %s a %s.", tipo_valor_a_str(tipoActual), tipo_valor_a_str(tipoObjetivo));
 }
 
+Error crear_error_llamada_foranea() {
+    return crear_error("No se puede llamar a una función foránea directamente "
+                       "porque su tipo de retorno no es conocido.\nSi quieres "
+                       "llamar a una función foránea, utiliza `callforeign`.");
+}
+
 void borrar_error(Error *error) {
     borrar_string(&error->mensaje);
 }

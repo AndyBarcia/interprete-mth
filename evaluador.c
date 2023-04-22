@@ -45,24 +45,21 @@ int siguiente_expresion(Parser *parser, Expresion *expresion) {
 Evaluador crear_evaluador(TablaSimbolos *tabla_simbolos, String wd) {
     return (Evaluador) {
         .tabla_simbolos = tabla_simbolos,
-        .wd = wd
+        .wd = wd,
+        .debug = 0,
     };
 }
 
 void borrar_evaluador(Evaluador *evaluador) {
     borrar_string(&evaluador->wd);
-    /*if (evaluador->tabla_simbolos) {
-        borrar_tabla_simbolos(evaluador->tabla_simbolos);
-    }*/
 }
 
 // La expresión es un valor; devolverlo si no es una sentencia.
 Valor evaluar_expresion_valor(ExpValor *exp, int es_sentencia) {
-    if (es_sentencia && exp->tipo_valor != TIPO_ERROR) {
-        borrar_valor(exp);
+    if (!es_sentencia || exp->tipo_valor == TIPO_ERROR)
+        return clonar_valor(*exp);
+    else
         return crear_valor_unidad(NULL);
-    }
-    return *exp;
 }
 
 // La expresión representa el nombre de un lugar, como una variable
@@ -70,11 +67,8 @@ Valor evaluar_expresion_valor(ExpValor *exp, int es_sentencia) {
 Valor evaluar_expresion_nombre(ExpNombre *exp, int es_sentencia, Evaluador *evaluador) {
     // Primero tenemos que encontrar el nombre base en la tabla de símbolos,
     // reportando en el caso de que no exista la variable.
-    Valor valor;
-    if ((valor = recuperar_clon_valor_tabla(*evaluador->tabla_simbolos, exp->nombre_base)).tipo_valor == TIPO_ERROR) {
-        borrar_nombre_asignable(exp);
-        return valor;
-    }
+    Valor valor = recuperar_clon_valor_tabla(*evaluador->tabla_simbolos, exp->nombre_base);
+    if (valor.tipo_valor == TIPO_ERROR) return valor;
 
     // Y luego buscar recursivamente los accesos.
     for (int i = 0; i < exp->longitud; ++i) {
@@ -85,17 +79,11 @@ Valor evaluar_expresion_nombre(ExpNombre *exp, int es_sentencia, Evaluador *eval
         switch (acceso.tipo) {
             case ACCESO_MIEMBRO:
                 indice = crear_valor_string(acceso.miembro.nombre, &acceso.miembro.loc);
-                borrar_loc(&acceso.miembro.loc);
                 break;
             case ACCESO_INDEXADO:
                 indice = evaluar_expresion(evaluador, (Expresion*) acceso.indice);
-                free(acceso.indice);
                 if (indice.tipo_valor == TIPO_ERROR) {
                     borrar_valor(&valor);
-                    borrar_identificador(&exp->nombre_base);
-                    for (int j = i+1; j < exp->longitud; ++j)
-                        borrar_acceso(&exp->accesos[j]);
-                    free(exp->accesos);
                     return indice;
                 }
                 break;
@@ -107,14 +95,7 @@ Valor evaluar_expresion_nombre(ExpNombre *exp, int es_sentencia, Evaluador *eval
         Valor miembro;
         if (!acceder_miembro_valor(valor, indice, &miembro)) {
             Error error = crear_error_acceso_incorrecto(valor.tipo_valor, indice.tipo_valor);
-            Valor r = crear_valor_error(error, indice.loc);
-            borrar_valor(&valor);
-            borrar_valor(&indice);
-            borrar_identificador(&exp->nombre_base);
-            for (int j = i+1; j < exp->longitud; ++j)
-                borrar_acceso(&exp->accesos[j]);
-            free(exp->accesos);
-            return r;
+            return crear_valor_error(error, indice.loc);
         }
 
         borrar_valor(&valor);
@@ -122,12 +103,10 @@ Valor evaluar_expresion_nombre(ExpNombre *exp, int es_sentencia, Evaluador *eval
         valor = miembro;
     }
 
-    // Si la expresión es una sentencia, simplemente liberar la memoria
-    // y terminar, porque no tenemos que devolver el valor.
+    // Si la expresión es una sentencia, simplemente terminar,
+    // porque no tenemos que devolver el valor.
     if (es_sentencia) {
         borrar_valor(&valor);
-        borrar_identificador(&exp->nombre_base);
-        if (exp->accesos) free(exp->accesos);
         return crear_valor_unidad(NULL);
     }
 
@@ -138,8 +117,6 @@ Valor evaluar_expresion_nombre(ExpNombre *exp, int es_sentencia, Evaluador *eval
     else
         valor.loc = malloc(sizeof(Localizacion));
     *valor.loc = clonar_loc(exp->nombre_base.loc);
-    borrar_identificador(&exp->nombre_base);
-    if (exp->accesos) free(exp->accesos);
 
     return valor;
 }
@@ -148,40 +125,19 @@ ListaValores evaluar_expresiones(Evaluador *evaluador, ListaExpresiones *listaEx
 
 Valor evaluar_expresion_llamada(ExpLlamada *exp, int es_sentencia, Evaluador *evaluador) {
     // Si es una llamada, evaluar la expresión que queremos llamar como función,
-    // y comprobar que efectivamente es una función.
+    // reportando el caso de que se haya producido un error.
     Valor f = evaluar_expresion(evaluador, (Expresion*)exp->funcion);
-    free(exp->funcion);
-    if (f.tipo_valor == TIPO_ERROR) {
-        borrar_lista_expresiones(&exp->args);
-        if(exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        return f;
-    }
+    if (f.tipo_valor == TIPO_ERROR) return f;
 
     // Obtener la lista de argumentos y abortar si alguno de ellos es un error.
     ListaValores args = evaluar_expresiones(evaluador, &exp->args);
     for(int i = 0; i < args.longitud; ++i) {
         Valor v = ((Valor*)args.valores)[i];
         if (v.tipo_valor == TIPO_ERROR) {
-            // Borrar todos los valores menos el que vamos a devolver.
-            for (int j = 0; j < args.longitud; ++j)
-                if (j != i) borrar_valor(&((Valor*)args.valores)[j]);
-            free(args.valores);
-            if (args.loc) {
-                borrar_loc(args.loc);
-                free(args.loc);
-            }
-            if (exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
-            if (f.loc) {
-                borrar_loc(f.loc);
-                free(f.loc);
-            }
-            return v;
+            Valor r = clonar_valor(v);
+            borrar_lista_valores(&args);
+            borrar_valor(&f);
+            return r;
         }
     }
 
@@ -189,16 +145,12 @@ Valor evaluar_expresion_llamada(ExpLlamada *exp, int es_sentencia, Evaluador *ev
     // función intrínseca o una función definida por el usuario.
     switch (f.tipo_valor) {
         case TIPO_FUNCION_INTRINSECA: {
-            // Una función intrínseca se ejecuta simplemente pasando
-            // el tipo de función junto a los argumentos y la tabla de símbolos.
+            // Una función intrínseca se ejecuta simplemente pasando el
+            // tipo de función junto a los argumentos y la tabla de símbolos.
 
             Valor result = ejecutar_funcion_intrinseca(f.funcion_intrinseca, args, evaluador);
             borrar_valor(&f);
 
-            if (exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
             if (es_sentencia) {
                 borrar_valor(&result);
                 return crear_valor_unidad(NULL);
@@ -217,32 +169,33 @@ Valor evaluar_expresion_llamada(ExpLlamada *exp, int es_sentencia, Evaluador *ev
                 Error error = crear_error_numero_argumentos(fn.nombres_args.longitud, fn.nombres_args.longitud, args.longitud);
                 Valor v = crear_valor_error(error, exp->loc);
                 borrar_lista_valores(&args);
-                if (exp->loc) {
-                    borrar_loc(exp->loc);
-                    free(exp->loc);
-                }
                 borrar_valor(&f);
                 return v;
             }
 
-            // Introducir los argumentos en la tabla de símbolos, introduciendo
-            // una barrera para que las modificaciones de variables dentro de la
-            // función no se propaguen fuera del cuerpo de la función.
+            // Establecer una barrera para que las modificaciones de
+            // variables dentro de la función no se propaguen fuera del
+            // cuerpo de la función.
             aumentar_nivel_tabla_simbolos(evaluador->tabla_simbolos);
             establecer_barrera_tabla_simbolos(evaluador->tabla_simbolos);
 
+            // Introducir los argumentos de la función en la tabla de símbolos
             for (int i = 0; i < args.longitud; ++i) {
                 String nombre = clonar_string(fn.nombres_args.valores[i].nombre);
 
                 TablaSimbolos *t = evaluador->tabla_simbolos;
                 insertar_hash(&t->tablas[t->nivel], nombre, args.valores[i], 0);
             }
+            free(args.valores);
+            if (args.loc) {
+                borrar_loc(args.loc);
+                free(args.loc);
+            }
             // Introducir las variables capturadas por la función
             asignar_clones_valores_tabla(evaluador->tabla_simbolos, *(TablaHash *) fn.variables_capturadas);
 
-            // Evaluar la propia función, recordando clonar el cuerpo.
-            Expresion cuerpo = clonar_expresion(*(Expresion*)fn.cuerpo);
-            Valor v = evaluar_expresion(evaluador, &cuerpo);
+            // Evaluar la propia función.
+            Valor v = evaluar_expresion(evaluador, (Expresion*)fn.cuerpo);
 
             // Si se devolvió un valor de control de flujo, tenemos que
             // sacar el valor del elemento de control (o propagarlo en el
@@ -250,33 +203,17 @@ Valor evaluar_expresion_llamada(ExpLlamada *exp, int es_sentencia, Evaluador *ev
             if (v.tipo_valor == TIPO_CONTROL_FLUJO) {
                 switch (v.control_flujo.tipo) {
                     case CTR_FLUJO_EXIT: break;
-                    default:
-                        if (v.control_flujo.valor) {
-                            Valor r = *(Valor*) v.control_flujo.valor;
-                            free(v.control_flujo.valor);
-                            v.control_flujo.valor = NULL;
-                            borrar_valor(&v);
-                            v = r;
-                        } else {
-                            Valor r = crear_valor_unidad(v.loc);
-                            borrar_valor(&v);
-                            v = r;
-                        }
+                    default: {
+                        Valor r = extraer_valor_control_flujo(&v.control_flujo);
+                        borrar_valor(&v);
+                        v = r;
+                    }
                 }
             }
 
             // Una vez terminado reducir nuevamente el nivel de la tabla
             // y libera la memoria.
             reducir_nivel_tabla_simbolos(evaluador->tabla_simbolos);
-            free(args.valores);
-            if (args.loc) {
-                borrar_loc(args.loc);
-                free(args.loc);
-            }
-            if (exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
             borrar_valor(&f);
 
             if (es_sentencia) {
@@ -286,10 +223,9 @@ Valor evaluar_expresion_llamada(ExpLlamada *exp, int es_sentencia, Evaluador *ev
             return v;
         }
         case TIPO_FUNCION_FORANEA: {
-            Error error = crear_error("No se puede llamar a una función foránea directamente "
-                                      "porque su tipo de retorno no es conocido.\nSi quieres "
-                                      "llamar a una función foránea, utiliza `callforeign`.");
-            return crear_valor_error(error, f.loc);
+            // Se está intentando llamar a una función foranea directamente
+            // sin utilizar `callforeign`.
+            return crear_valor_error(crear_error_llamada_foranea(), f.loc);
         }
         default: {
             return crear_valor_error(crear_error("Este valor no es una función!"), f.loc);
@@ -297,8 +233,8 @@ Valor evaluar_expresion_llamada(ExpLlamada *exp, int es_sentencia, Evaluador *ev
     }
 }
 
+// Expresión de asignación de una expresión a una variable.
 Valor evaluar_expresion_asignacion(ExpAsignacion *exp, int es_sentencia, Evaluador *evaluador) {
-    // Expresión de asignación de una expresión a una variable.
     String nombre = exp->nombre.nombre_base.nombre;
 
     // Comportamiento especial cuando estamos asignando una definición
@@ -315,7 +251,6 @@ Valor evaluar_expresion_asignacion(ExpAsignacion *exp, int es_sentencia, Evaluad
 
     // Evaluar el valor que se va a asignar.
     Valor v = evaluar_expresion(evaluador, (Expresion*)exp->expresion);
-    free(exp->expresion);
 
     if (v.tipo_valor != TIPO_ERROR) {
         // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
@@ -324,60 +259,35 @@ Valor evaluar_expresion_asignacion(ExpAsignacion *exp, int es_sentencia, Evaluad
 
         // Intentar asignar el valor, y si no se puede, porque estamos intentando
         // cambiar el valor de una variable inmutable, reportar un error.
-        if (!asignar_valor_tabla(evaluador->tabla_simbolos, nombre, v, exp->tipo)) {
-            Error error = crear_error_reasignando_inmutable(string_a_str(&nombre));
-            v = crear_valor_error(error, &exp->nombre.nombre_base.loc);
+        if (!asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(nombre), v, exp->tipo)) {
             borrar_valor(&retorno);
-            borrar_nombre_asignable(&exp->nombre);
-            if(exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
-            return v;
+            Error error = crear_error_reasignando_inmutable(string_a_str(&nombre));
+            return crear_valor_error(error, &exp->nombre.nombre_base.loc);
         }
         v = retorno;
-    } else {
-        // Si el valor era un error no insertamos nada.
-        borrar_string(&exp->nombre.nombre_base.nombre);
     }
 
-    // Liberar toda la memoria que queda.
-    if (exp->loc) {
-        borrar_loc(exp->loc);
-        free(exp->loc);
-    }
-    borrar_loc(&exp->nombre.nombre_base.loc);
-    if (exp->nombre.accesos) {
-        for(int i = 0; i < exp->nombre.longitud; ++i)
-            borrar_acceso(&exp->nombre.accesos[i]);
-        free(exp->nombre.accesos);
-    }
     return v;
 }
 
+// Una expresión de definición de función, del estilo de \x,y => x+y.
 Valor evaluar_expresion_def_funcion(ExpDefFuncion *exp, int es_sentencia, Evaluador *evaluador) {
-    // Una expresión de definición de función, del estilo de \x,y => x+y.
     // Tenemos que capturar las variables del entorno, copiándolas en una
     // tabla hash, y de paso reportas errores en caso de utilizar variables
     // no definidas en el cuerpo de la función.
 
-    Expresion *cuerpo = (Expresion*) exp->cuerpo;
-
     // Lista de identificadores usados en la función que no son ni argumentos
     // ni variables locales (y que por ende, deben provenir del exterior).
-    ListaIdentificadores ids = variables_capturadas(*exp);
 
     TablaHash *capturadas = malloc(sizeof(TablaHash));
-    *capturadas = crear_tabla_hash(ids.longitud);
+    *capturadas = crear_tabla_hash(exp->variables_capturadas.longitud);
 
     int funcion_recursiva = 0;
     int i_nombre_funcion_recursiva = -1;
 
-    for(int i = 0; i < ids.longitud; ++i) {
-        Valor v;
-        if ((v = recuperar_clon_valor_tabla(*evaluador->tabla_simbolos, ids.valores[i])).tipo_valor == TIPO_ERROR) {
-            // TODO: borrar_expresion(exp);
-            borrar_lista_identificadores(&ids);
+    for(int i = 0; i < exp->variables_capturadas.longitud; ++i) {
+        Valor v = recuperar_clon_valor_tabla(*evaluador->tabla_simbolos, exp->variables_capturadas.valores[i]);
+        if (v.tipo_valor == TIPO_ERROR) {
             borrar_tabla_hash(capturadas);
             free(capturadas);
             return v;
@@ -398,24 +308,20 @@ Valor evaluar_expresion_def_funcion(ExpDefFuncion *exp, int es_sentencia, Evalua
             funcion_recursiva = 1;
             continue;
         }
-        insertar_hash(capturadas, clonar_string(ids.valores[i].nombre), v, 1);
+        insertar_hash(capturadas, clonar_string(exp->variables_capturadas.valores[i].nombre), v, 1);
     }
 
-    Valor funcion = crear_funcion(exp->nombres_args, (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, exp->loc);
+    Expresion *cuerpo = malloc(sizeof(Expresion));
+    *cuerpo = clonar_expresion(*(Expresion*) exp->cuerpo);
+
+    Valor funcion = crear_funcion(clonar_lista_identificadores(exp->nombres_args), (struct Expresion*) cuerpo, (struct TablaHash*) capturadas, exp->loc);
 
     // Si la función es recursiva, entonces insertar un clon débil de la propia
     // función como variable capturada. Esta no cuenta para el número de referencias
     // activas al valor, por lo que no evitará que se libere su propia memoria.
     if (funcion_recursiva) {
-        //printf("Función recursiva!");
-        Valor clon_funcion = clonar_valor_debil(funcion);
-        insertar_hash(capturadas, clonar_string(ids.valores[i_nombre_funcion_recursiva].nombre), clon_funcion, 1);
-    }
-    borrar_lista_identificadores(&ids);
-
-    if (exp->loc) {
-        borrar_loc(exp->loc);
-        free(exp->loc);
+        String nombre_funcion = exp->variables_capturadas.valores[i_nombre_funcion_recursiva].nombre;
+        insertar_hash(capturadas, clonar_string(nombre_funcion), clonar_valor_debil(funcion), 1);
     }
 
     if (es_sentencia) {
@@ -432,10 +338,6 @@ Valor evaluar_expresion_bloque(ExpBloque *exp, int es_sentencia, Evaluador *eval
 
     aumentar_nivel_tabla_simbolos(evaluador->tabla_simbolos);
     ListaExpresiones lista = exp->lista;
-    if(exp->loc) {
-        borrar_loc(exp->loc);
-        free(exp->loc);
-    }
 
     Valor ultimo_valor = crear_valor_unidad(NULL);
     for (int i = 0; i < lista.longitud; ++i) {
@@ -445,16 +347,12 @@ Valor evaluar_expresion_bloque(ExpBloque *exp, int es_sentencia, Evaluador *eval
         // Si nos encontramos un error o un valor de control de flujo,
         // terminar prematuramente sin evaluar el resto de expresiones.
         if (ultimo_valor.tipo_valor == TIPO_ERROR || ultimo_valor.tipo_valor == TIPO_CONTROL_FLUJO) {
-            for (int j = i+1; j < lista.longitud; ++j)
-                borrar_expresion(&((Expresion*) lista.valores)[j]);
-            free(lista.valores);
             reducir_nivel_tabla_simbolos(evaluador->tabla_simbolos);
             return ultimo_valor;
         }
     }
     reducir_nivel_tabla_simbolos(evaluador->tabla_simbolos);
 
-    free(lista.valores);
     if (es_sentencia) {
         borrar_valor(&ultimo_valor);
         return crear_valor_unidad(NULL);
@@ -478,33 +376,13 @@ Valor evaluar_expresion_import(ExpImporte *exp, Evaluador *evaluador) {
         if (!bib) {
             Error error = crear_error("No se pudo abrir la biblioteca dinámica \"%s\".",
                                       string_a_str(&dir_archivo));
-            borrar_string(&exp->archivo);
             borrar_string(&dir_archivo);
-            if (exp->as) {
-                borrar_identificador(exp->as);
-                free(exp->as);
-            }
-
-            Valor v = crear_valor_error(error, exp->loc);
-            if (exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
-            return v;
+            return crear_valor_error(error, exp->loc);
         }
 
         Valor v = crear_valor_biblioteca(bib, &exp->as->loc);
         if (!asignar_valor_tabla(evaluador->tabla_simbolos, exp->as->nombre, v, ASIGNACION_INMUTABLE)) {
             Error error = crear_error("Ya hay un objeto definido con este nombre");
-            borrar_string(&exp->archivo);
-            if (exp->as) {
-                borrar_identificador(exp->as);
-                free(exp->as);
-            }
-            if (exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
             return crear_valor_error(error, &exp->as->loc);
         }
     } else {
@@ -513,18 +391,8 @@ Valor evaluar_expresion_import(ExpImporte *exp, Evaluador *evaluador) {
         CodigoFuente src;
         if (!crear_codigo_fuente_archivo(string_a_str(&dir_archivo), &src)) {
             Error error = crear_error("No se pudo abrir el archivo \"%s\"", string_a_str(&dir_archivo));
-            borrar_string(&exp->archivo);
             borrar_string(&dir_archivo);
-            if (exp->as) {
-                borrar_identificador(exp->as);
-                free(exp->as);
-            }
-            Valor v = crear_valor_error(error, exp->loc);
-            if (exp->loc) {
-                borrar_loc(exp->loc);
-                free(exp->loc);
-            }
-            return v;
+            return crear_valor_error(error, exp->loc);
         }
 
         // Calcular el nuevo directorio de trabajo extrayendo lo
@@ -553,22 +421,14 @@ Valor evaluar_expresion_import(ExpImporte *exp, Evaluador *evaluador) {
             Valor v = evaluar_expresion(&evaluador_import, &e);
             if (v.tipo_valor == TIPO_ERROR) imprimir_valor(v);
             borrar_valor(&v);
+            borrar_expresion(&e);
         }
         reducir_nivel_tabla_simbolos(evaluador_import.tabla_simbolos);
         borrar_evaluador(&evaluador_import);
         borrar_parser(&parser);
     }
 
-    borrar_string(&exp->archivo);
     borrar_string(&dir_archivo);
-    if (exp->as) {
-        borrar_identificador(exp->as);
-        free(exp->as);
-    }
-    if (exp->loc) {
-        borrar_loc(exp->loc);
-        free(exp->loc);
-    }
     return crear_valor_unidad(NULL);
 }
 
@@ -578,70 +438,25 @@ Valor evaluar_expresion_condicional(ExpCondicional *exp, int es_sentencia, Evalu
     // y entonces evaluar una de las dos expresiones.
 
     Valor cond = evaluar_expresion(evaluador, (Expresion*)exp->condicion);
-    free(exp->condicion);
-    if (cond.tipo_valor == TIPO_ERROR) {
-        borrar_expresion((Expresion*) exp->verdadero);
-        if (exp->falso) borrar_expresion((Expresion*) exp->falso);
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        return cond;
-    }
+    if (cond.tipo_valor == TIPO_ERROR) return cond;
     if (cond.tipo_valor != TIPO_BOOL) {
         Error error = crear_error("Sólo se pueden utilizar booleanos como condicionales.");
         Valor v = crear_valor_error(error, cond.loc);
         borrar_valor(&cond);
-        borrar_expresion((Expresion*) exp->verdadero);
-        if (exp->falso) borrar_expresion((Expresion*) exp->falso);
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
         return v;
     }
 
-    if (cond.bool) {
+    int c = cond.bool;
+    borrar_valor(&cond);
+
+    if (c) {
         // La condición era verdadera; evaluar la expresión del "then".
-
-        Valor verdadero = evaluar_expresion(evaluador, (Expresion*)exp->verdadero);
-        free(exp->verdadero);
-        if (exp->falso) {
-            borrar_expresion((Expresion*) exp->falso);
-            free(exp->falso);
-        }
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        borrar_valor(&cond);
-
-        return verdadero;
+        return evaluar_expresion(evaluador, (Expresion*)exp->verdadero);
     } else if (exp->falso) {
         // La condición era falsa; evaluar la expresión del "else".
-
-        Valor falso = evaluar_expresion(evaluador, (Expresion*)exp->falso);
-        free(exp->falso);
-        borrar_expresion((Expresion*) exp->verdadero);
-        free(exp->verdadero);
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        borrar_valor(&cond);
-
-        return falso;
+        return evaluar_expresion(evaluador, (Expresion*)exp->falso);
     } else {
         // La condición era falsa, pero no había un "else".
-        // Simplemente borrar la memoria y devolver unidad.
-
-        borrar_expresion((Expresion*) exp->verdadero);
-        free(exp->verdadero);
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        borrar_valor(&cond);
         return crear_valor_unidad(NULL);
     }
 }
@@ -652,35 +467,32 @@ Valor evaluar_expresion_while(ExpWhile *exp, int es_sentencia, Evaluador *evalua
     // y después evaluar el cuerpo repetidamente).
 
     do {
-        Expresion cond_exp = clonar_expresion(*(Expresion*) exp->condicion);
-        Valor cond = evaluar_expresion(evaluador, &cond_exp);
+        Valor cond = evaluar_expresion(evaluador, (Expresion*) exp->condicion);
+
+        if (cond.tipo_valor == TIPO_ERROR) return cond;
         if (cond.tipo_valor != TIPO_BOOL) {
             Error error = crear_error("Sólo se pueden utilizar booleanos como condicionales.");
             Valor v = crear_valor_error(error, cond.loc);
             borrar_valor(&cond);
-            //TODO borrar_expresion(exp);
             return v;
         }
 
-        if (!cond.bool) {
-            borrar_valor(&cond);
-            //TODO  borrar_expresion(exp);
+        int c = cond.bool;
+        borrar_valor(&cond);
+
+        if (!c) {
+            // La condición era falsa. Terminar.
             return crear_valor_unidad(NULL);
         } else {
-            borrar_valor(&cond);
-            Expresion cuerpo_exp = clonar_expresion(*(Expresion*) exp->cuerpo);
-            Valor v = evaluar_expresion(evaluador, &cuerpo_exp);
+            Valor v = evaluar_expresion(evaluador, (Expresion*) exp->cuerpo);
 
             // Si el cuerpo del bucle dio un error, terminar ya.
-            if (v.tipo_valor == TIPO_ERROR) {
-                //TODO  borrar_expresion(exp);
-                return v;
-            }
+            if (v.tipo_valor == TIPO_ERROR) return v;
+
             // Si el cuerpo devolvió un control de flujo, comprobar
             // si era un exit (en cuyo caso, tenemos que propagar
             // el valor), y si no, capturar el valor de control de flujo.
             if (v.tipo_valor == TIPO_CONTROL_FLUJO) {
-                //TODO  borrar_expresion(exp);
                 switch (v.control_flujo.tipo) {
                     case CTR_FLUJO_EXIT: return v;
                     default:
@@ -708,36 +520,24 @@ Valor evaluar_expresion_control_flujo(ExpControlFlujo *exp, Evaluador *evaluador
     // aunque la expresión sea una sentencia.
 
     if (exp->retorno) {
-        // Si hay un valor de retorno asociado al control de flujo (ej, `return value;`), entonces
-        // devolverlo en el valor.
+        // Si hay un valor de retorno asociado al control de flujo (ej, `return value;`),
+        // entonces devolverlo en el valor.
 
         Valor v = evaluar_expresion(evaluador, (Expresion*) exp->retorno);
-        free(exp->retorno);
-        Valor r = crear_valor_control_flujo(exp->tipo, &v, exp->loc);
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        return r;
+        return crear_valor_control_flujo(exp->tipo, &v, exp->loc);
     } else {
         // Si no, simplemente crear un valor de control de flujo y terminar.
-
-        Valor r = crear_valor_control_flujo(exp->tipo, NULL, exp->loc);
-        if (exp->loc) {
-            borrar_loc(exp->loc);
-            free(exp->loc);
-        }
-        return r;
+        return crear_valor_control_flujo(exp->tipo, NULL, exp->loc);
     }
 }
 
 Valor evaluar_expresion(Evaluador *evaluador, Expresion *exp) {
-    // Hay que tener en cuenta que sólo hay que devolver un valor
-    // si la expresión no es una sentencia. Si no, se tiene que
-    // devolver el valor unidad.
-    // Si en algún momento nos encontramos con un valor de tipo
-    // "error", hay que abortar y devolver ese valor, aunque la
-    // expresión sea una sentencia.
+    // Imprimir la expresión si estamos en modo debugging.
+    if (evaluador->debug) {
+        imprimir_expresion(*exp);
+    }
+
+    // Actuar de distinta manera en base al tipo de expresión.
     switch (exp->tipo) {
         case EXP_VALOR: return evaluar_expresion_valor(&exp->valor, exp->es_sentencia);
         case EXP_NOMBRE: return evaluar_expresion_nombre(&exp->nombre, exp->es_sentencia, evaluador);
@@ -749,10 +549,7 @@ Valor evaluar_expresion(Evaluador *evaluador, Expresion *exp) {
         case EXP_CONDICIONAL: return evaluar_expresion_condicional(&exp->condicional, exp->es_sentencia, evaluador);
         case EXP_BUCLE_WHILE: return evaluar_expresion_while(&exp->bucle_while, exp->es_sentencia, evaluador);
         case EXP_CONTROL_FLUJO: return evaluar_expresion_control_flujo(&exp->control_flujo, evaluador);
-        default: {
-            borrar_expresion(exp);
-            return crear_valor_error(crear_error("Expresión desconocida. What?"), NULL);
-        }
+        default: return crear_valor_error(crear_error("Expresión desconocida. What?"), NULL);
     }
 
 }
@@ -777,12 +574,5 @@ ListaValores evaluar_expresiones(Evaluador *evaluador, ListaExpresiones *listaEx
     //if (valores.loc && listaExpresiones->loc)
     //    *valores.loc = *listaExpresiones->loc;
 
-    free(listaExpresiones->valores);
-    if (listaExpresiones->loc) {
-        borrar_loc(listaExpresiones->loc);
-        free(listaExpresiones->loc);
-    }
-    listaExpresiones->longitud = 0;
-    listaExpresiones->capacidad = 0;
     return valores;
 }

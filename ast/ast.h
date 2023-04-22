@@ -57,6 +57,10 @@ typedef struct {
 typedef struct {
     /// Los nombres de los argumentos.
     ListaIdentificadores nombres_args;
+    /// La lista de variables usadas dentro de
+    /// la función que no son ni argumentos ni
+    /// variables locales.
+    ListaIdentificadores variables_capturadas;
     /// El cuerpo de la propia función.
     struct Expresion *cuerpo;
     /// La localización de la expresión en
@@ -298,21 +302,5 @@ void imprimir_expresion(Expresion expresion);
  * @param listaExpresiones
  */
 void imprimir_lista_expresiones(ListaExpresiones listaExpresiones);
-
-/**
- * Funciones que calcula la lista de identificadores que una determinada
- * definición de función ha capturado del exterior. Estos se determinan
- * como aquellos identificadores que no son ni nombres_args de la función
- * ni variables locales. Por ejemplo,
- *
- *      const five = 5
- *      \x => x+five
- *
- *  Devolvería ["five"] como lista de variables capturadas.
- *
- * @param funcion función a la que se le calcularán las variables capturadas.
- * @return lista de variables capturadas.
- */
-ListaIdentificadores variables_capturadas(ExpDefFuncion funcion);
 
 #endif //PRACTICA3_AST_H

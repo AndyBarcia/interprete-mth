@@ -52,6 +52,9 @@ typedef struct {
     /// el evaluador a efectos de cargar archivos.
     /// Por defecto se puede establecer a ".".
     String wd;
+    /// Si se está en modo debugging.
+    /// Si es verdadero, se imprimen las expresiones.
+    int debug;
 } Evaluador;
 
 /**

@@ -24,13 +24,16 @@ void modo_interactivo(Evaluador *evaluador) {
         while (siguiente_expresion(&parser, &exp)) {
             Valor v = evaluar_expresion(evaluador, &exp);
             if (v.tipo_valor == TIPO_CONTROL_FLUJO && v.control_flujo.tipo == CTR_FLUJO_EXIT) {
+                borrar_expresion(&exp);
                 borrar_valor(&v);
+                borrar_parser(&parser);
                 free(linea);
                 return;
             }
 
             imprimir_valor(v);
             borrar_valor(&v);
+            borrar_expresion(&exp);
         }
         borrar_parser(&parser);
 
@@ -66,6 +69,7 @@ void modo_fichero(Evaluador *evaluador, char* fichero) {
     while (siguiente_expresion(&parser, &exp)) {
         Valor v = evaluar_expresion(evaluador, &exp);
         if (v.tipo_valor == TIPO_CONTROL_FLUJO && v.control_flujo.tipo == CTR_FLUJO_EXIT) {
+            borrar_expresion(&exp);
             borrar_valor(&v);
             borrar_parser(&parser);
             return;
@@ -73,6 +77,7 @@ void modo_fichero(Evaluador *evaluador, char* fichero) {
 
         imprimir_valor(v);
         borrar_valor(&v);
+        borrar_expresion(&exp);
     }
 
     borrar_parser(&parser);
@@ -144,11 +149,18 @@ int main(int argc, char *argv[]) {
     // Crea un evaluador en el directorio actual, y carga el módulo
     // prelude en caso de que sea necesario.
     Evaluador evaluador = crear_evaluador(&simbolos, crear_string("."));
+
     if (!no_prelude) {
         Expresion e = crear_exp_importe(crear_string(prelude_file), 0, NULL);
         Valor v = evaluar_expresion(&evaluador, &e);
         if (v.tipo_valor == TIPO_ERROR) imprimir_valor(v);
+        borrar_expresion(&e);
     }
+
+    // Establecer el modo debug si se estableció como argumento.
+    // No lo establecemos antes para que no se pete la terminal al cargarse
+    // el prelude.
+    evaluador.debug = debug;
 
     if (n_argumentos_posicionales < 1) {
         modo_interactivo(&evaluador);

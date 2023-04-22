@@ -540,6 +540,7 @@ Valor eval(Valor arg, Evaluador *evaluador) {
             Valor v = evaluar_expresion(evaluador, &exp);
             if (result.tipo_valor == TIPO_ERROR) imprimir_valor(v);
             borrar_valor(&result);
+            borrar_expresion(&exp);
             result = v;
         }
 

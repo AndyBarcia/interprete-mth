@@ -72,9 +72,21 @@ Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, Tipo
     };
 }
 
+
+// Funciones que calcula la lista de identificadores que una determinada
+// definición de función ha capturado del exterior. Estos se determinan
+// como aquellos identificadores que no son ni nombres_args de la función
+// ni variables locales. Por ejemplo,
+//       const five = 5
+//       \x => x+five
+// Devolvería ["five"] como lista de variables capturadas.
+ListaIdentificadores variables_capturadas(ListaIdentificadores nombres_args, Expresion *cuerpo);
+
 Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = cuerpo;
+
+    ListaIdentificadores capturadas = variables_capturadas(argumentos, e);
 
     if (loc) {
         Localizacion* loc_copy = malloc(sizeof(Localizacion));
@@ -86,6 +98,7 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
             .tipo = EXP_OP_DEF_FUNCION,
             .def_funcion = (ExpDefFuncion) {
                     .nombres_args = argumentos,
+                    .variables_capturadas = capturadas,
                     .cuerpo = (struct Expresion *) e,
                     .loc = loc
             },
@@ -328,6 +341,7 @@ Expresion clonar_expresion(Expresion exp) {
             break;
         case EXP_OP_DEF_FUNCION:
             e.def_funcion.nombres_args = clonar_lista_identificadores(exp.def_funcion.nombres_args);
+            e.def_funcion.variables_capturadas = clonar_lista_identificadores(exp.def_funcion.variables_capturadas);
             e.def_funcion.cuerpo = malloc(sizeof(Expresion)); // Esto es necesario
             *(Expresion *) e.def_funcion.cuerpo = clonar_expresion(*(Expresion *) exp.def_funcion.cuerpo);
             if (e.def_funcion.loc) {
@@ -423,6 +437,7 @@ void borrar_expresion(Expresion *exp) {
             borrar_expresion((Expresion *) exp->def_funcion.cuerpo);
             free(exp->def_funcion.cuerpo);
             borrar_lista_identificadores(&exp->def_funcion.nombres_args);
+            borrar_lista_identificadores(&exp->def_funcion.variables_capturadas);
             if(exp->def_funcion.loc) {
                 borrar_loc(exp->def_funcion.loc);
                 free(exp->def_funcion.loc);
@@ -641,15 +656,16 @@ void _imprimir_expresion(Expresion expresion) {
         case EXP_BUCLE_WHILE:
             printf("while ");
             _imprimir_expresion(*(Expresion*) expresion.bucle_while.condicion);
-            printf("do ");
+            printf(" do ");
             _imprimir_expresion(*(Expresion*) expresion.bucle_while.cuerpo);
             break;
     }
 }
 
 void imprimir_expresion(Expresion expresion) {
+    printf("`");
     _imprimir_expresion(expresion);
-    printf("\n");
+    printf("`\n");
 }
 
 void _imprimir_lista_expresiones(ListaExpresiones listaExpresiones) {
@@ -715,14 +731,13 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
     }
 }
 
-ListaIdentificadores variables_capturadas(ExpDefFuncion funcion) {
+ListaIdentificadores variables_capturadas(ListaIdentificadores nombres_args, Expresion *cuerpo) {
     ListaIdentificadores capturadas = crear_lista_identificadores();
-    TablaHash locales = crear_tabla_hash(funcion.nombres_args.longitud);
-    for (int i = 0; i < funcion.nombres_args.longitud; ++i)
-        insertar_hash(&locales, clonar_string(funcion.nombres_args.valores[i].nombre), crear_valor_unidad(NULL), 0);
+    TablaHash locales = crear_tabla_hash(nombres_args.longitud);
+    for (int i = 0; i < nombres_args.longitud; ++i)
+        insertar_hash(&locales, clonar_string(nombres_args.valores[i].nombre), crear_valor_unidad(NULL), 0);
 
-    Expresion cuerpo = *(Expresion *) funcion.cuerpo;
-    _variables_capturadas(cuerpo, &locales, &capturadas);
+    _variables_capturadas(*cuerpo, &locales, &capturadas);
     borrar_tabla_hash(&locales);
     return capturadas;
 }

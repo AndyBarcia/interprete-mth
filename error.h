@@ -25,6 +25,7 @@ Error crear_error_dividir_entre_cero();
 Error crear_error_archivo_no_encontrado(char* fichero);
 Error crear_error_contexto_incorrecto(char* tipo, char* contexto);
 Error crear_error_casting(int tipoActual, int tipoObjetivo);
+Error crear_error_llamada_foranea();
 
 void borrar_error(Error *error);
 

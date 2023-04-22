@@ -151,6 +151,17 @@ Valor crear_valor_error(Error error, Localizacion *loc) {
     };
 }
 
+Valor extraer_valor_control_flujo(ValorControlFlujo *control_flujo) {
+    if (control_flujo->valor) {
+        Valor r = *(Valor*) control_flujo->valor;
+        free(control_flujo->valor);
+        control_flujo->valor = NULL;
+        return r;
+    } else {
+        return crear_valor_unidad(NULL);
+    }
+}
+
 Valor clonar_valor(Valor v) {
     Valor copia = v;
     // Al clonar aumentar el número de referencias si es un
@@ -406,6 +417,36 @@ void borrar_lista_valores(ListaValores *lista) {
 
 void _imprimir_error(Error error, Localizacion *loc);
 
+char* _intrinseca_a_str(FuncionIntrinseca f) {
+    switch (f) {
+        case INTRINSECA_SUMA: return "+";
+        case INTRINSECA_RESTA: return "-";
+        case INTRINSECA_MULT: return "*";
+        case INTRINSECA_DIV: return "/";
+        case INTRINSECA_MOD: return "%";
+        case INTRINSECA_EQ: return "==";
+        case INTRINSECA_NEQ: return "!=";
+        case INTRINSECA_GE: return ">";
+        case INTRINSECA_GEQ: return ">=";
+        case INTRINSECA_LE: return "<";
+        case INTRINSECA_LEQ: return "<=";
+        case INTRINSECA_AND: return "&&";
+        case INTRINSECA_OR: return "||";
+        case INTRINSECA_NOT: return "!";
+        case INTRINSECA_NEGAR: return "-";
+        case INTRINSECA_PRINT: return "print";
+        case INTRINSECA_PRINTWS: return "printws";
+        case INTRINSECA_RESETWS: return "resetws";
+        case INTRINSECA_AYUDA: return "help";
+        case INTRINSECA_CARGAR: return "load";
+        case INTRINSECA_EVAL: return "eval";
+        case INTRINSECA_EXIT: return "exit";
+        case INTRINSECA_CALLFOREIGN: return "callforeign";
+        case INTRINSECA_CAST_ENTERO: return "int";
+        case INTRINSECA_CAST_DECIMAL: return "decimal";
+    }
+}
+
 void _imprimir_valor(Valor valor) {
     switch (valor.tipo_valor) {
         case TIPO_UNIDAD: /*printf("unidad");*/ break;
@@ -416,10 +457,10 @@ void _imprimir_valor(Valor valor) {
             _imprimir_error(valor.error, valor.loc);
             break;
         case TIPO_FUNCION_INTRINSECA:
-            printf("[función intrínseca]");
+            printf("%s", _intrinseca_a_str(valor.funcion_intrinseca));
             break;
         case TIPO_FUNCION:
-            printf("[función]");
+            printf("[función %d-aria]", valor.funcion.nombres_args.longitud);
             break;
         case TIPO_FUNCION_FORANEA:
             printf("[función foránea]");
