@@ -9,6 +9,9 @@
 ///    puntero), y el stack para cadenas pequeñas.
 ///  * Con arrays dinámicos se utiliza una cuenta de
 ///    referencias dinámicas para un clonado barato de strings.
+///  * Los strings se consideran inmutables a efectos
+///    de aliasing (es decir, si existen farias referencias
+///	   a un string, sus contenidos no pueden cambiar).
 ///  * Cuenta con una serie de funciones `extender_string`
 ///    y `extender_string_n` para facilitar la creación de
 ///    strings.
@@ -17,12 +20,11 @@ typedef struct {
         /// Contiene el string si el puntero
         /// es NULL.
         char padding[SMALL_STRING_PADDING];
-        /// El número de referencias dinámicas
-        /// a este string. Su memoria no se
-        /// liberará hasta que desaparezcan
-        /// todas las referencias.
-        /// Sólo se utiliza si no se está
-        /// utilizando el padding.
+        /// Contiene el número de referencias
+        /// dinámicas al string si el puntero
+        /// es no NULL.
+        /// Su memoria no se liberará hasta que 
+        /// todas las referencias desaparezcan.
         int* referencias;
     };
     /// Puntero a memoria dinámica, o
@@ -66,9 +68,10 @@ String crear_string_n(unsigned long n);
 /**
  * Extiende los contenidos de un string, añadiendo los
  * contenidos de una cadena de caracteres al final del string.
- * Si el string es una referencia única, se extiende el propio
- * string; pero si no, se hace un clonado profundo para evitar
- * problemas de aliasing.
+ * En general extender el string implica crear una copia
+ * para no modificar el original, a no ser que el original
+ * tuviera una única referencia viva, en cuyo caso se reutilza
+ * la memoria del propio string.
  * @param string string que se va a extender
  * @param str cadena de caracteres
  */
@@ -77,9 +80,10 @@ void extender_string(String *string, char *str);
 /**
  * Extiende los contenidos de un string, añadiendo una cierta
  * cantidad de caracteres de una cadena.
- * Si el string es una referencia única, se extiende el propio
- * string; pero si no, se hace un clonado profundo para evitar
- * problemas de aliasing.
+ * En general extender el string implica crear una copia
+ * para no modificar el original, a no ser que el original
+ * tuviera una única referencia viva, en cuyo caso se reutilza
+ * la memoria del propio string.
  * @param string el string a extender.
  * @param str cadena de caracteres
  * @param n número de caracteres a copiar
@@ -96,15 +100,20 @@ void extender_string_n(String *string, char *str, unsigned long n);
 String clonar_string(String string);
 
 /**
- * Libera los contenidos del string.
- * Si no se utiliza memoria dinámica, no se hace nada
+ * Reduce el número de referencias dinámicas al string,
+ * liberando su memoria en caso de llegar a 0 referencias.
  * @param string
  */
 void borrar_string(String *string);
 
 /**
- * Convierte un string a un puntero a un array de
+ * Convierte un string a un puntero a array de
  * caracteres normal y corriente.
+ * No se debe modificar los contenidos de este
+ * string mediante este puntero, ya que los strings
+ * se consideran inmutables (excepto en el caso
+ * de que se garantice que no haya aliasing si, por 
+ * ejemplo, el string es de nueva creación).
  * @param string
  * @return
  */

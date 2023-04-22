@@ -4,10 +4,13 @@
 #include "tabla_hash.h"
 
 /// Una tabla de símbolos, que es capaz de almacenar
-/// valores asociados a determinadas cadenas
+/// valores asociados a determinadas cadenas o nombres
 /// a lo largo de varios niveles o "scopes".
 /// Se utiliza el concepto de "barrera" para evitar
 /// que las asignaciones de variables se propaguen
+/// a partir de ciertos niveles (esto se utiliza, 
+/// por ejemplo, para evitar que una función
+/// modifique variables fuera del cuerpo de la función).
 typedef struct {
     /// Array de tablas; una por cada nivel
     TablaHash* tablas;
@@ -92,7 +95,8 @@ void borrar_tabla_simbolos(TablaSimbolos *t);
  * @param nombre el nombre de la variable
  * @param tipo el lugar donde se guardará el tipo de asignación que tenía
  * el valor. Puede ser NULL, en cuyo caso no se guardará el tipo.
- * @param nivel el nivel de la tabla en el que estaba la variable.
+ * @param nivel el nivel de la tabla en el que estaba la variable. Puede
+ * ser NULL, en cuyo caso no se guardará el nivel en el que estaba.
  * @param nivel_max el nivel máximo de la tabla de símbolos en el que se
  * buscará la variable.
  * @return un puntero al valor en la tabla, o NULL en caso de que no se haya
@@ -124,7 +128,7 @@ Valor recuperar_clon_valor_tabla(TablaSimbolos t, Identificador nombre);
 int asignar_valor_tabla(TablaSimbolos *t, String nombre, Valor valor, TipoAsignacion tipo);
 
 /**
- * Clona todos los valores de una tabla hash dada al últivo nivel de
+ * Clona todos los valores de una tabla hash dada al último nivel de
  * esta tabla de símbolos.
  * @param t la tabla de símbolos en la que se asignarán los valores.
  * @param otro la tabla con el conjunto de valores.

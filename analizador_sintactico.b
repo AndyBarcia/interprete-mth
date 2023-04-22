@@ -59,22 +59,13 @@ while (0)
 %token <string> STRING "string"
 %token <error_lexico> ERROR
 
-%token SUMA "+"
-%token RESTA "-"
-%token MULT "*"
-%token DIV "/"
-%token MOD "%"
-
-%token IGUAL "="
 %token EQ "=="
 %token NEQ "!="
-%token GE ">"
 %token GEQ ">="
-%token LE "<"
 %token LEQ "<="
 %token AND "&&"
 %token OR "||"
-%token NOT "!"
+%token FLECHA "=>"
 
 %token CONST "const"
 %token EXPORT "export"
@@ -88,19 +79,6 @@ while (0)
 %token ELSE "else"
 %token WHILE "while"
 %token DO "do"
-
-%token PARENTESIS_IZQ "("
-%token PARENTESIS_DER ")"
-%token CORCHETE_IZQ "["
-%token CORCHETE_DER "]"
-%token LLAVE_IZQ "{"
-%token LLAVE_DER "}"
-%token PUNTO "."
-%token FLECHA "=>"
-%token SLASH_INVERTIDA "\\"
-%token NUEVA_LINEA "\n"
-%token PUNTO_Y_COMA ";"
-%token COMA ","
 
 %type <listaExpresiones> argument_list
 %type <listaExpresiones> argument_list_many
@@ -118,15 +96,15 @@ while (0)
 %precedence "else"
 %precedence "return"
 %precedence "break"
-%precedence "="
+%precedence '='
 %precedence "=>"
-%left "!"
-%left "+" "-"
-%left "*" "/" "%"
 %left "||"
 %left "&&"
-%nonassoc "==" "!=" ">" ">=" "<" "<="
-%precedence "("
+%nonassoc "==" "!=" '>' ">=" '<' "<="
+%left '!'
+%left '+' '-'
+%left '*' '/' '%'
+%precedence '('
 
 %destructor { borrar_identificador(&$$); } IDENTIFICADOR
 %destructor { borrar_string(&$$); } STRING
@@ -143,30 +121,31 @@ while (0)
 %%
 
 program:
-    nuevas_lineas
-    | program statement nuevas_lineas { *exp = $2; }
-    | program error nuevas_lineas { }
+      %empty
+    | program '\n'
+    | program statement { *exp = $2; }
     ;
 
-nuevas_lineas: %empty | nuevas_lineas "\n" ;
-
 argument_list_many:
-    expresion { $$ = crear_lista_expresiones1($1); }
-    | argument_list_many "," expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
+      expresion { $$ = crear_lista_expresiones1($1); }
+    | argument_list_many ',' expresion { push_lista_expresiones(&$1, $3); $$ = $1; }
     ;
 argument_list: argument_list_many
     | %empty { $$ = crear_lista_expresiones(&@$); }
 
 identifier_list_many:
-    IDENTIFICADOR { $$ = crear_lista_identificadores1($1); }
-    | identifier_list_many "," IDENTIFICADOR { push_lista_identificadores(&$1, $3); $$ = $1; }
+      IDENTIFICADOR { $$ = crear_lista_identificadores1($1); }
+    | identifier_list_many ',' IDENTIFICADOR { push_lista_identificadores(&$1, $3); $$ = $1; }
     ;
 identifier_list:  identifier_list_many
     | %empty { $$ = crear_lista_identificadores(); }
 
+nuevas_lineas: %empty | nuevas_lineas '\n' ;
+
 expression_list_many:
-      nuevas_lineas { $$ = crear_lista_expresiones(&@$); }
-    | expression_list_many statement nuevas_lineas { push_lista_expresiones(&$1, $2); $$ = $1; }
+      %empty { $$ = crear_lista_expresiones(&@$); }
+    | expression_list_many '\n'
+    | expression_list_many statement { push_lista_expresiones(&$1, $2); $$ = $1; }
     ;
 expression_list:
       expression_list_many { $$ = $1; }
@@ -174,12 +153,12 @@ expression_list:
     ;
 
 acceso:
-    "." IDENTIFICADOR { $$ = crear_acceso_miembro($2); }
-    | "[" expresion "]" { $$ = crear_acceso_indexado((struct Expresion*) &$2); }
+      '.' IDENTIFICADOR { $$ = crear_acceso_miembro($2); }
+    | '[' expresion ']' { $$ = crear_acceso_indexado((struct Expresion*) &$2); }
     ;
 
 nombre_asignable:
-    IDENTIFICADOR { $$ = crear_nombre_asignable($1); }
+      IDENTIFICADOR { $$ = crear_nombre_asignable($1); }
     | nombre_asignable acceso { push_acceso_nombre_asignable(&$1, $2); $$ = $1; }
     ;
 
@@ -187,46 +166,46 @@ expresion:
       ENTERO { $$ = crear_exp_valor(crear_entero($1, &@1)); }
     | DECIMAL { $$ = crear_exp_valor(crear_decimal($1, &@1)); }
     | STRING { $$ = crear_exp_valor(crear_valor_string($1, &@1)); }
-    | "(" "!" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NOT, &@$)); }
-    | "(" "*" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MULT, &@$)); }
-    | "(" "/" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_DIV, &@$)); }
-    | "(" "%" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MOD, &@$)); }
-    | "(" "+" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_SUMA, &@$)); }
-    | "(" "-" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_RESTA, &@$)); }
-    | "(" "==" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_EQ, &@$)); }
-    | "(" "!=" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NEQ, &@$)); }
-    | "(" ">" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GE, &@$)); }
-    | "(" ">=" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GEQ, &@$)); }
-    | "(" "<" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LE, &@$)); }
-    | "(" "<=" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LEQ, &@$)); }
-    | "(" "&&" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_AND, &@$)); }
-    | "(" "||" ")" { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_OR, &@$)); }
-    | "!" expresion { $$ = crear_exp_op_unaria(INTRINSECA_NOT, &@2, $2, &@$); }
-    | "-" expresion { $$ = crear_exp_op_unaria(INTRINSECA_NEGAR, &@2, $2, &@$); }
-    | expresion "*" expresion { $$ = crear_exp_op_binaria(INTRINSECA_MULT, &@2, $1, $3, &@$); }
-    | expresion "/" expresion { $$ = crear_exp_op_binaria(INTRINSECA_DIV, &@2, $1, $3, &@$); }
-    | expresion "%" expresion { $$ = crear_exp_op_binaria(INTRINSECA_MOD, &@2, $1, $3, &@$); }
-    | expresion "+" expresion { $$ = crear_exp_op_binaria(INTRINSECA_SUMA, &@2, $1, $3, &@$); }
-    | expresion "-" expresion { $$ = crear_exp_op_binaria(INTRINSECA_RESTA, &@2, $1, $3, &@$); }
+    | '(' '!' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NOT, &@$)); }
+    | '(' '*' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MULT, &@$)); }
+    | '(' '/' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_DIV, &@$)); }
+    | '(' '%' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_MOD, &@$)); }
+    | '(' '+' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_SUMA, &@$)); }
+    | '(' '-' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_RESTA, &@$)); }
+    | '(' "==" ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_EQ, &@$)); }
+    | '(' "!=" ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_NEQ, &@$)); }
+    | '(' '>' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GE, &@$)); }
+    | '(' ">=" ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_GEQ, &@$)); }
+    | '(' '<' ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LE, &@$)); }
+    | '(' "<=" ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_LEQ, &@$)); }
+    | '(' "&&" ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_AND, &@$)); }
+    | '(' "||" ')' { $$ = crear_exp_valor(crear_funcion_intrinseca(INTRINSECA_OR, &@$)); }
+    | '!' expresion { $$ = crear_exp_op_unaria(INTRINSECA_NOT, &@2, $2, &@$); }
+    | '-' expresion { $$ = crear_exp_op_unaria(INTRINSECA_NEGAR, &@2, $2, &@$); }
+    | expresion '*' expresion { $$ = crear_exp_op_binaria(INTRINSECA_MULT, &@2, $1, $3, &@$); }
+    | expresion '/' expresion { $$ = crear_exp_op_binaria(INTRINSECA_DIV, &@2, $1, $3, &@$); }
+    | expresion '%' expresion { $$ = crear_exp_op_binaria(INTRINSECA_MOD, &@2, $1, $3, &@$); }
+    | expresion '+' expresion { $$ = crear_exp_op_binaria(INTRINSECA_SUMA, &@2, $1, $3, &@$); }
+    | expresion '-' expresion { $$ = crear_exp_op_binaria(INTRINSECA_RESTA, &@2, $1, $3, &@$); }
     | expresion "==" expresion { $$ = crear_exp_op_binaria(INTRINSECA_EQ, &@2, $1, $3, &@$); }
     | expresion "!=" expresion { $$ = crear_exp_op_binaria(INTRINSECA_NEQ, &@2, $1, $3, &@$); }
-    | expresion ">" expresion { $$ = crear_exp_op_binaria(INTRINSECA_GE, &@2, $1, $3, &@$); }
+    | expresion '>' expresion { $$ = crear_exp_op_binaria(INTRINSECA_GE, &@2, $1, $3, &@$); }
     | expresion ">=" expresion { $$ = crear_exp_op_binaria(INTRINSECA_GEQ, &@2, $1, $3, &@$); }
-    | expresion "<" expresion { $$ = crear_exp_op_binaria(INTRINSECA_LE, &@2, $1, $3, &@$); }
+    | expresion '<' expresion { $$ = crear_exp_op_binaria(INTRINSECA_LE, &@2, $1, $3, &@$); }
     | expresion "<=" expresion { $$ = crear_exp_op_binaria(INTRINSECA_LEQ, &@2, $1, $3, &@$); }
     | expresion "&&" expresion { $$ = crear_exp_op_binaria(INTRINSECA_AND, &@2, $1, $3, &@$); }
     | expresion "||" expresion { $$ = crear_exp_op_binaria(INTRINSECA_OR, &@2, $1, $3, &@$); }
-    | expresion "(" argument_list ")" { $$ = crear_exp_llamada($1, $3, &@$); }
-    | "(" expresion ")" { $$ = $2; }
+    | expresion '(' argument_list ')' { $$ = crear_exp_llamada($1, $3, &@$); }
+    | '(' expresion ')' { $$ = $2; }
     | nombre_asignable { $$ = crear_exp_nombre($1); }
-    | nombre_asignable "=" expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
-    | "const" nombre_asignable "=" expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
-    | "export" nombre_asignable "=" expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
-    | "{" expression_list "}" { $$ = crear_exp_bloque($2, &@$); }
+    | nombre_asignable '=' expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
+    | "const" nombre_asignable '=' expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
+    | "export" nombre_asignable '=' expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
+    | '{' expression_list '}' { $$ = crear_exp_bloque($2, &@$); }
     | "if" expresion "then" expresion { $$ = crear_exp_condicional($2, $4, NULL, &@$); }
     | "if" expresion "then" expresion "else" expresion { $$ = crear_exp_condicional($2, $4, &$6, &@$); }
     | "while" expresion "do" expresion { $$ = crear_exp_bucle_while($2, $4, &@$); }
-    | "\\" identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
+    | '\\' identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
     | "import" STRING {$$ = crear_exp_importe($2, 0, &@2); }
     | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, &@3); }
     | "break" { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_BREAK, NULL, &@1); }
@@ -237,8 +216,8 @@ expresion:
     ;
 
 statement:
-    expresion ";" { $$ = $1; $$.es_sentencia = 1; }
-    | expresion "\n" { $$ = $1;}
+      expresion ';' { $$ = $1; $$.es_sentencia = 1; }
+    | expresion '\n' { $$ = $1;}
     | expresion YYEOF { $$ = $1; }
 
 %%

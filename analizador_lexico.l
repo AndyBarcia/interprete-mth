@@ -98,39 +98,20 @@ do      { return DO; }
         return ERROR;
     }
 
-\+   { return SUMA; }
--    { return RESTA; }
-\*   { return MULT; }
-\/   { return DIV; }
-%    { return MOD; }
-
 \=\= { return EQ; }
 !\=  { return NEQ; }
->    { return GE; }
 >=   { return GEQ; }
-\<   { return LE; }
 \<=  { return LEQ; }
 &&   { return AND; }
 \|\| { return OR; }
-!    { return NOT; }
-\=   { return IGUAL; }
-
-\(   { return PARENTESIS_IZQ; }
-\)   { return PARENTESIS_DER; }
-\[   { return CORCHETE_IZQ; }
-\]   { return CORCHETE_DER; }
-\{   { return LLAVE_IZQ; }
-\}   { return LLAVE_DER; }
-;    { return PUNTO_Y_COMA; }
-\.   { return PUNTO; }
-,    { return COMA; }
 =>  { return FLECHA;}
-\\  { return SLASH_INVERTIDA; }
+
+[+\-*=/%><!()\[\]\{\};.,\\] { return yytext[0]; }
 
 \n  {
         yylloc->last_column = 1;
         ++yylloc->last_line;
-        return NUEVA_LINEA;
+        return '\n';
     }
 
 \/\/[^\n]* { /* ignorar comentarios de una línea */ }

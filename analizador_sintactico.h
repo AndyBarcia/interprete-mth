@@ -45,11 +45,11 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 38 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 38 "analizador_sintactico.b"
 
     #include "ast/ast.h"
 
-#line 53 "../analizador_sintactico.h"
+#line 53 "analizador_sintactico.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -65,45 +65,25 @@ extern int yydebug;
     IDENTIFICADOR = 260,           /* "identificador"  */
     STRING = 261,                  /* "string"  */
     ERROR = 262,                   /* ERROR  */
-    SUMA = 263,                    /* "+"  */
-    RESTA = 264,                   /* "-"  */
-    MULT = 265,                    /* "*"  */
-    DIV = 266,                     /* "/"  */
-    MOD = 267,                     /* "%"  */
-    IGUAL = 268,                   /* "="  */
-    EQ = 269,                      /* "=="  */
-    NEQ = 270,                     /* "!="  */
-    GE = 271,                      /* ">"  */
-    GEQ = 272,                     /* ">="  */
-    LE = 273,                      /* "<"  */
-    LEQ = 274,                     /* "<="  */
-    AND = 275,                     /* "&&"  */
-    OR = 276,                      /* "||"  */
-    NOT = 277,                     /* "!"  */
-    CONST = 278,                   /* "const"  */
-    EXPORT = 279,                  /* "export"  */
-    IMPORT = 280,                  /* "import"  */
-    FOREIGN = 281,                 /* "foreign"  */
-    AS = 282,                      /* "as"  */
-    BREAK = 283,                   /* "break"  */
-    RETURN = 284,                  /* "return"  */
-    IF = 285,                      /* "if"  */
-    THEN = 286,                    /* "then"  */
-    ELSE = 287,                    /* "else"  */
-    WHILE = 288,                   /* "while"  */
-    DO = 289,                      /* "do"  */
-    PARENTESIS_IZQ = 290,          /* "("  */
-    PARENTESIS_DER = 291,          /* ")"  */
-    CORCHETE_IZQ = 292,            /* "["  */
-    CORCHETE_DER = 293,            /* "]"  */
-    LLAVE_IZQ = 294,               /* "{"  */
-    LLAVE_DER = 295,               /* "}"  */
-    PUNTO = 296,                   /* "."  */
-    FLECHA = 297,                  /* "=>"  */
-    SLASH_INVERTIDA = 298,         /* "\\"  */
-    NUEVA_LINEA = 299,             /* "\n"  */
-    PUNTO_Y_COMA = 300,            /* ";"  */
-    COMA = 301                     /* ","  */
+    EQ = 263,                      /* "=="  */
+    NEQ = 264,                     /* "!="  */
+    GEQ = 265,                     /* ">="  */
+    LEQ = 266,                     /* "<="  */
+    AND = 267,                     /* "&&"  */
+    OR = 268,                      /* "||"  */
+    FLECHA = 269,                  /* "=>"  */
+    CONST = 270,                   /* "const"  */
+    EXPORT = 271,                  /* "export"  */
+    IMPORT = 272,                  /* "import"  */
+    FOREIGN = 273,                 /* "foreign"  */
+    AS = 274,                      /* "as"  */
+    BREAK = 275,                   /* "break"  */
+    RETURN = 276,                  /* "return"  */
+    IF = 277,                      /* "if"  */
+    THEN = 278,                    /* "then"  */
+    ELSE = 279,                    /* "else"  */
+    WHILE = 280,                   /* "while"  */
+    DO = 281                       /* "do"  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -112,7 +92,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 42 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
+#line 42 "analizador_sintactico.b"
 
     int valorEntero;
     double valorDecimal;
@@ -126,7 +106,7 @@ union YYSTYPE
     Valor valor;
     Expresion expresion;
 
-#line 130 "../analizador_sintactico.h"
+#line 110 "analizador_sintactico.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
