@@ -1,14 +1,8 @@
 #include "std.h"
 #include "ast/ast.h"
 #include "evaluador.h"
-#include "math.h"
 
-void inicializar_libreria_estandar(TablaSimbolos *t) {
-    asignar_valor_tabla(t, crear_string("verdadero"), crear_bool(1, NULL), ASIGNACION_INMUTABLE);
-    asignar_valor_tabla(t, crear_string("falso"), crear_bool(0, NULL), ASIGNACION_INMUTABLE);
-    asignar_valor_tabla(t, crear_string("pi"), crear_decimal(M_PI, NULL), ASIGNACION_INMUTABLE);
-    asignar_valor_tabla(t, crear_string("e"), crear_decimal(M_E, NULL), ASIGNACION_INMUTABLE);
-
+void cargar_intrinsecas(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("print"), crear_funcion_intrinseca(INTRINSECA_PRINT, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("printws"), crear_funcion_intrinseca(INTRINSECA_PRINTWS, NULL), ASIGNACION_INMUTABLE);
     asignar_valor_tabla(t, crear_string("resetws"), crear_funcion_intrinseca(INTRINSECA_RESETWS, NULL), ASIGNACION_INMUTABLE);
@@ -461,7 +455,7 @@ void ayuda(Valor v) {
                                                  "se hubiese iniciado el programa por primera vez.\n"); break;
                 case INTRINSECA_AYUDA:  printf("Devuelve ayuda sobre un valor pasado como argumento.\n"); break;
                 case INTRINSECA_CARGAR: printf("Permite cargar un fichero en un string.\n"
-                                               "Ejemplo: `load(\"math.mth\")`\n"); break;
+                                               "Ejemplo: `load(\"prelude.mth\")`\n"); break;
                 case INTRINSECA_EVAL: printf("Permite evaluar una cadena con código, como si se hubiese"
                                              "ejecutado directamente en la consola.\n"
                                              "Ejemplo: `eval(\"x=2+3\"); print(x)`\n"); break;
@@ -522,7 +516,7 @@ Valor cargar(Valor arg) {
 //  * Se capturan valores de control de flujo creados, por lo que no
 //    se puede terminar la ejecución de la terminal con `eval`, ni tampoco
 //    salir prematuramente de una función, ni terminar un bucle.
-Valor eval(Valor arg, TablaSimbolos *t, String wd) {
+Valor eval(Valor arg, Evaluador *evaluador) {
     if (arg.tipo_valor != TIPO_STRING) {
         // Si el único argumento no es un string, reportar un error.
         Error error = crear_error_op_incompatible("evaluar", arg.tipo_valor);
@@ -532,24 +526,25 @@ Valor eval(Valor arg, TablaSimbolos *t, String wd) {
         // Si no, crear un evaluador en contexto de EVAL.
         CodigoFuente src = crear_codigo_fuente_str_cpy(string_a_str(&arg.string));
         Lexer lexer = crear_lexer(src);
-        Evaluador evaluador = crear_evaluador(lexer, CONTEXTO_EVAL, wd);
+        Parser parser = crear_parser(lexer, CONTEXTO_EVAL);
 
         // Aumentar el nivel de la tabla de símbolos y establecer
         // una barrera, para que no se puedan modificar variables
         // externas desde dentro del `eval`.
-        aumentar_nivel_tabla_simbolos(t);
-        establecer_barrera_tabla_simbolos(t);
+        aumentar_nivel_tabla_simbolos(evaluador->tabla_simbolos);
+        establecer_barrera_tabla_simbolos(evaluador->tabla_simbolos);
 
         Valor result = crear_valor_unidad(NULL);
-        Valor v;
-        while(evaluar_siguiente(&evaluador, t, &v)) {
+        Expresion exp;
+        while (siguiente_expresion(&parser, &exp)) {
+            Valor v = evaluar_expresion(evaluador, &exp);
             if (result.tipo_valor == TIPO_ERROR) imprimir_valor(v);
             borrar_valor(&result);
             result = v;
         }
 
-        reducir_nivel_tabla_simbolos(t);
-        borrar_evaluador(&evaluador);
+        reducir_nivel_tabla_simbolos(evaluador->tabla_simbolos);
+        borrar_parser(&parser);
         borrar_valor(&arg);
 
         // Importante: si el resultado es un tipo de control
@@ -706,7 +701,7 @@ Valor casting(Valor v, TipoValor objetivo) {
     return retorno;
 }
 
-Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaSimbolos *t, String wd) {
+Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, Evaluador *evaluador) {
     Valor *vargs = (Valor*) args.valores;
     Valor result = crear_valor_unidad(NULL);
 
@@ -784,13 +779,13 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             break;
         case INTRINSECA_PRINTWS:
             comprobacion_n_args(0, "imprimir espacio de trabajo");
-            printws(t);
+            printws(evaluador->tabla_simbolos);
             break;
         case INTRINSECA_RESETWS:
             comprobacion_n_args(0, "resetear espacio de trabajo");
-            borrar_tabla_simbolos(t);
-            *t = crear_tabla_simbolos();
-            inicializar_libreria_estandar(t);
+            borrar_tabla_simbolos(evaluador->tabla_simbolos);
+            *evaluador->tabla_simbolos = crear_tabla_simbolos();
+            cargar_intrinsecas(evaluador->tabla_simbolos);
             break;
         case INTRINSECA_AYUDA:
             comprobacion_n_m_args(0, 1, "pedir ayuda");
@@ -809,7 +804,7 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, TablaS
             break;
         case INTRINSECA_EVAL:
             comprobacion_n_args(1, "evaluar");
-            result = eval(vargs[0], t, wd);
+            result = eval(vargs[0], evaluador);
             break;
         case INTRINSECA_EXIT:
             comprobacion_n_m_args(0, 1, "salir");

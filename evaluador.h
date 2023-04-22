@@ -27,16 +27,27 @@ typedef enum {
     /// el sistema operativo, por ejemplo, para aumentar su
     /// seguridad.
     CONTEXTO_EVAL
-} ContextoEvaluacion;
+} ContextoParsing;
 
-/// Un evaluador del lenguaje matemático.
+/// Un analizador sintáctico del lenguaje
+/// matemático, que permite extraer
+/// expresiones.
 typedef struct {
     /// Estado actual del analizador léxico.
     Lexer lexer;
     /// Estado actual del analizador sintáctico.
     void *ps;
-    /// El contexto de evaluación.
-    ContextoEvaluacion contexto;
+    /// El contexto en el que se están analizando
+    /// expresiones. Dependiendo de este valor se
+    /// permiten o no ciertas expresiones.
+    ContextoParsing contexto;
+} Parser;
+
+/// Un evaluador del lenguaje matemático.
+typedef struct {
+    /// La tabla de símbolos con los valores actuales
+    /// de las variables.
+    TablaSimbolos *tabla_simbolos;
     /// El working directory en el que se encuentra
     /// el evaluador a efectos de cargar archivos.
     /// Por defecto se puede establecer a ".".
@@ -44,16 +55,38 @@ typedef struct {
 } Evaluador;
 
 /**
+ * Crea un nuevo parser dado un analizador léxico dado,
+ * en un contexto dado.
+ * @param lexer el analizador léxico.
+ * @param contexto el contexto de parsing.
+ * @return
+ */
+Parser crear_parser(Lexer lexer, ContextoParsing contexto);
+
+/**
+ * Libera la memoria asociada a un parser.
+ * @param parser
+ */
+void borrar_parser(Parser *parser);
+
+/**
+ * Extrae la siguiente expresión de un parser dado.
+ * @param parser el analizador sintáctico
+ * @param expresion donde se guardará la expresión
+ * @return 1 si se consiguió una nueva expresión, o
+ * 0 si ya no quedan más expresiones.
+ */
+int siguiente_expresion(Parser *parser, Expresion *expresion);
+
+/**
  * Crea un nuevo evaluador de expresiones con un
- * analizador léxico dado, que puede provenir
- * de un archivo, cadena de caracteres, o entrada
- * estándar.
- * @param lexer el analizador léxico a utilizar.
- * @param contexto el contexto de evaluación.
+ * con una tabla de símbols dada en un directorio
+ * de trabajo.
+ * @param tabla_simbolos la tabla de símbolos.
  * @param wd el working directory.
  * @return
  */
-Evaluador crear_evaluador(Lexer lexer, ContextoEvaluacion contexto, String wd);
+Evaluador crear_evaluador(TablaSimbolos *tabla_simbolos, String wd);
 
 /**
  * Libera la memoria de un evaluador.
@@ -62,14 +95,12 @@ Evaluador crear_evaluador(Lexer lexer, ContextoEvaluacion contexto, String wd);
 void borrar_evaluador(Evaluador *evaluador);
 
 /**
- * Obtiene el valor resultante de evaluar la siguiente
- * expresión que hay en un evaluador.
+ * Obtiene el valor resultante de evaluar una expresión dada.
+ * La memoria de la expresión queda liberada.
  * @param evaluador el evaluador a usar.
- * @param tabla_simbolos la tabla de variables.
- * @param valor donde se guardará el valor.
- * @return 1 si se evaluó un valor, o 0 en caso de que
- * ya no quedasen expresiones por evaluar.
+ * @param exp la expresión a evaluar.
+ * @return el valor resultante.
  */
-int evaluar_siguiente(Evaluador *evaluador, TablaSimbolos *tabla_simbolos, Valor *valor);
+Valor evaluar_expresion(Evaluador *evaluador, Expresion *exp);
 
 #endif //PRACTICA3_EVALUADOR_H

@@ -147,7 +147,7 @@ typedef enum {
     /// Ejemplo: `{ x=5; print(x); }`
     EXP_BLOQUE,
     /// Una importación de métodos de un archivo.
-    /// Ejemplo: `import "math.mth"`, `import foreign "math.so"`
+    /// Ejemplo: `import "prelude.mth"`, `import foreign "math.so"`
     EXP_IMPORT,
     /// Una expresión condicional.
     /// Ejemplo: `if cond { a } else { b }`
