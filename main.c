@@ -127,6 +127,26 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Mostrar el mensaje de ayuda si se estableció como opción.
+    if (help) {
+        printf("Intérprete de un lenguaje básico matemático. Si no se especifica un fichero"
+               " a ejecutar, se inicia el modo interactivo.\n"
+               "Por defecto se carga un módulo con definiciones básicas de la biblioteca estándar"
+               " (senos, cosenos, constantes matemáticas, etc). Si se quiere no cargar un"
+               " módulo por defecto, o se quiere cargar otro, se pueden utilizar las opciones.\n"
+               "\n"
+               "math [OPCIONES] [fichero] \n"
+               "\nOPCIONES:\n"
+               "\t-p --prelude fichero Este es el módulo que se cargará por defecto (\"prelude.mth\" por defecto)\n"
+               "\t   --no-prelude No importa ningún módulo por defecto\n"
+               "\t-d --debug Imprime las expresiones antes de evaluarlas\n"
+               "\t-h --help Imprime este mensaje de ayuda y termina\n"
+               "\n"
+               "Para más información utiliza en modo interactivo la función `help()`.\n"
+               "Para salir del modo interactivo, utiliza la función `exit()`.\n");
+        return 0;
+    }
+
     // Comprobar que la combinación de opciones pasadas es válida.
     if (prelude_file && no_prelude) {
         printf("aviso: se ha indicado un módulo como prelude, pero se ha establecido que no se "
