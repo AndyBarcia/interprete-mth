@@ -49,7 +49,7 @@ void establecer_barrera_tabla_simbolos(TablaSimbolos *t) {
 }
 
 int nivel_ultima_barrera(TablaSimbolos t) {
-    if (t.barreras)
+    if (t.barreras && t.longitud_barreras > 0)
         return t.barreras[t.longitud_barreras-1];
     return 0;
 }
