@@ -1,0 +1,27 @@
+// Implementación recursiva de la sucesión de Fibonacci
+export fib = \n => {
+    if n <= 0 then 0 else if n == 1 then 1 else fib(n-1)+fib(n-2)
+}
+
+// Implementación de la sucesión de Fibonacci en forma cerrada
+export fib_closed = \n => {
+    int((1/sqrt(5)) * (pow((1+sqrt(5))/2, n) - pow((1-sqrt(5))/2, n)))
+}
+
+// Implementación de la sucesión de Fibonacci en forma iterativa
+export fib_iter = \n => {
+    if n == 0 || n == 1 then return n
+
+    x = 0
+    prev1 = 0
+    prev2 = 1
+
+    i = 2
+    while i <= n do {
+        x = prev1 + prev2
+        prev1 = prev2
+        prev2 = x
+        i = i + 1
+    }
+    return x
+}

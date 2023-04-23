@@ -2,7 +2,7 @@ import foreign "libm.so" as math
 
 // Booleanos
 export true = 0==0
-export false = 0!=0
+export false = !true
 
 // Constantes básicas
 export pi = 3.14159265358979323846

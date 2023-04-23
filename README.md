@@ -84,10 +84,10 @@ expresiones, por lo que se pueden hacer cosas como:
 * Se pueden utilizar funciones básicas aritméticas como `+`, `-`, `*`, `/` y `%`; 
 operaciones de comparación como `==`, `!=`, `>`, `<`, `>=` y `<=`; y  operaciones 
 sobre booleanos como `&&` y `||`. 
-Adicionalmente, se puede utilizar el módulo `math.mth` para utilizar  otra funciones 
-complejas, como raíces cuadradas, senos, cosenos, etc.
+Adicionalmente, en el módulo por defecto `prelude.mth` se definen constantes
+matemáticas y otras funciones complejas, como raíces cuadradas, senos, 
+cosenos, etc.
 
-        import "math.mth"
         print(sin(5.0))
         print(sqrt(2))
 
@@ -147,6 +147,13 @@ el tipo que devuelve la función, y los argumentos que se pasarán a la función
   Esto, junto a la función `load`, se puede utilizar para ejecutar archivos
   como si se hubiesen ejecutado en la consola interactiva.
 
+        > eval(load("test.mth"))
+        fib(0) = 0
+        fib(1) = 1
+        fib(2) = 1
+        fib(3) = 2
+        fib(4) = 3
+
 * Se puede pedir ayuda de una función o tipo de datos con la función `help`.
 
 * Se puede salir del programa con la función `exit`
@@ -173,9 +180,13 @@ Para utilizar el programa como una consola interactiva se puede utilizar
 
         ./mth 
 
-Si no, se puede ejecutar un archivo como si se hubiese ejecutado en la consola con
+Si no, se puede ejecutar un archivo como si se hubiese introducido en la consola con
 
         ./mth archivo.mth
+
+Se pueden consultar otras opciones y ayuda utilizando
+
+        ./mth --help
 
 ## Ejemplos
 
