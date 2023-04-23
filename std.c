@@ -738,8 +738,10 @@ Valor ejecutar_funcion_intrinseca(FuncionIntrinseca f, ListaValores args, Evalua
             result = negar(vargs[0]);
             break;
         case INTRINSECA_PRINT:
-            for (int i = 0; i < args.longitud; ++i)
+            for (int i = 0; i < args.longitud; ++i) {
                 _imprimir_valor(vargs[i]);
+                borrar_valor(&vargs[i]);
+            }
             printf("\n");
             break;
         case INTRINSECA_PRINTWS:
