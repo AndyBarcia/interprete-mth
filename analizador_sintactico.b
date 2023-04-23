@@ -123,6 +123,9 @@ while (0)
 program:
       %empty
     | program '\n'
+    | program error ';'
+    | program error '\n'
+    | program error YYEOF
     | program statement { *exp = $2; }
     ;
 
@@ -217,7 +220,7 @@ expresion:
 
 statement:
       expresion ';'   { $$ = $1; $$.es_sentencia = 1; }
-    | expresion '\n'  { $$ = $1;}
+    | expresion '\n'  { $$ = $1; }
     | expresion YYEOF { $$ = $1; }
 
 %%
