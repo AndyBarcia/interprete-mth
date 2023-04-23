@@ -2,6 +2,7 @@
 #include "analizador_sintactico.h"
 #include "analizador_lexico.h"
 #include "std.h"
+#include "bibliotecas/biblioteca_dinamica.h"
 
 Parser crear_parser(Lexer lexer, ContextoParsing contexto) {
     return (Parser) {
@@ -277,7 +278,6 @@ Valor evaluar_expresion_definicion(ExpDefinicion *exp, int es_sentencia, Evaluad
     // normal esto causaría un error "variable f no definida" en el
     // cuerpo de la función.
     if (((Expresion*)exp->expresion)->tipo == EXP_OP_FUNCION) {
-        //printf("%s\n", string_a_str(&nombre));
         // Asignar un valor especial indefinido.
         asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(exp->nombre.nombre), crear_valor_indefinido(), t);
     }
@@ -304,7 +304,7 @@ Valor evaluar_expresion_definicion(ExpDefinicion *exp, int es_sentencia, Evaluad
 }
 
 // Una expresión de definición de función, del estilo de \x,y => x+y.
-Valor evaluar_expresion_def_funcion(ExpFuncion *exp, int es_sentencia, Evaluador *evaluador) {
+Valor evaluar_expresion_funcion(ExpFuncion *exp, int es_sentencia, Evaluador *evaluador) {
     // Tenemos que capturar las variables del entorno, copiándolas en una
     // tabla hash, y de paso reportas errores en caso de utilizar variables
     // no definidas en el cuerpo de la función.
@@ -574,7 +574,7 @@ Valor evaluar_expresion(Evaluador *evaluador, Expresion *exp) {
         case EXP_OP_LLAMADA: return evaluar_expresion_llamada(&exp->llamada_funcion, exp->es_sentencia, evaluador);
         case EXP_OP_ASIGNACION: return evaluar_expresion_asignacion(&exp->asignacion, exp->es_sentencia, evaluador);
         case EXP_OP_DEFINICION: return evaluar_expresion_definicion(&exp->definicion, exp->es_sentencia, evaluador);
-        case EXP_OP_FUNCION: return evaluar_expresion_def_funcion(&exp->def_funcion, exp->es_sentencia, evaluador);
+        case EXP_OP_FUNCION: return evaluar_expresion_funcion(&exp->def_funcion, exp->es_sentencia, evaluador);
         case EXP_BLOQUE: return evaluar_expresion_bloque(&exp->bloque, exp->es_sentencia, evaluador);
         case EXP_IMPORT: return evaluar_expresion_import(&exp->importe, evaluador);
         case EXP_CONDICIONAL: return evaluar_expresion_condicional(&exp->condicional, exp->es_sentencia, evaluador);

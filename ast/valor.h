@@ -3,7 +3,6 @@
 
 #include "../string.h"
 #include "../error.h"
-#include "../bibliotecas/biblioteca_dinamica.h"
 #include "../analizador_lexico.h"
 
 #include "identificador.h"
@@ -47,6 +46,9 @@ typedef int Entero;
 typedef int Bool;
 /// Tipo entero de un número decimal.
 typedef double Decimal;
+
+typedef void* BibilotecaDinamica;
+typedef void* FuncionForanea;
 
 /// Las distintas funciones intrínsecas del lenguaje.
 typedef enum {

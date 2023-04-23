@@ -1,6 +1,7 @@
 #include "std.h"
 #include "ast/ast.h"
 #include "evaluador.h"
+#include "bibliotecas/biblioteca_dinamica.h"
 
 void cargar_intrinsecas(TablaSimbolos *t) {
     asignar_valor_tabla(t, crear_string("print"), crear_funcion_intrinseca(INTRINSECA_PRINT, NULL), ASIGNACION_INMUTABLE);
@@ -603,68 +604,31 @@ Valor callforeign(Valor f, Valor tipo_retorno, Valor* vargs, int nargs) {
         return result;
     }
 
-    ffi_type **arg_types = malloc(sizeof (ffi_type) * nargs);
-    void **args = malloc(sizeof(void*) * nargs);
-    for (int i = 0; i < nargs; ++i) {
-        switch (vargs[i].tipo_valor) {
-            case TIPO_ENTERO:
-                arg_types[i] = &ffi_type_sint;
-                args[i] = &vargs[i].entero;
-                break;
-            case TIPO_DECIMAL:
-                arg_types[i] = &ffi_type_double;
-                args[i] = &vargs[i].decimal;
-                break;
-            case TIPO_BOOL:
-                arg_types[i] = &ffi_type_ushort;
-                args[i] = &vargs[i].bool;
-                break;
-            case TIPO_STRING:
-                arg_types[i] = &ffi_type_pointer;
-                char* ptr = string_a_str(&vargs[i].string);
-                args[i] = &ptr;
-                break;
-            case TIPO_FUNCION_FORANEA:
-                arg_types[i] = &ffi_type_pointer;
-                args[i] = &vargs[i].funcion_foranea;
-                break;
-            default: {
-                Error error = crear_error("No se puede pasar un valor de tipo %s como argumento a una función foránea.",
-                                          tipo_valor_a_str(vargs[i].tipo_valor));
-                // TODO: liberar memoria
-                return crear_valor_error(error, vargs[i].loc);
-            }
-        }
-    }
-
     char* str_retorno = string_a_str(&tipo_retorno.string);
-    Valor resultado;
+    TipoForaneo tipo_r;
     if (strcmp(str_retorno, "int") == 0) {
-        int rvalue;
-        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_sint, arg_types, nargs, args, &rvalue);
-        resultado = crear_entero(rvalue, NULL);
+        tipo_r = TIPO_C_INT;
     } else if (strcmp(str_retorno, "float") == 0) {
-        float rvalue;
-        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_float, arg_types, nargs, args, &rvalue);
-        resultado = crear_decimal((Decimal) rvalue, NULL);
+        tipo_r = TIPO_C_FLOAT;
     } else if (strcmp(str_retorno, "double") == 0) {
-        double rvalue;
-        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_double, arg_types, nargs, args, &rvalue);
-        resultado = crear_decimal((Decimal) rvalue, NULL);
+        tipo_r = TIPO_C_DOUBLE;
     } else if (strcmp(str_retorno, "void") == 0) {
-        llamar_funcion_foranea(f.funcion_foranea, &ffi_type_void, arg_types, nargs, args, NULL);
-        resultado = crear_valor_unidad(NULL);
+        tipo_r = TIPO_C_VOID;
     } else {
         Error error = crear_error("No se reconoce \"%s\" como un tipo de retorno correcto para una función foránea.", str_retorno);
-        resultado = crear_valor_error(error, tipo_retorno.loc);
+        borrar_valor(&f);
+        borrar_valor(&tipo_retorno);
+        for (int i = 0; i < nargs; ++i)
+            borrar_valor(vargs+i);
+        return crear_valor_error(error, tipo_retorno.loc);
     }
+
+    Valor resultado = llamar_funcion_foranea(f.funcion_foranea, tipo_r, vargs, nargs);
 
     borrar_valor(&f);
     borrar_valor(&tipo_retorno);
     for (int i = 0; i < nargs; ++i)
         borrar_valor(vargs+i);
-    free(arg_types);
-    free(args);
     return resultado;
 }
 

@@ -1,5 +1,6 @@
 #include "valor.h"
 #include "ast.h"
+#include "../bibliotecas/biblioteca_dinamica.h"
 #include <stdlib.h>
 #include <stdio.h>
 

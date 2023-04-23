@@ -12,6 +12,14 @@ typedef void* BibilotecaDinamica;
 /// y 1 de salida.
 typedef void* FuncionForanea;
 
+/// Un tipo de C.
+typedef enum {
+    TIPO_C_INT,
+    TIPO_C_FLOAT,
+    TIPO_C_DOUBLE,
+    TIPO_C_VOID
+} TipoForaneo;
+
 /**
  * Trata de cargar una biblioteca dinámica de un determinado fichero.
  * @param fichero la dirección de la biblioteca.
@@ -33,16 +41,19 @@ void cerrar_biblioteca_dinamica(BibilotecaDinamica *bib);
  */
 FuncionForanea cargar_funcion_biblioteca(BibilotecaDinamica bib, char* funcion);
 
+#include "../ast/valor.h"
+
 /**
- * Llama una determinada función foránea de una biblioteca dinámica
- * con unos determinados tipos de argumentos y tipo de retorno.
- * @param f la función a ejecutar.
- * @param rtype el tipo de retorno.
- * @param arg_types array de tipos de argumentos.
+ * Llama una determinada función foránea con unos argumentos y tipo de retorno
+ * dados. El prototipo de la función foránea se determina automáticamente en
+ * base a los tipos de los argumentos recibidos y el tipo de retorno.
+ * @param f la función foránea a ejecutar.
+ * @param tipo_retorno el tipo de retorno de la función.
+ * @param vargs los valores que se pasarán como argumentos.
  * @param nargs el número de argumentos.
- * @param args los argumentos pasados.
- * @param rvalue el lugar donde se guardará el valor de retorno.
+ * @return el resultado de ejecutar la función, o un error en caso de
+ * que se haya producido algún problema al llamar a la función.
  */
-void llamar_funcion_foranea(FuncionForanea f, ffi_type *rtype, ffi_type **arg_types, int nargs, void **args, void *rvalue);
+Valor llamar_funcion_foranea(FuncionForanea f, TipoForaneo tipo_retorno, Valor* vargs, int nargs);
 
 #endif //PRACTICA3_BIBLIOTECA_DINAMICA_H
