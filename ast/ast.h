@@ -34,23 +34,35 @@ typedef struct {
     Localizacion* loc;
 } ExpLlamada;
 
-/// Una expresión de asignación, del
-/// estilo de `x = exp`.
+/// Una expresión de asignación, del estilo
+/// de `x = exp`, `x[exp] = exp`, `x.y = exp`
+/// o cualquier combinación de accesos.
 typedef struct {
     /// El nombre al que se va a asignar
     /// el valor de la expresión.
     NombreAsignable nombre;
     /// La expresión a evaluar.
     struct Expresion *expresion;
-    /// Si la asignación es normal, o
-    /// si es de tipo inmutable o export.
-    /// Ejemplo: `const x = 5`
-    /// Ejemplo: `export pi = 3.14`
-    TipoAsignacion tipo;
     /// La localización de la expresión
     /// en el código fuente.
     Localizacion* loc;
 } ExpAsignacion;
+
+/// Una expresión de asignación inmutable
+/// del estilo de `const x = exp` o
+/// `export x = exp`.
+typedef struct {
+    /// El nombre al que se asignará
+    /// el valor de forma inmutable.
+    Identificador nombre;
+    /// La expresión a evaluar.
+    struct Expresion *expresion;
+    /// Si es de tipo `export`.
+    int export;
+    /// La localización de la expresión
+    /// en el código fuente.
+    Localizacion* loc;
+} ExpDefinicion;
 
 /// Una expresión de definición de una función,
 /// del estilo de `\x => exp`.
@@ -66,7 +78,7 @@ typedef struct {
     /// La localización de la expresión en
     /// código fuente.
     Localizacion* loc;
-} ExpDefFuncion;
+} ExpFuncion;
 
 /// Una expresión de importación, ya sea
 /// del estilo de `import "fichero.mth"
@@ -137,16 +149,24 @@ typedef enum {
     /// Ejemplo: `f(5)`, `(\x=>x+1)(2)`
     EXP_OP_LLAMADA,
     /// Una expresión que es una asignación de un valor
-    /// a un identificador.
-    /// Ejemplo: `x = 5`, `const pi = 3.14`
+    /// a un nombre asignable.
+    /// Ejemplo: `x = 5`, `x[2] = 3`, `x.y = 8`
     /// Nótese que una asignación produce como valor el
     /// valor asignado (a no ser que sea una sentencia).
     /// Es decir, `a=b=c=0` es una expresión válida que
     /// establece a,b, y c a 0.
     EXP_OP_ASIGNACION,
+    /// Una expresión que es una asignación de un valor
+    /// a un identificador de forma inmutable.
+    /// Ejemplo: `const x = 5`.
+    /// Se permiten expresiones del tipo `export`, que
+    /// permiten que la variable sea accesible desde
+    /// fuera del módulo actual.
+    /// Ejemplo: `export x = 5`
+    EXP_OP_DEFINICION,
     /// Una definición de una función creada por el usuario.
     /// Ejemplo: `\x,y => x+y`
-    EXP_OP_DEF_FUNCION,
+    EXP_OP_FUNCION,
     /// Una lista de expresiones dentro de un bloque.
     /// Ejemplo: `{ x=5; print(x); }`
     EXP_BLOQUE,
@@ -177,7 +197,8 @@ typedef struct {
         ExpNombre nombre;
         ExpLlamada llamada_funcion;
         ExpAsignacion asignacion;
-        ExpDefFuncion def_funcion;
+        ExpDefinicion definicion;
+        ExpFuncion def_funcion;
         ExpBloque bloque;
         ExpImporte importe;
         ExpCondicional condicional;
@@ -195,8 +216,9 @@ Expresion crear_exp_valor(Valor valor);
 Expresion crear_exp_nombre(NombreAsignable nombre);
 //Expresion crear_exp_acceso(Expresion valor, Acceso acceso, Localizacion *loc);
 Expresion crear_exp_llamada(Expresion funcion, ListaExpresiones argumentos, Localizacion *loc);
-Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc);
-Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc);
+Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, Localizacion *loc);
+Expresion crear_exp_definicion(Identificador nombre, Expresion expresion, int export, Localizacion *loc);
+Expresion crear_exp_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc);
 Expresion crear_exp_bloque(ListaExpresiones expresiones, Localizacion *loc);
 Expresion crear_exp_importe(String archivo, int foraneo, Localizacion *loc);
 Expresion crear_exp_importe_as(String archivo, int foraneo, Identificador as, Localizacion *loc);

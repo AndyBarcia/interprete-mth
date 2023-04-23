@@ -242,11 +242,9 @@ Valor evaluar_expresion_asignacion(ExpAsignacion *exp, int es_sentencia, Evaluad
     // recursividad del estilo de `f = \x => f(x-1)`, ya que de forma
     // normal esto causaría un error "variable f no definida" en el
     // cuerpo de la función.
-    if (((Expresion*)exp->expresion)->tipo == EXP_OP_DEF_FUNCION) {
-        //printf("%s\n", string_a_str(&nombre));
+    if (((Expresion*)exp->expresion)->tipo == EXP_OP_FUNCION) {
         // Asignar un valor especial indefinido.
-        TipoAsignacion t = exp->tipo != ASIGNACION_EXPORT ? ASIGNACION_NORMAL : ASIGNACION_EXPORT;
-        asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(nombre), crear_valor_indefinido(), t);
+        asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(nombre), crear_valor_indefinido(), ASIGNACION_NORMAL);
     }
 
     // Evaluar el valor que se va a asignar.
@@ -259,7 +257,7 @@ Valor evaluar_expresion_asignacion(ExpAsignacion *exp, int es_sentencia, Evaluad
 
         // Intentar asignar el valor, y si no se puede, porque estamos intentando
         // cambiar el valor de una variable inmutable, reportar un error.
-        if (!asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(nombre), v, exp->tipo)) {
+        if (!asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(nombre), v, ASIGNACION_NORMAL)) {
             borrar_valor(&retorno);
             Error error = crear_error_reasignando_inmutable(string_a_str(&nombre));
             return crear_valor_error(error, &exp->nombre.nombre_base.loc);
@@ -270,14 +268,46 @@ Valor evaluar_expresion_asignacion(ExpAsignacion *exp, int es_sentencia, Evaluad
     return v;
 }
 
+Valor evaluar_expresion_definicion(ExpDefinicion *exp, int es_sentencia, Evaluador *evaluador) {
+    TipoAsignacion t = exp->export ? ASIGNACION_EXPORT : ASIGNACION_NORMAL;
+
+    // Comportamiento especial cuando estamos asignando una definición
+    // de función a una variable. Esto permite que se pueda utilizar
+    // recursividad del estilo de `f = \x => f(x-1)`, ya que de forma
+    // normal esto causaría un error "variable f no definida" en el
+    // cuerpo de la función.
+    if (((Expresion*)exp->expresion)->tipo == EXP_OP_FUNCION) {
+        //printf("%s\n", string_a_str(&nombre));
+        // Asignar un valor especial indefinido.
+        asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(exp->nombre.nombre), crear_valor_indefinido(), t);
+    }
+
+    // Evaluar el valor que se va a asignar.
+    Valor v = evaluar_expresion(evaluador, (Expresion*)exp->expresion);
+
+    if (v.tipo_valor != TIPO_ERROR) {
+        // Si la asignación es una sentencia, simplemente devolvemos valor unidad.
+        // Si no, devolvemos un clon de valor que vamos a insertar en la tabla.
+        Valor retorno = es_sentencia ? crear_valor_unidad(NULL) : clonar_valor(v);
+
+        // Intentar asignar el valor, y si no se puede, porque estamos intentando
+        // cambiar el valor de una variable inmutable, reportar un error.
+        if (!asignar_valor_tabla(evaluador->tabla_simbolos, clonar_string(exp->nombre.nombre), v, t)) {
+            borrar_valor(&retorno);
+            Error error = crear_error_reasignando_inmutable(identificador_a_str(&exp->nombre));
+            return crear_valor_error(error, &exp->nombre.loc);
+        }
+        v = retorno;
+    }
+
+    return v;
+}
+
 // Una expresión de definición de función, del estilo de \x,y => x+y.
-Valor evaluar_expresion_def_funcion(ExpDefFuncion *exp, int es_sentencia, Evaluador *evaluador) {
+Valor evaluar_expresion_def_funcion(ExpFuncion *exp, int es_sentencia, Evaluador *evaluador) {
     // Tenemos que capturar las variables del entorno, copiándolas en una
     // tabla hash, y de paso reportas errores en caso de utilizar variables
     // no definidas en el cuerpo de la función.
-
-    // Lista de identificadores usados en la función que no son ni argumentos
-    // ni variables locales (y que por ende, deben provenir del exterior).
 
     TablaHash *capturadas = malloc(sizeof(TablaHash));
     *capturadas = crear_tabla_hash(exp->variables_capturadas.longitud);
@@ -543,7 +573,8 @@ Valor evaluar_expresion(Evaluador *evaluador, Expresion *exp) {
         case EXP_NOMBRE: return evaluar_expresion_nombre(&exp->nombre, exp->es_sentencia, evaluador);
         case EXP_OP_LLAMADA: return evaluar_expresion_llamada(&exp->llamada_funcion, exp->es_sentencia, evaluador);
         case EXP_OP_ASIGNACION: return evaluar_expresion_asignacion(&exp->asignacion, exp->es_sentencia, evaluador);
-        case EXP_OP_DEF_FUNCION: return evaluar_expresion_def_funcion(&exp->def_funcion, exp->es_sentencia, evaluador);
+        case EXP_OP_DEFINICION: return evaluar_expresion_definicion(&exp->definicion, exp->es_sentencia, evaluador);
+        case EXP_OP_FUNCION: return evaluar_expresion_def_funcion(&exp->def_funcion, exp->es_sentencia, evaluador);
         case EXP_BLOQUE: return evaluar_expresion_bloque(&exp->bloque, exp->es_sentencia, evaluador);
         case EXP_IMPORT: return evaluar_expresion_import(&exp->importe, evaluador);
         case EXP_CONDICIONAL: return evaluar_expresion_condicional(&exp->condicional, exp->es_sentencia, evaluador);

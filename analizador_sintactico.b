@@ -198,14 +198,14 @@ expresion:
     | expresion '(' argument_list ')' { $$ = crear_exp_llamada($1, $3, &@$); }
     | '(' expresion ')' { $$ = $2; }
     | nombre_asignable { $$ = crear_exp_nombre($1); }
-    | nombre_asignable '=' expresion { $$ = crear_exp_asignacion($1, $3, ASIGNACION_NORMAL, &@$); }
-    | "const" nombre_asignable '=' expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_INMUTABLE, &@$); }
-    | "export" nombre_asignable '=' expresion { $$ = crear_exp_asignacion($2, $4, ASIGNACION_EXPORT, &@$); }
+    | nombre_asignable '=' expresion { $$ = crear_exp_asignacion($1, $3, &@$); }
+    | "const" IDENTIFICADOR '=' expresion { $$ = crear_exp_definicion($2, $4, 0, &@$); }
+    | "export" IDENTIFICADOR '=' expresion { $$ = crear_exp_definicion($2, $4, 1, &@$); }
     | '{' expression_list '}' { $$ = crear_exp_bloque($2, &@$); }
     | "if" expresion "then" expresion { $$ = crear_exp_condicional($2, $4, NULL, &@$); }
     | "if" expresion "then" expresion "else" expresion { $$ = crear_exp_condicional($2, $4, &$6, &@$); }
     | "while" expresion "do" expresion { $$ = crear_exp_bucle_while($2, $4, &@$); }
-    | '\\' identifier_list "=>" expresion { $$ = crear_exp_def_funcion($2, $4, &@$); }
+    | '\\' identifier_list "=>" expresion { $$ = crear_exp_funcion($2, $4, &@$); }
     | "import" STRING {$$ = crear_exp_importe($2, 0, &@2); }
     | "import" "foreign" STRING "as" IDENTIFICADOR { $$ = crear_exp_importe_as($3, 1, $5, &@3); }
     | "break" { $$ = crear_exp_ctrl_flujo(CTR_FLUJO_BREAK, NULL, &@1); }
@@ -216,8 +216,8 @@ expresion:
     ;
 
 statement:
-      expresion ';' { $$ = $1; $$.es_sentencia = 1; }
-    | expresion '\n' { $$ = $1;}
+      expresion ';'   { $$ = $1; $$.es_sentencia = 1; }
+    | expresion '\n'  { $$ = $1;}
     | expresion YYEOF { $$ = $1; }
 
 %%

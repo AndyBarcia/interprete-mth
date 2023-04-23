@@ -593,7 +593,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-22)
+#define YYPACT_NINF (-24)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -607,20 +607,20 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     -22,     2,   -22,   -22,   -22,   -22,   -22,   -22,    -4,    -4,
-       8,   266,   266,   266,   266,   266,   266,   129,   -22,   -22,
-      15,     1,    72,   -22,    10,    17,   -22,    19,   408,   408,
-     341,   370,    55,    59,   -21,   -13,   -12,   -11,    -9,    -7,
-      -6,     0,   163,     4,   197,     9,    12,    31,   295,   231,
-      32,   -22,    14,    65,   266,    91,   266,   -22,   -22,   266,
+     -24,     2,   -24,   -24,   -24,   -24,   -24,   -24,    -4,    -2,
+       8,   266,   266,   266,   266,   266,   266,   129,   -24,   -24,
+      15,     1,    72,   -24,   -23,    -6,   -24,    19,   408,   408,
+     341,   370,    55,    16,   -13,   -12,   -11,    -9,    -7,    -5,
+       0,     4,   163,    12,   197,    14,    31,    34,   295,   231,
+      -8,   -24,     6,    43,   266,    74,   266,   -24,   -24,   266,
      266,   266,   266,   266,   266,   266,   266,   266,   266,   266,
-     266,   266,   266,   -22,   -22,   266,   266,    78,   266,   266,
-     -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
-     -22,   -22,   -22,   -22,   -22,   -22,    72,   -22,   -22,    93,
-     266,   408,   -22,   307,   357,   357,   357,   357,   446,   437,
-     357,   357,    59,    59,    66,    66,    66,    73,    68,   408,
-     408,   408,   107,   399,   408,    76,   -22,   408,   -22,   266,
-     -22,   -22,   266,   -22,   408,   408
+     266,   266,   266,   -24,   -24,   266,   266,    73,   266,   266,
+     -24,   -24,   -24,   -24,   -24,   -24,   -24,   -24,   -24,   -24,
+     -24,   -24,   -24,   -24,   -24,   -24,    72,   -24,   -24,    88,
+     266,   408,   -24,   307,   357,   357,   357,   357,   446,   437,
+     357,   357,    16,    16,    58,    58,    58,    57,    54,   408,
+     408,   408,    92,   399,   408,    61,   -24,   408,   -24,   266,
+     -24,   -24,   266,   -24,   408,   408
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -647,8 +647,8 @@ static const yytype_int8 yydefact[] =
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
-      -5,    -1,    67
+     -24,   -24,   -24,   -24,   -24,   -24,   -24,   -24,   -24,   -24,
+     -24,    -1,    53
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -663,18 +663,18 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      22,     5,     2,    24,    25,     3,     4,     5,     6,     7,
+      22,    24,     2,    25,    75,     3,     4,     5,     6,     7,
       28,    29,    30,    31,    26,    33,    48,     8,     9,    10,
-      51,    80,    11,    12,    13,    77,    27,    14,    54,    81,
-      82,    83,    15,    84,    16,    85,    86,    75,    17,    18,
-      55,    56,    87,    33,    76,    19,    89,    20,    96,    55,
-      56,    91,    99,   101,    92,   103,    55,    56,   104,   105,
+      51,    76,    11,    12,    13,    77,    27,    14,    54,    80,
+      81,    82,    15,    83,    16,    84,    98,    85,    17,    18,
+      55,    56,    86,    33,    99,    19,    87,    20,    96,    69,
+      70,    71,    72,   101,    89,   103,    91,   100,   104,   105,
      106,   107,   108,   109,   110,   111,   112,   113,   114,   115,
-     116,   119,    58,    93,   120,   121,    98,   123,   124,   100,
+     116,   119,    58,    92,   120,   121,    93,   123,   124,   102,
       59,    60,    61,    62,    63,    64,    67,    68,    69,    70,
-      71,    72,    69,    70,    71,    72,   102,   122,   126,   127,
-      65,    66,    72,    67,    68,    69,    70,    71,    72,    73,
-     130,   129,   131,   133,     0,     0,    97,     0,    74,     0,
+      71,    72,   122,   126,    72,   129,   130,   131,   133,   127,
+      65,    66,    97,    67,    68,    69,    70,    71,    72,    73,
+       0,     0,     0,     0,     0,     0,     0,     0,    74,     0,
        0,     0,     0,     0,     0,     0,     0,     0,   134,     0,
        0,   135,     3,     4,     5,     6,     7,    34,    35,    36,
       37,    38,    39,     0,     8,     9,    10,     0,     0,    11,
@@ -716,18 +716,18 @@ static const yytype_int16 yytable[] =
 
 static const yytype_int16 yycheck[] =
 {
-       1,     5,     0,     8,     9,     3,     4,     5,     6,     7,
+       1,     5,     0,     5,    27,     3,     4,     5,     6,     7,
       11,    12,    13,    14,     6,    16,    17,    15,    16,    17,
-       5,    42,    20,    21,    22,     6,    18,    25,    27,    42,
-      42,    42,    30,    42,    32,    42,    42,    27,    36,    37,
-      39,    40,    42,    44,    27,    43,    42,    45,    49,    39,
-      40,    42,    38,    54,    42,    56,    39,    40,    59,    60,
+       5,    27,    20,    21,    22,     6,    18,    25,    27,    42,
+      42,    42,    30,    42,    32,    42,    44,    42,    36,    37,
+      39,    40,    42,    44,    38,    43,    42,    45,    49,    33,
+      34,    35,    36,    54,    42,    56,    42,    14,    59,    60,
       61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
-      71,    72,     0,    42,    75,    76,    44,    78,    79,    14,
+      71,    72,     0,    42,    75,    76,    42,    78,    79,     5,
        8,     9,    10,    11,    12,    13,    31,    32,    33,    34,
-      35,    36,    33,    34,    35,    36,     5,    19,     5,   100,
-      28,    29,    36,    31,    32,    33,    34,    35,    36,    37,
-      42,    38,     5,    37,    -1,    -1,    49,    -1,    46,    -1,
+      35,    36,    19,     5,    36,    38,    42,     5,    37,   100,
+      28,    29,    49,    31,    32,    33,    34,    35,    36,    37,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    46,    -1,
       -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   129,    -1,
       -1,   132,     3,     4,     5,     6,     7,     8,     9,    10,
       11,    12,    13,    -1,    15,    16,    17,    -1,    -1,    20,
@@ -773,7 +773,7 @@ static const yytype_int8 yystos[] =
 {
        0,    48,     0,     3,     4,     5,     6,     7,    15,    16,
       17,    20,    21,    22,    25,    30,    32,    36,    37,    43,
-      45,    57,    58,    59,    57,    57,     6,    18,    58,    58,
+      45,    57,    58,    59,     5,     5,     6,    18,    58,    58,
       58,    58,    58,    58,     8,     9,    10,    11,    12,    13,
       28,    29,    30,    31,    32,    33,    34,    35,    58,    54,
       55,     5,    51,    52,    27,    39,    40,    56,     0,     8,
@@ -2143,19 +2143,19 @@ yyreduce:
 
   case 59: /* expresion: nombre_asignable '=' expresion  */
 #line 201 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                                     { (yyval.expresion) = crear_exp_asignacion((yyvsp[-2].nombreAsignable), (yyvsp[0].expresion), ASIGNACION_NORMAL, &(yyloc)); }
+                                     { (yyval.expresion) = crear_exp_asignacion((yyvsp[-2].nombreAsignable), (yyvsp[0].expresion), &(yyloc)); }
 #line 2148 "../analizador_sintactico.c"
     break;
 
-  case 60: /* expresion: "const" nombre_asignable '=' expresion  */
+  case 60: /* expresion: "const" "identificador" '=' expresion  */
 #line 202 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                                             { (yyval.expresion) = crear_exp_asignacion((yyvsp[-2].nombreAsignable), (yyvsp[0].expresion), ASIGNACION_INMUTABLE, &(yyloc)); }
+                                          { (yyval.expresion) = crear_exp_definicion((yyvsp[-2].identificador), (yyvsp[0].expresion), 0, &(yyloc)); }
 #line 2154 "../analizador_sintactico.c"
     break;
 
-  case 61: /* expresion: "export" nombre_asignable '=' expresion  */
+  case 61: /* expresion: "export" "identificador" '=' expresion  */
 #line 203 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                                              { (yyval.expresion) = crear_exp_asignacion((yyvsp[-2].nombreAsignable), (yyvsp[0].expresion), ASIGNACION_EXPORT, &(yyloc)); }
+                                           { (yyval.expresion) = crear_exp_definicion((yyvsp[-2].identificador), (yyvsp[0].expresion), 1, &(yyloc)); }
 #line 2160 "../analizador_sintactico.c"
     break;
 
@@ -2185,7 +2185,7 @@ yyreduce:
 
   case 66: /* expresion: '\\' identifier_list "=>" expresion  */
 #line 208 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                                          { (yyval.expresion) = crear_exp_def_funcion((yyvsp[-2].listaIdentificadores), (yyvsp[0].expresion), &(yyloc)); }
+                                          { (yyval.expresion) = crear_exp_funcion((yyvsp[-2].listaIdentificadores), (yyvsp[0].expresion), &(yyloc)); }
 #line 2190 "../analizador_sintactico.c"
     break;
 
@@ -2233,13 +2233,13 @@ yyreduce:
 
   case 74: /* statement: expresion ';'  */
 #line 219 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                    { (yyval.expresion) = (yyvsp[-1].expresion); (yyval.expresion).es_sentencia = 1; }
+                      { (yyval.expresion) = (yyvsp[-1].expresion); (yyval.expresion).es_sentencia = 1; }
 #line 2238 "../analizador_sintactico.c"
     break;
 
   case 75: /* statement: expresion '\n'  */
 #line 220 "/home/andy/Documentos/USC/3º/CI/Practica3/analizador_sintactico.b"
-                     { (yyval.expresion) = (yyvsp[-1].expresion);}
+                      { (yyval.expresion) = (yyvsp[-1].expresion);}
 #line 2244 "../analizador_sintactico.c"
     break;
 

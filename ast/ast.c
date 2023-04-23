@@ -50,7 +50,7 @@ Expresion crear_exp_op_binaria(FuncionIntrinseca op, Localizacion *opLoc, Expres
     return crear_exp_llamada(crear_exp_valor(crear_funcion_intrinseca(op, opLoc)), args, loc);
 }
 
-Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, TipoAsignacion asignacion, Localizacion *loc) {
+Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, Localizacion *loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = expresion;
 
@@ -65,13 +65,33 @@ Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, Tipo
             .asignacion = (ExpAsignacion) {
                     .nombre = nombre,
                     .expresion = (struct Expresion *) e,
-                    .tipo = asignacion,
                     .loc = loc,
             },
             .es_sentencia = 0,
     };
 }
 
+Expresion crear_exp_definicion(Identificador nombre, Expresion expresion, int export, Localizacion *loc) {
+    Expresion *e = malloc(sizeof(Expresion));
+    *e = expresion;
+
+    if (loc) {
+        Localizacion* loc_copy = malloc(sizeof(Localizacion));
+        *loc_copy = clonar_loc(*loc);
+        loc = loc_copy;
+    }
+
+    return (Expresion) {
+            .tipo = EXP_OP_DEFINICION,
+            .definicion = (ExpDefinicion) {
+                    .nombre = nombre,
+                    .expresion = (struct Expresion*) e,
+                    .export = export,
+                    .loc = loc
+            },
+            .es_sentencia = 0,
+    };
+}
 
 // Funciones que calcula la lista de identificadores que una determinada
 // definición de función ha capturado del exterior. Estos se determinan
@@ -82,7 +102,7 @@ Expresion crear_exp_asignacion(NombreAsignable nombre, Expresion expresion, Tipo
 // Devolvería ["five"] como lista de variables capturadas.
 ListaIdentificadores variables_capturadas(ListaIdentificadores nombres_args, Expresion *cuerpo);
 
-Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc) {
+Expresion crear_exp_funcion(ListaIdentificadores argumentos, Expresion cuerpo, Localizacion *loc) {
     Expresion *e = malloc(sizeof(Expresion));
     *e = cuerpo;
 
@@ -95,8 +115,8 @@ Expresion crear_exp_def_funcion(ListaIdentificadores argumentos, Expresion cuerp
     }
 
     return (Expresion) {
-            .tipo = EXP_OP_DEF_FUNCION,
-            .def_funcion = (ExpDefFuncion) {
+            .tipo = EXP_OP_FUNCION,
+            .def_funcion = (ExpFuncion) {
                     .nombres_args = argumentos,
                     .variables_capturadas = capturadas,
                     .cuerpo = (struct Expresion *) e,
@@ -249,7 +269,7 @@ void validar_expresion(Expresion *e, ContextoExpresion ctx) {
     // Dentro de un módulo sólo se permiten imports y asignaciones.
     // Otras expresiones como `5` o `print("hola")` y otras expresiones
     // sin efectos no están permitidas.
-    if (ctx.es_modulo && !ctx.es_asignacion && (e->tipo != EXP_IMPORT && e->tipo != EXP_OP_ASIGNACION)) {
+    if (ctx.es_modulo && !ctx.es_asignacion && (e->tipo != EXP_IMPORT && e->tipo != EXP_OP_ASIGNACION && e->tipo != EXP_OP_DEFINICION)) {
         Valor v = crear_valor_error(crear_error_contexto_incorrecto("expresión sin efectos", "fuera de una asignación"),
                                     obtener_loc_exp(e));
         borrar_expresion(e);
@@ -259,17 +279,21 @@ void validar_expresion(Expresion *e, ContextoExpresion ctx) {
 
     switch (e->tipo) {
         case EXP_OP_ASIGNACION:
+            ctx.es_asignacion = 1;
+            validar_expresion((Expresion*) e->asignacion.expresion, ctx);
+            break;
+        case EXP_OP_DEFINICION:
             // Los exports sólo se permiten en un módulo, y sólo en el
             // primer nivel del módulo. Algo como `x = { export y = 5; }`
             // tampoco se permite.
-            if (e->asignacion.tipo == ASIGNACION_EXPORT && (!ctx.es_modulo || ctx.es_asignacion)) {
-                Valor v = crear_valor_error(crear_error_contexto_incorrecto("export", "fuera de un módulo"), e->asignacion.loc);
+            if (e->definicion.export && (!ctx.es_modulo || ctx.es_asignacion)) {
+                Valor v = crear_valor_error(crear_error_contexto_incorrecto("export", "fuera de un módulo"), e->definicion.loc);
                 borrar_expresion(e);
                 *e = crear_exp_valor(v);
                 return;
             }
             ctx.es_asignacion = 1;
-            validar_expresion((Expresion*) e->asignacion.expresion, ctx);
+            validar_expresion((Expresion*) e->definicion.expresion, ctx);
             break;
         case EXP_CONTROL_FLUJO:
             // Los `breaks` sólo se permiten si estamos dentro de un bucle.
@@ -302,7 +326,7 @@ void validar_expresion(Expresion *e, ContextoExpresion ctx) {
             ctx.es_bucle = 1;
             validar_expresion((Expresion*) e->bucle_while.cuerpo, ctx);
             break;
-        case EXP_OP_DEF_FUNCION:
+        case EXP_OP_FUNCION:
             ctx.es_funcion = 1;
             validar_expresion((Expresion*) e->def_funcion.cuerpo, ctx);
             break;
@@ -332,14 +356,23 @@ Expresion clonar_expresion(Expresion exp) {
             break;
         case EXP_OP_ASIGNACION:
             e.asignacion.nombre = clonar_nombre_asignable(exp.asignacion.nombre);
-            e.asignacion.expresion = malloc(sizeof(Expresion)); // Y esto??
+            e.asignacion.expresion = malloc(sizeof(Expresion));
             *(Expresion *) e.asignacion.expresion = clonar_expresion(*(Expresion *) exp.asignacion.expresion);
             if (e.asignacion.loc) {
                 e.asignacion.loc = malloc(sizeof(Localizacion));
                 *e.asignacion.loc = clonar_loc(*exp.asignacion.loc);
             }
             break;
-        case EXP_OP_DEF_FUNCION:
+        case EXP_OP_DEFINICION:
+            e.definicion.nombre = clonar_identificador(exp.definicion.nombre);
+            e.definicion.expresion = malloc(sizeof(Expresion));
+            *(Expresion *) e.definicion.expresion = clonar_expresion(*(Expresion *) exp.definicion.expresion);
+            if (e.definicion.loc) {
+                e.definicion.loc = malloc(sizeof(Localizacion));
+                *e.definicion.loc = clonar_loc(*exp.definicion.loc);
+            }
+            break;
+        case EXP_OP_FUNCION:
             e.def_funcion.nombres_args = clonar_lista_identificadores(exp.def_funcion.nombres_args);
             e.def_funcion.variables_capturadas = clonar_lista_identificadores(exp.def_funcion.variables_capturadas);
             e.def_funcion.cuerpo = malloc(sizeof(Expresion)); // Esto es necesario
@@ -433,7 +466,16 @@ void borrar_expresion(Expresion *exp) {
                 free(exp->asignacion.loc);
             }
             break;
-        case EXP_OP_DEF_FUNCION:
+        case EXP_OP_DEFINICION:
+            borrar_expresion((Expresion *) exp->definicion.expresion);
+            free(exp->definicion.expresion);
+            borrar_identificador(&exp->definicion.nombre);
+            if(exp->definicion.loc) {
+                borrar_loc(exp->definicion.loc);
+                free(exp->definicion.loc);
+            }
+            break;
+        case EXP_OP_FUNCION:
             borrar_expresion((Expresion *) exp->def_funcion.cuerpo);
             free(exp->def_funcion.cuerpo);
             borrar_lista_identificadores(&exp->def_funcion.nombres_args);
@@ -512,7 +554,9 @@ Localizacion* obtener_loc_exp(Expresion *exp) {
             return exp->llamada_funcion.loc;
         case EXP_OP_ASIGNACION:
             return exp->asignacion.loc;
-        case EXP_OP_DEF_FUNCION:
+        case EXP_OP_DEFINICION:
+            return exp->definicion.loc;
+        case EXP_OP_FUNCION:
             return exp->def_funcion.loc;
         case EXP_BLOQUE:
             return exp->bloque.loc;
@@ -608,16 +652,16 @@ void _imprimir_expresion(Expresion expresion) {
             _imprimir_lista_expresiones(expresion.llamada_funcion.args);
             break;
         case EXP_OP_ASIGNACION:
-            switch (expresion.asignacion.tipo) {
-                case ASIGNACION_NORMAL: break;
-                case ASIGNACION_INMUTABLE: printf("const "); break;
-                case ASIGNACION_EXPORT: printf("export "); break;
-            }
             _imprimir_nombre_asignable(expresion.asignacion.nombre);
             printf(" = ");
             _imprimir_expresion(*(Expresion*) expresion.asignacion.expresion);
             break;
-        case EXP_OP_DEF_FUNCION:
+        case EXP_OP_DEFINICION:
+            printf(expresion.definicion.export ? "export " : "const ");
+            printf("%s = ", identificador_a_str(&expresion.definicion.nombre));
+            _imprimir_expresion(*(Expresion*) expresion.definicion.expresion);
+            break;
+        case EXP_OP_FUNCION:
             printf("\\");
             _imprimir_lista_identificadores(expresion.def_funcion.nombres_args);
             printf(" => ");
@@ -701,7 +745,11 @@ void _variables_capturadas(Expresion expresion, TablaHash *locales, ListaIdentif
             insertar_hash(locales, clonar_string(expresion.asignacion.nombre.nombre_base.nombre), crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.asignacion.expresion, locales, lista);
             break;
-        case EXP_OP_DEF_FUNCION:
+        case EXP_OP_DEFINICION:
+            insertar_hash(locales, clonar_string(expresion.definicion.nombre.nombre), crear_valor_unidad(NULL), 0);
+            _variables_capturadas(*(Expresion *) expresion.definicion.expresion, locales, lista);
+            break;
+        case EXP_OP_FUNCION:
             for (int i = 0; i < expresion.def_funcion.nombres_args.longitud; ++i)
                 insertar_hash(locales, clonar_string(expresion.def_funcion.nombres_args.valores[i].nombre), crear_valor_unidad(NULL), 0);
             _variables_capturadas(*(Expresion *) expresion.def_funcion.cuerpo, locales, lista);

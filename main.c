@@ -166,10 +166,10 @@ int main(int argc, char *argv[]) {
     TablaSimbolos simbolos = crear_tabla_simbolos();
     cargar_intrinsecas(&simbolos);
 
-    // Crea un evaluador en el directorio actual, y carga el módulo
-    // prelude en caso de que sea necesario.
+    // Crea un evaluador en el directorio actual
     Evaluador evaluador = crear_evaluador(&simbolos, crear_string("."));
 
+    // Carga el módulo prelude en caso de que sea necesario.
     if (!no_prelude) {
         Expresion e = crear_exp_importe(crear_string(prelude_file), 0, NULL);
         Valor v = evaluar_expresion(&evaluador, &e);
@@ -178,8 +178,8 @@ int main(int argc, char *argv[]) {
     }
 
     // Establecer el modo debug si se estableció como argumento.
-    // No lo establecemos antes para que no se pete la terminal al cargarse
-    // el prelude.
+    // No lo establecemos antes para que no se pete la terminal al
+    // cargarse el prelude.
     evaluador.debug = debug;
 
     if (n_argumentos_posicionales < 1) {
