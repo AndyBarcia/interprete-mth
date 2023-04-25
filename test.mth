@@ -1,7 +1,26 @@
 import "fib.mth"
 
+const n_test = 10;
+print("Fibonacci recursivo");
+
 i = 0;
-while i < 5 do {
+while i < n_test do {
+    print("fib(", i, ") = ", fib(i))
+    i = i+1
+}
+
+print("Fibonacci cerrado");
+
+i = 0;
+while i < n_test do {
     print("fib(", i, ") = ", fib_closed(i))
+    i = i+1
+}
+
+print("Fibonacci iterativo");
+
+i = 0;
+while i < n_test do {
+    print("fib(", i, ") = ", fib_iter(i))
     i = i+1
 }

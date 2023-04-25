@@ -1,14 +1,60 @@
-OPTIONS
+MEMOIZACIÓN
 
-Utilizar getopt_long para implementar las siguientes funciones
+Se podría implementar fácilmente con una intrínseca
 
-* Por defecto importar "math.mth", y mover a ese fichero las
-  definiciones de "e" y "pi".
-* Opciones
+export fib = \n => {
+    if n <= 0 then 0 else if n == 1 then 1 else fib(n-1)+fib(n-2)
+}
 
-	--no-prelude No importa módulo por defecto
-	-p --prelude fichero Este es el módulo que se cargará por defecto ("math.mth" por defecto)
-	-d --debug Imprime las expresiones antes de evaluarlas
+export fib_memoized = memoize(fib)
+
+Lo que tendría que hacer la función es crear una nueva función que
+englobase a fib que fuese tal que así
+
+export fib_memoized = {
+	results = {{}}
+	
+	\n => {
+		if (v=results[n]) then return v
+		return results[n] = fib(n)
+	}
+}
+
+Esto significaría que la función podría ser implementada de una manera
+tal que así en pseudocódigo.
+
+export memoize = \f => {
+	results = {{}}
+	
+	\args.. => {
+		if (v=results[args]) then return v
+		return results[args = f(args..)
+	}
+}
+
+Pero en realidad esta implementación no podría funcionar por dos razones:
+
+	* No podemos saber realmente cuantos argumentos tiene f ni podemos
+	  definir una función que tenga los mismos argumentos que otra función.
+	* Para conseguir memoización en funciones recursivas se tendría que
+	  actualizar su referencia a sí misma para que apunte a la versión
+	  memoizada de la función y no la función original.
+
+NÚMERO ARBITRARIO DE ARGUMENTOS EN FUNCIONES DEFINIDAS POR EL USUARIO
+
+Utilizando ".." para indicar que se pasa un número indeterminado
+de argumnetos como si fuera una función.
+
+sumar = \xs.. => {
+	fold((+), 0, xs)
+}
+
+sumar(1,2,3,4,5,6) 
+
+De la misma manera, también se puede utilizar ".." como un spread
+operator para pasar un array a una de estas funciones.
+
+sumar(1,2,3,[4,5,6]..)
 
 MODULOS VERDADERAMENTE INDEPENDIENTES
 
@@ -87,6 +133,13 @@ type Impar = !Par
 ????
 
 type Lista = |v, n| -> n(v[i]) for all i
+
+type Vector = |x, n| -> longitud(x) == n
+
+append = |x, v: Vector(n)| : Vector(n+1) -> { ... }
+
+v : Vector(_) = [1,2,3,4]
+v := append(v, 5)
 
 ????
 
